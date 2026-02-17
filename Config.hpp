@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 10:13:49 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/17 11:43:59 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/02/17 14:49:05 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,3 +64,5 @@ struct HttpConfig
 	std::map<int, std::string> errors;
 	std::vector<ServerConfig> servers;
 };
+
+#endif
