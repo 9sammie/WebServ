@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 10:13:49 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/17 14:49:05 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/02/18 11:28:39 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,18 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cstddef> //size_t
 
 struct ListenConfig
 {
+	ListenConfig();
 	std::string host;//si vide refuser, verifier a.b.c.d avec 4 octets 0...255
 	int port; //valeurs a refuser <=0 et > 65535, non numerique
 };
 
 struct LocationConfig
 {
+	LocationConfig();
 	std::string prefix; // /srcs, /files, /
 	std::string root; 
 	std::string index; 
@@ -36,10 +39,14 @@ struct LocationConfig
 	bool hasRedirection; // si redirection est configuree
 	int redirectCode; // 301 permanent 302 temporaire, 307 et 308 ??? dans quelle mesure c est important ?
 	std::string redirectTarget; //new path ?
+	bool hasMaxBodySize;
+	size_t maxBodySize;
 };
 
 struct ServerConfig
 {
+	ServerConfig();
+	int keepaliveTimeoutSec;
 	std::vector<ListenConfig> listens; // au moins 1 dans ce container, En mémoire, ça donne :
 										//listens.size() == 1
 										//listens[0].host == "127.0.0.1"
@@ -59,6 +66,7 @@ struct ServerConfig
 
 struct HttpConfig
 {
+	HttpConfig();
 	int keepaliveTimeoutSec;
 	size_t maxBodySize;
 	std::map<int, std::string> errors;
