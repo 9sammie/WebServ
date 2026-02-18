@@ -27,6 +27,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig& other)
 		cgiExtension = other.cgiExtension;
 		cgiPath = other.cgiPath;
 	}
+	return *this;
 }
 
 LocationConfig::~LocationConfig() {}

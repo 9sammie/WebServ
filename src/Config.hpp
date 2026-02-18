@@ -21,16 +21,16 @@
 class Config
 {
 	private:
-	std::vector<ServerConfig> _servers;
-
-	public:
-	Config();
-	Config(const Config& other);
-	Config& operator=(const Config& other);
-	~Config();
-
-	int parseFile(const std::string& path);
-	const std::vector<ServerConfig>& getServers() const;
+		std::vector<ServerConfig> _servers;
+	
+		public:
+		Config();
+		Config(const Config& other);
+		Config& operator=(const Config& other);
+		~Config();
+	
+		int parseFile(const std::string& path);
+		const std::vector<ServerConfig>& getServers() const;
 };
 
 #endif

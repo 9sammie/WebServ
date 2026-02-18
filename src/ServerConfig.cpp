@@ -28,6 +28,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& other)
 		errorPages = other.errorPages;
 		locations = other.locations;
 	}
+	return *this;
 }
 
 ServerConfig::~ServerConfig() {}

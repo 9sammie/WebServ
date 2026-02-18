@@ -6,17 +6,17 @@
 class LocationConfig
 {
 	public:
-	LocationConfig();
-	LocationConfig(const LocationConfig& other);
-	LocationConfig& operator=(const LocationConfig& other);
-	~LocationConfig();
-
-	std::string path;
-    std::string root;
-    std::string index;
-    std::string cgiExtension;
-    std::string cgiPath;
-    std::vector<std::string> allowedMethods;
+		LocationConfig();
+		LocationConfig(const LocationConfig& other);
+		LocationConfig& operator=(const LocationConfig& other);
+		~LocationConfig();
+	
+		std::string path;
+    	std::string root;
+    	std::string index;
+    	std::string cgiExtension;
+    	std::string cgiPath;
+    	std::vector<std::string> allowedMethods;
 };
 
 #endif
