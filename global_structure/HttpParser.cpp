@@ -10,5 +10,5 @@ HttpParser::~HttpParser() {}
 
 bool HttpParser::parse(std::string& buffer, HttpRequest& request)
 {
-
+	
 }

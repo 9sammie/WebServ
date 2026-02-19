@@ -5,6 +5,16 @@
 
 class HttpParser
 {
+	private:
+		enum State
+		{
+			REQUEST_LINE,
+			HEADERS,
+			BODY,
+			COMPLETE
+		};
+		State _state;
+
 	public:
 		HttpParser();
 		HttpParser(const HttpParser& other);
