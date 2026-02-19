@@ -2,12 +2,12 @@
 #include <iostream>
 #include <list>
 #include <exception>
-// #include <signal.h> //Uncomment for MacOS
+#include "Signal.hpp"
 
 int main(void){
 
     // signal(SIGPIPE, SIG_IGN); // For MacOS only, and change sendResponse function too, uncomment
-    
+    init_signal_handler();
     std::list<int> ports;
     ports.push_back(8080);
 

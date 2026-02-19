@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include "Colors.hpp"
+#include "Signal.hpp"
 
 
 ServerManager::ServerManager(std::list<int> ports){
@@ -34,7 +35,7 @@ ServerManager::ServerManager(std::list<int> ports){
 }
 
 ServerManager::~ServerManager(){
-    for (std::vector<TcpListener*>::iterator it; it != _listeners.end(); ++it){
+    for (std::vector<TcpListener*>::iterator it = _listeners.begin(); it != _listeners.end(); ++it){
         delete *it;
     }
 }
@@ -107,6 +108,7 @@ void ServerManager::sendResponse(int clientFd, int idx) {
         closeConnection(clientFd);
     }
     // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
+    _clients[clientFd].clean(Client::REQUEST);
     _pollFds[idx].events = POLLIN;
 }
 
@@ -124,8 +126,12 @@ bool    ServerManager::handleRequest(int idx){
     if (readClientData(fd) <= 0)
         return false;
     if (_clients[fd].isRequestComplete()){
-        // COOCKER call
+        // COOCKER call DEBUG
+        std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         _pollFds[idx].events = POLLOUT;
+    }
+    else{
+        std::cout << BRIGHT_RED << "DEBUG: REQUEST incomplete !" << RESET << std::endl;
     }
     return true;
 }
@@ -136,29 +142,27 @@ void    ServerManager::run(){
         //Event go through _pollFds to find the revent On
         if (poll(&_pollFds[0], _pollFds.size(), -1) >= 0){
             for (size_t i = 0; i < _pollFds.size(); ++i){
-                if (_pollFds[i].revents & POLLIN){
-                    //Can read
+                if (_pollFds[i].revents & POLLIN){ // Can read
                     if (isListener(_pollFds[i].fd)){// STOPPED HERE, utiliser isListenner pour ajuster
                         acceptNewConnection(_pollFds[i].fd);
                     }
                     else{
-                        // if (readClientData(_pollFds[i].fd) <= 0)
-                        //     i--; //A client has been disconnected, decrement i because _pollFds has one client less
-                        // else // For tests ONLY, delete after simple tests
-                        //     _pollFds[i].events = POLLIN | POLLOUT; // For tests ONLY, delete after simple tests
                         if (!handleRequest(i))
-                            i--;
+                            i--; //A client has been disconnected, decrement i because _pollFds has one client less
                     }
                 }
-                else if (_pollFds[i].revents & POLLOUT){
-                    // Can write
+                else if (_pollFds[i].revents & POLLOUT){ // Can write
                     sendResponse(_pollFds[i].fd, i);
                 }
             }
         }
         else{
-            if (errno == EINTR)
-                continue;
+            if (errno == EINTR){
+                if (stop_sig == 1)
+                    break;
+                else
+                    continue;
+            }
             else
                 throw std::runtime_error(strerror(errno));
         }
