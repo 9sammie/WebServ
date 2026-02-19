@@ -6,175 +6,156 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/18 15:02:20 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/02/19 14:54:38 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Lexer.hpp"
+#include "Token.hpp"
+#include <string> // std::find 
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <stdexcept>
 
-Lexer::Token() : type(WORD), wordText(""), line(1)
-{}
-Lexer::Token(ElementType t, const std::string& str, int l)
-	: type(t)
-	, wordText(str), line(l)
-{}
-
-Lexer::
-
-
-
-
+void lexLine(const std::string& str, int line, std::vector<Token>& res);
+static bool isWhitespace(char c);
+static bool isDelim(char c);
+static bool isBlankLine(const std::string& str);
+static void skipComment(std::string& str);
 
 
+std::vector<Token> lexFile(const std::string& path)
+{
+    std::ifstream infile(path.c_str());
+    if (!infile.is_open())
+        throw std::runtime_error("cannot open file: " + path);
 
+    std::vector<Token> res;
+    std::string str;
+    int line = 1;
 
+    while (std::getline(infile, str))
+    {
+        skipComment(str);
 
+        if (isBlankLine(str)) {
+            ++line;
+            continue;
+        }
 
+        lexLine(str, line, res);
+        ++line;
+    }
+	
+    if (res.empty())
+        throw std::runtime_error("empty or comment only " + path);
 
+    return res;
+}
 
+void lexLine(const std::string& str, int line, std::vector<Token>& res)
+{
+	size_t i = 0;
+	while (i < str.size())
+	{
+		while (i < str.size() && isWhitespace(str[i]))
+			++i;
+		if (i >= str.size())
+			return;
+		if (str[i] == '{')
+		{
+			res.push_back(Token(LBRACE, "{", line));
+			++i;
+			continue;
+		}
+		if (str[i] == '}')
+		{
+			res.push_back(Token(RBRACE, "}", line));
+			++i;
+			continue;
+		}
+		if (str[i] == ';')
+		{
+			res.push_back(Token(SEMICOLON, ";", line));
+			++i;
+			continue;
+		}
+		size_t start = i;
+		while (i < str.size() && !isWhitespace(str[i]) && !isDelim(str[i]) && str[i] != '#')
+			++i;
+		res.push_back(Token(WORD, str.substr(start, i - start), line));
+	}
+}
+		
+static bool isWhitespace(char c)
+{
+	if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+		return true;
+	return false;
+}
 
+static bool isDelim(char c)
+{
+	if (c == '{' || c == '}' || c == ';')
+		return true;
+	return false;
+}
 
+static bool isBlankLine(const std::string& str)
+{
+	for (size_t i = 0; i < str.size(); ++i)
+	{
+		if (!isWhitespace(str[i]))
+			return false;
+	}
+	return true;
+}
 
+static void skipComment(std::string& str)
+{
+	size_t pos = str.find('#'); // pos recoit l index ou se trouve #
+	if (pos != std::string::npos)
+		str.erase(pos); // supprime tout depuis #
+}
 
+static const char* tokenTypeName(TokenType t)
+{
+	switch (t)
+	{
+		case WORD:
+			return "WORD";
+		case LBRACE:
+			return "LBRACE";
+		case RBRACE:
+			return "RBRACE";
+		case SEMICOLON:
+			return "SEMICOLON";
+		case COMMENT:
+			return "COMMENT";
+	}
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//#include <fstream>
-//#include <stdexcept>
-//#include <cctype>   // std::isspace
-//#include <istream>
-//
-//// ----- Token -----
-//Tokenizer::Token::Token() : type(TOK_WORD), text(""), line(1) {}
-//
-//Tokenizer::Token::Token(TokenType t, const std::string& s, int l)
-//: type(t), text(s), line(l) {}
-//
-//
-//// ----- Canonical form -----
-//Tokenizer::Tokenizer() : _buf(""), _line(1) {}
-//
-//Tokenizer::Tokenizer(const Tokenizer& other) : _buf(other._buf), _line(other._line) {}
-//
-//Tokenizer& Tokenizer::operator=(const Tokenizer& other) {
-    //if (this != &other) {
-        //_buf = other._buf;
-        //_line = other._line;
-    //}
-    //return *this;
-//}
-//
-//Tokenizer::~Tokenizer() {}
-//
-//
-//// ----- Private helpers -----
-//void Tokenizer::resetState_() {
-    //_buf.clear();
-    //_line = 1;
-//}
-//
-//void Tokenizer::flushWord_(std::vector<Token>& out) {
-    //if (!_buf.empty()) {
-        //out.push_back(Token(TOK_WORD, _buf, _line));
-        //_buf.clear();
-    //}
-//}
-//
-//void Tokenizer::pushDelimiter_(std::vector<Token>& out, char ch) {
-    //TokenType t = TOK_WORD;
-    //if (ch == '{') t = TOK_LBRACE;
-    //else if (ch == '}') t = TOK_RBRACE;
-    //else if (ch == ';') t = TOK_SEMI;
-    //out.push_back(Token(t, "", _line));
-//}
-//
-//void Tokenizer::skipComment_(std::istream& in) {
-    //// On est juste après avoir lu '#'
-    //char c;
-    //while (in.get(c)) {
-        //if (c == '\n') {
-            //_line++;
-            //break;
-        //}
-    //}
-//}
-//
-//
-//// ----- Public API -----
-//std::vector<Tokenizer::Token> Tokenizer::tokenizeFile(const std::string& path) {
-    //std::ifstream in(path.c_str());
-    //if (!in.is_open())
-        //throw std::runtime_error("Tokenizer: cannot open file: " + path);
-//
-    //resetState_();
-//
-    //std::vector<Token> out;
-    //char ch;
-//
-    //while (in.get(ch)) {
-//
-        //// Newline
-        //if (ch == '\n') {
-            //flushWord_(out);
-            //_line++;
-            //continue;
-        //}
-//
-        //// Comment
-        //if (ch == '#') {
-            //flushWord_(out);
-            //skipComment_(in);
-            //continue;
-        //}
-//
-        //// Whitespace (space/tab/etc.)
-        //if (std::isspace(static_cast<unsigned char>(ch))) {
-            //flushWord_(out);
-            //continue;
-        //}
-//
-        //// Delimiters
-        //if (ch == '{' || ch == '}' || ch == ';') {
-            //flushWord_(out);
-            //pushDelimiter_(out, ch);
-            //continue;
-        //}
-//
-        //// WORD char
-        //_buf += ch;
-    //}
-//
-    //// EOF: flush last word
-    //flushWord_(out);
-    //return out;
-//}
+int main(int argc, char** argv)
+{
+	if (argc != 2)
+	{
+		std::cerr << "Usage: " << argv[0] << " <config_path>\n";
+		return 1;
+	}
+	try
+	{
+		std::vector<Token> toks = lexFile(argv[1]);
+		for (size_t i = 0; i < toks.size(); ++i)
+		{
+			std::cout << toks[i].line << "  "
+                      << tokenTypeName(toks[i].type) << "  "
+                      << "\"" << toks[i].wordText << "\"\n";
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 2;
+    }
+    return 0;
+}
