@@ -6,11 +6,12 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/19 16:13:43 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/02/24 11:19:33 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Token.hpp"
+#include "Parser.hpp"
 #include <string> // std::find 
 #include <fstream>
 #include <iostream>
@@ -145,12 +146,23 @@ int main(int argc, char** argv)
 	try
 	{
 		std::vector<Token> toks = lexFile(argv[1]);
-		for (size_t i = 0; i < toks.size(); ++i)
+		ParseState ps(toks);
+		std::cout << "ParseState.pos = " << ps.pos << "\n";
+		std::cout << "ParseState.toks.size() = " << ps.toks.size() << "\n";
+
+		if (!ps.toks.empty())
 		{
-			std::cout << toks[i].line << "  "
-                      << tokenTypeName(toks[i].type) << "  "
-                      << "\"" << toks[i].wordText << "\"\n";
-        }
+    		std::cout << "Current token at pos 0: "
+              		  << tokenTypeName(ps.toks[ps.pos].type)
+              		  << " \"" << ps.toks[ps.pos].wordText << "\""
+                     << " line " << ps.toks[ps.pos].line << "\n";
+		}
+		//for (size_t i = 0; i < toks.size(); ++i)
+		//{
+		//	std::cout << toks[i].line << "  "
+          //            << tokenTypeName(toks[i].type) << "  "
+            //          << "\"" << toks[i].wordText << "\"\n";
+        //}
     }
     catch (const std::exception& e)
     {
