@@ -10,7 +10,6 @@
 #include "Colors.hpp"
 #include "Signal.hpp"
 
-
 ServerManager::ServerManager(std::list<int> ports){
     _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
     _pollFds .reserve(MAX_CLIENTS + ports.size());
@@ -67,9 +66,9 @@ void ServerManager::acceptNewConnection(int serverFd){
 }
 
 void    ServerManager::closeConnection(int clientFd){
-    close(clientFd);
+    if (close(clientFd) == -1)
+        std::cerr << RED << "Error: close(" << clientFd <<") failed: " << strerror(errno) << RESET << std::endl;
     _clients.erase(clientFd);
-
     for (std::vector<struct pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it){
         if (it->fd == clientFd){
             _pollFds.erase(it);
@@ -120,15 +119,46 @@ bool    ServerManager::isListener(int fd){
     return false;
 }
 
+
+/************************************************************************************************************ */
+/*                                                                                                            */
+/*                                                                                                            */
+/*                                Refactoring functions                                                       */
+/*                                                                                                            */
+/*                                                                                                            */
+/*                                                                                                            */
+/************************************************************************************************************ */
+
+
 bool    ServerManager::handleRequest(int idx){
     int fd = _pollFds[idx].fd;
 
     if (readClientData(fd) <= 0)
         return false;
     if (_clients[fd].isRequestComplete()){
-        // COOCKER call DEBUG
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
-        _pollFds[idx].events = POLLOUT;
+        // COOKER call DEBUG
+        // CgiInfo
+        if (_clients[fd].getCgiInfo().isCgi == true){
+            int pipeRead = _clients[fd].getCgiInfo().pipeRead;
+            struct pollfd cgiReadFd;
+            cgiReadFd.fd = pipeRead;
+            cgiReadFd.events = POLLIN;
+            cgiReadFd.revents = 0;
+            _pollFds.push_back(cgiReadFd);
+            _cgiReadFds[pipeRead] = fd;
+           if (_clients[fd].getCgiInfo().pipeWrite != -1){
+                int pipeWrite = _clients[fd].getCgiInfo().pipeWrite;
+                struct pollfd cgiWriteFd;
+                cgiWriteFd.fd = pipeWrite;
+                cgiWriteFd.events = POLLOUT;
+                cgiWriteFd.revents = 0;
+                _pollFds.push_back(cgiWriteFd);
+                _cgiWriteFds[pipeWrite] = fd;
+           }
+        }
+        else
+            _pollFds[idx].events = POLLOUT;
     }
     else{
         std::cout << BRIGHT_RED << "DEBUG: REQUEST incomplete !" << RESET << std::endl;
@@ -143,8 +173,13 @@ void    ServerManager::run(){
         if (poll(&_pollFds[0], _pollFds.size(), -1) >= 0){
             for (size_t i = 0; i < _pollFds.size(); ++i){
                 if (_pollFds[i].revents & POLLIN){ // Can read
-                    if (isListener(_pollFds[i].fd)){// STOPPED HERE, utiliser isListenner pour ajuster
+                    if (isListener(_pollFds[i].fd)){
                         acceptNewConnection(_pollFds[i].fd);
+                    }
+                    // else if (_cgiClient handler, get response from cgi and store inside client)
+                    else if (_cgiReadFds.count(_pollFds[i].fd)){
+                        readCgiResponse();
+                        //CookCgi()
                     }
                     else{
                         if (!handleRequest(i))
@@ -152,7 +187,15 @@ void    ServerManager::run(){
                     }
                 }
                 else if (_pollFds[i].revents & POLLOUT){ // Can write
-                    sendResponse(_pollFds[i].fd, i);
+                    // if () Is cgiPOLLOUT (body needs to be write into pipeWrite)
+                    // write body inside pipeWrite. (client.getCgiInfo.pipeWrite)
+                    // IsWritefull ? close pipe/ remove from _pollFds and _cgiWrite
+                    // else{ sendResponse()}
+                    if (_cgiWriteFds.count(_pollFds[i].fd)){
+                        writeCgiBody();
+                    }
+                    else
+                        sendResponse(_pollFds[i].fd, i);
                 }
             }
         }
@@ -165,6 +208,85 @@ void    ServerManager::run(){
             }
             else
                 throw std::runtime_error(strerror(errno));
+        }
+    }
+}
+
+std::string getBody(const std::string& requestBuffer){
+    size_t headerEnd = requestBuffer.find("\r\n\r\n");
+    return requestBuffer.substr(headerEnd + 4);
+}
+
+void    ServerManager::removeWritePipe(int pipeWrite){
+    if (close(pipeWrite) == -1)
+        std::cerr << RED << "Error: close(" << pipeWrite <<") failed: " << strerror(errno) << RESET << std::endl;
+    _cgiWriteFds.erase(pipeWrite);
+    for (std::vector<struct pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it){
+        if (it->fd == pipeWrite){
+            _pollFds.erase(it);
+            break;
+        }
+    }
+}
+
+void    ServerManager::removeReadPipe(int pipeRead){
+    if (close(pipeRead) == -1)
+        std::cerr << RED << "Error: close(" << pipeRead <<") failed: " << strerror(errno) << RESET << std::endl;
+    _cgiReadFds.erase(pipeRead);
+    for (std::vector<struct pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it){
+        if (it->fd == pipeRead){
+            _pollFds.erase(it);
+            break;
+        }
+    }
+}
+
+// int ServerManager::findPipeReadByClient(int clientFd){
+//     for (std::map<int, int>::iterator it = _cgiReadFds.begin(); it != _cgiReadFds.end(); ++it){
+//         if (it->second == clientFd)
+//             return it->first;
+//     }
+//     return -1;
+// }
+
+
+void    ServerManager::writeCgiBody(size_t& idx){
+    /*
+        idx is for i in _pollFds[i]
+        pipeWrite is where to write the body of the request
+        get body by using getBuffer(request), function from client.
+        extract only the body and write body inside of the pipeWrite.
+        Close pipeWrite
+        remove from _cgiWrite IF all writen  
+
+    */
+   int pipeWrite = _pollFds[idx].fd;
+   int clientFd = _cgiWriteFds[pipeWrite];
+   std::string body = getBody(_clients[clientFd].getBuffer(Client::REQUEST));
+    if (body.empty()){
+        removeWritePipe(pipeWrite);
+        --idx;
+        return ;
+    }
+   ssize_t bytesWritten = write(pipeWrite, body.c_str(), body.size());
+    if (bytesWritten > 0){
+        removeWritePipe(pipeWrite);
+        --idx;
+        return ;
+    }
+    else {
+        if (errno == EPIPE)
+        {
+            removeWritePipe(pipeWrite);
+            int pipeRead = _clients[clientFd].getCgiInfo().pipeRead;
+            removeReadPipe(pipeRead);
+            idx -= 2;
+            //IMPORTANT HERE ADD A sendResponse Send a 500 Internal Server Error to the client
+            return ;
+        }
+        else{
+            waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
+            return ;
         }
     }
 }

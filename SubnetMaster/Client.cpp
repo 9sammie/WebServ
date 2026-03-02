@@ -4,10 +4,20 @@
 
 Client::Client() : _fd(-1), _closeAfterResponse(false){
     _lastActivity = time(NULL);
+    _cgiInfo.isCgi = false;
+    _cgiInfo.pid = -1;
+    _cgiInfo.pipeRead = -1;
+    _cgiInfo.pipeWrite = -1;
+    _cgiInfo.start_time = 0;
 }
 
 Client::Client(int fd): _fd(fd), _closeAfterResponse(false){
     _lastActivity = time(NULL);
+    _cgiInfo.isCgi = false;
+    _cgiInfo.pid = -1;
+    _cgiInfo.pipeRead = -1;
+    _cgiInfo.pipeWrite = -1;
+    _cgiInfo.start_time = 0;
 }
 
 void Client::store(const std::string& content, BufferType type){
@@ -74,17 +84,13 @@ ssize_t      Client::getContentLenthSize(){
     return bodySize;
 }
 
-bool    Client::isRequestComplete(){
+//Add a check transfer-encoding function to check for chunked data
+bool Client::isRequestComplete(){
     if (!hasHeadersSeparator())
         return false;
-    if (!hasBody()){
-        std::cout << BRIGHT_BROWN << "DEBUG: no body !" << RESET << std::endl;
-        if (!hasContentLengthHeader())
-        return true;
-    }
     if (!hasContentLengthHeader()){
-        std::cout << BRIGHT_BROWN << "DEBUG: no body !" << RESET << std::endl;
-        _closeAfterResponse = true;
+        if (hasBody())
+            _closeAfterResponse = true;
         return true;
     }
     ssize_t bodySize = getContentLenthSize();
@@ -92,22 +98,23 @@ bool    Client::isRequestComplete(){
         _closeAfterResponse = true;
         return true;
     }
-    else{
-        if ((size_t)bodySize > actualBodySize())
-            return false;
-    }
-    return true;
+    return actualBodySize() >= (size_t)bodySize;
 }
 
 int Client::getFd() const{
     return _fd;
 }
 
-const std::string& Client::getBuffer(BufferType type)const{
+const std::string& Client::getBuffer(BufferType type){
     if (type == REQUEST)
         return _requestBuffer;
     return _responseBuffer;
 }
+
+Client::CgiInfo&    Client::getCgiInfo(){
+    return _cgiInfo;
+}
+
 
 time_t Client::timeSinceLastActivity(){
     return time(NULL) - _lastActivity;
@@ -120,7 +127,9 @@ void    Client::updateActivity(){
 Client::~Client(){}
 
 Client::Client(const Client& src) : _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
-_lastActivity(src._lastActivity), _fd(src._fd), _closeAfterResponse(src._closeAfterResponse){}
+_lastActivity(src._lastActivity), _fd(src._fd), _closeAfterResponse(src._closeAfterResponse){
+    _cgiInfo = src._cgiInfo;
+}
 
 Client& Client::operator=(const Client& rhs){
     if (this != &rhs){
@@ -129,6 +138,7 @@ Client& Client::operator=(const Client& rhs){
         _requestBuffer = rhs._requestBuffer;
         _responseBuffer = rhs._responseBuffer;
         _closeAfterResponse = rhs._closeAfterResponse;
+        _cgiInfo = rhs._cgiInfo;
     }
     return *this;
 }

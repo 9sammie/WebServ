@@ -21,13 +21,19 @@ class ServerManager{
         void    closeConnection(int clientFd);
         int     readClientData(int clientFd);
         void    sendResponse(int clientFd, int idx);
-
+        void    writeCgiBody(size_t& idx);
+        void    removeWritePipe(int pipeWrite);
+        void    removeReadPipe(int pipeRead);
+        // int     findPipeReadByClient(int clientFd);
         bool    isListener(int fd);
 
     private :
 
         std::vector<TcpListener*>    _listeners;
         std::map<int, Client>       _clients;
+        //       pipe, clientFd
+        std::map<int, int>          _cgiReadFds;
+        std::map<int, int>          _cgiWriteFds;
         std::vector<struct pollfd>  _pollFds;
         int                         _portsQuantity;
 
