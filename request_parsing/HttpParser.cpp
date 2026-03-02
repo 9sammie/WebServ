@@ -4,7 +4,9 @@ HttpParser::HttpParser() {}
 
 HttpParser::HttpParser(const HttpParser& other) {}
 
-HttpParser& HttpParser::operator=(const HttpParser& other) {}
+HttpParser& HttpParser::operator=(const HttpParser& other) {
+	return *this;
+}
 
 HttpParser::~HttpParser() {}
 
@@ -13,7 +15,6 @@ HttpParser::ParseResult HttpParser::getRequestParts(std::string& buffer, std::st
 	size_t headerEnd = buffer.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
         return ParseResult::INCOMPLETE;
-
     std::string headerPart = buffer.substr(0, headerEnd);
     bodyPart = buffer.substr(headerEnd + 4);
 
@@ -29,6 +30,7 @@ HttpParser::ParseResult HttpParser::getRequestParts(std::string& buffer, std::st
 
 HttpParser::ParseResult HttpParser::parseRequest(std::string& buffer, HttpRequest& request)
 {
+	HttpRequest tempRequest;
 	std::string requestLine;
 	std::string headerLines;
 	std::string bodyPart;
@@ -37,14 +39,17 @@ HttpParser::ParseResult HttpParser::parseRequest(std::string& buffer, HttpReques
 	result = getRequestParts(buffer, requestLine, headerLines, bodyPart);
 	if (result != ParseResult::ALL_OK)
         return result;
-
-	result = parseRequestLine(requestLine, request);
+	result = parseRequestLine(requestLine, tempRequest);
 	if (result != ParseResult::ALL_OK)
         return result;
-
-	result = parseHeader(headerLines, request);
+	result = parseHeaders(headerLines, tempRequest);
 	if (result != ParseResult::ALL_OK)
         return result;
+	result = parseBody(bodyPart, tempRequest);
+	if (result != ParseResult::ALL_OK)
+		return result;
 
-	return parseBody(bodyPart, request);
+	request = tempRequest;
+
+	return result;
 }

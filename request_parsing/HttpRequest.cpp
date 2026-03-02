@@ -4,7 +4,8 @@ HttpRequest::HttpRequest()
 	:	_method(""),
 		_path(""),
 		_version(""),
-		_body("")
+		_body(""),
+		_contentLength(0)
 {}
 
 HttpRequest::HttpRequest(const HttpRequest& other)
@@ -14,6 +15,7 @@ HttpRequest::HttpRequest(const HttpRequest& other)
 	_version = other._version;
 	_headers = other._headers;
 	_body = other._body;
+	_contentLength = other._contentLength;
 }
 
 HttpRequest& HttpRequest::operator=(const HttpRequest& other)
@@ -25,6 +27,7 @@ HttpRequest& HttpRequest::operator=(const HttpRequest& other)
 		_version = other._version;
 		_headers = other._headers;
 		_body = other._body;
+		_contentLength = other._contentLength;
 	}
 	return *this;
 }

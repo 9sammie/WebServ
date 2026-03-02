@@ -1,8 +1,8 @@
 #ifndef HTTPREQUEST_HPP
 #define HTTPREQUEST_HPP
 
-#include "string"
-#include "map"
+#include <string>
+#include <map>
 
 class HttpRequest
 {
@@ -24,7 +24,7 @@ class HttpRequest
     	const std::string& getPath() const;
     	const std::string& getVersion() const;
     	const std::map<std::string, std::string>& getHeaders() const;
-		std::string HttpRequest::getHeader(const std::string& key) const;
+		std::string getHeader(const std::string& key) const;
     	const std::string& getBody() const;
 		size_t getContentLength() const;
 

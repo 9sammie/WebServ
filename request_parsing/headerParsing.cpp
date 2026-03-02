@@ -1,4 +1,5 @@
 #include "HttpParser.hpp"
+#include <sstream>
 
 bool	checkPath(std::string path)
 {
@@ -15,76 +16,103 @@ bool	checkPath(std::string path)
 	return 0;
 }
 
-HttpParser::ParseResult HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& request)
+// Tockenise and only accept "method" "path" "version" before checking
+// their content. 
+HttpParser::ParseResult HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest)
 {
-	size_t firstSpace;
-	size_t pathStart;
-	size_t secondSpace;
-	size_t versionStart;
-	size_t versionEnd;
 	std::string method;
 	std::string path;
 	std::string version;
+	ParseResult result;
 
-	firstSpace = requestLine.find(' ');
-	if (firstSpace == std::string::npos)
-		return ParseResult::INVALID_REQUEST_LINE;
-	method = requestLine.substr(0, firstSpace);
-
-	pathStart = requestLine.find_first_not_of(' ', firstSpace);
-	if (pathStart == std::string::npos)
-	    return ParseResult::INVALID_REQUEST_LINE;
-	secondSpace = requestLine.find(' ', firstSpace + 1);
-	if (secondSpace == std::string::npos)
-		return ParseResult::INVALID_REQUEST_LINE;
-	path = requestLine.substr(pathStart, secondSpace - pathStart);
-
-	versionStart = requestLine.find_first_not_of(' ', secondSpace);
-	if (versionStart == std::string::npos)
-	    return ParseResult::INVALID_REQUEST_LINE;
-	versionEnd = requestLine.find(' ', versionStart);
-	if (versionEnd == std::string::npos)
-	    version = requestLine.substr(versionStart);
-	else
-	{
-		if (requestLine.find_first_not_of(' ', versionEnd) != std::string::npos)
-			return ParseResult::INVALID_REQUEST_LINE;
-	    version = requestLine.substr(versionStart, versionEnd - versionStart);
-	}
+	result = tockeniseRequestLine(requestLine, method, path, version);
+	if (result != ParseResult::ALL_OK)
+		return result;
 
 	if (method != "GET" && method != "POST" && method != "DELETE")
 		return ParseResult::INVALID_METHOD;
-	
+
 	if (checkPath(path))
 		return ParseResult::INVALID_URI;
-	
+
 	if (version != "HTTP/1.1")
 		return ParseResult::INVALID_HTTP_VERSION;
 
-	request.setMethod(method);
-	request.setPath(path);
-	request.setVersion(version);
+	tempRequest.setMethod(method);
+	tempRequest.setPath(path);
+	tempRequest.setVersion(version);
 
 	return ParseResult::ALL_OK;
 }
 
-HttpParser::ParseResult HttpParser::parseHeader(const std::string& headerLines, HttpRequest& request)
+HttpParser::ParseResult HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& tempRequest)
 {
+	std::istringstream	stream(headersBlock);
+	std::string 		line;
+	std::string 		key;
+	std::string 		value;
+	size_t				start;
+	size_t				colon;
+
+	while (std::getline(stream, line))
+	{
+		if (!line.empty() && line[line.size() - 1] == '\r')
+		    line.erase(line.size() - 1);
+		if (line.empty())
+			return ParseResult::INVALID_HEADER_FORMAT;
+		colon = line.find(':');
+		if (colon == std::string::npos)
+			return ParseResult::INVALID_HEADER_FORMAT;
+
+		key = line.substr(0, colon);
+		value = line.substr(colon + 1);
+
+		start = value.find_first_not_of(' ');
+		if (start == std::string::npos)
+			return ParseResult::UNEXPECTED_ERROR;
+		value = value.substr(start);
+		if (key.empty())
+			return ParseResult::INVALID_HEADER_FORMAT;
+
+		tempRequest.setHeader(key, value);
+	}
 	return ParseResult::ALL_OK;
 }
 
 // If there is a body, then retrieve and check out his size conformity.
-HttpParser::ParseResult HttpParser::parseBody(const std::string& bodyPart, HttpRequest& request)
+HttpParser::ParseResult HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest)
 {
-    if (request.hasHeader("Content-Length"))
+	unsigned long	len;
+	std::string		value;
+	char*			end;
+
+    if (!tempRequest.hasHeader("content-length"))
     {
-        request.setContentLength(std::atoi(request.getHeader("Content-Length").c_str()));
-		if (bodyPart.size() < request.getContentLength())
-			return ParseResult::INCOMPLETE;
-        else if (bodyPart.size() != request.getContentLength())
-            return ParseResult::BODY_SIZE_MISMATCH;
+    if (!bodyPart.empty())
+            return ParseResult::UNEXPECTED_BODY;
+
+        tempRequest.setBody("");
+        tempRequest.setContentLength(0);
+        return ParseResult::ALL_OK;
     }
 
-    request.setBody(bodyPart);
+	value = tempRequest.getHeader("content-length");
+	errno = 0;
+	len = std::strtoul(value.c_str(), &end, 10);
+
+	// if (len > MAX_BODY_SIZE)
+	// 	return ParseResult::BODY_TOO_LARGE;    //ask where we stock maxBodySize 
+	if (len > static_cast<unsigned long>(SIZE_MAX))
+		return ParseResult::INVALID_CONTENT_LENGTH;
+	if (errno != 0 || *end != '\0')
+		return ParseResult::INVALID_CONTENT_LENGTH;
+	if (bodyPart.size() < len)
+        return ParseResult::INCOMPLETE;
+	if (bodyPart.size() > len)
+		return ParseResult::BODY_SIZE_MISMATCH;
+	
+    tempRequest.setContentLength(len);
+    tempRequest.setBody(bodyPart.substr(0, len));
+
 	return ParseResult::ALL_OK;
 }

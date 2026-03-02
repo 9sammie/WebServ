@@ -2,7 +2,6 @@
 #define HTTPPARSER_HPP
 
 #include "HttpRequest.hpp"
-#include <string>
 
 class HttpParser
 {
@@ -37,17 +36,18 @@ class HttpParser
 
     		BODY_TOO_LARGE,
     		BODY_SIZE_MISMATCH,
-    		INVALID_TRANSFER_ENCODING,
-    		CHUNKED_FORMAT_ERROR,
 
-			UNEXPECTED_ERROR
+			UNEXPECTED_ERROR,
+			UNEXPECTED_BODY
 		};
 
-		ParseResult getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
 		ParseResult parseRequest(std::string& buffer, HttpRequest& request);
-		ParseResult parseRequestLine(const std::string& requestLine, HttpRequest& request);
-		ParseResult parseHeader(const std::string& headerLines, HttpRequest& request);
-		ParseResult parseBody(const std::string& bodyPart, HttpRequest& request);
+		ParseResult getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
+		
+		ParseResult tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
+		ParseResult parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
+		ParseResult parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
+		ParseResult parseBody(const std::string& bodyPart, HttpRequest& tempRequest);
 };
 
 #endif
