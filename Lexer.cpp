@@ -6,45 +6,52 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/24 11:19:33 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/04 10:41:36 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Token.hpp"
-#include "Parser.hpp"
-#include <string> // std::find 
+//#include "Parser.hpp"
+#include "Lexer.hpp"
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <stdexcept>
+#include <iostream>
 
-void lexLine(const std::string& str, int line, std::vector<Token>& res);
-static bool isWhitespace(char c);
-static bool isDelim(char c);
-static bool isBlankLine(const std::string& str);
-static void skipComment(std::string& str);
+//void lexLine(const std::string& str, int line, std::vector<Token>& res);
+//static bool isWhitespace(char c);
+//static bool isDelim(char c);
+//static bool isBlankLine(const std::string& str);
+//static void skipComment(std::string& str);
 
+Lexer::Lexer() : _buf("") {}
 
-std::vector<Token> lexFile(const std::string& path)
+Lexer::Lexer(const Lexer& src) : _buf(src._buf) {}
+
+Lexer::~Lexer() {}
+
+Lexer& Lexer::operator=(const Lexer& src)
+{
+	if (this != &src)
+		this->_buf = src._buf;
+	return *this;
+}
+
+std::vector<Token> Lexer::lexFile(const std::string& path)
 {
     std::ifstream infile(path.c_str());
     if (!infile.is_open())
         throw std::runtime_error("cannot open file: " + path);
-
     std::vector<Token> res;
-    std::string str;
     int line = 1;
-
-    while (std::getline(infile, str))
+    while (std::getline(infile, _buf))
     {
-        skipComment(str);
-
-        if (isBlankLine(str)) {
+        skipComment(_buf);
+        if (isBlankLine(_buf)) {
             ++line;
             continue;
         }
 
-        lexLine(str, line, res);
+        lexLine(_buf, line, res);
         ++line;
     }
 	
@@ -54,7 +61,7 @@ std::vector<Token> lexFile(const std::string& path)
     return res;
 }
 
-void lexLine(const std::string& str, int line, std::vector<Token>& res)
+void Lexer::lexLine(const std::string& str, int line, std::vector<Token>& res)
 {
 	size_t i = 0;
 	while (i < str.size())
@@ -84,25 +91,26 @@ void lexLine(const std::string& str, int line, std::vector<Token>& res)
 		size_t start = i;
 		while (i < str.size() && !isWhitespace(str[i]) && !isDelim(str[i]) && str[i] != '#')
 			++i;
-		res.push_back(Token(WORD, str.substr(start, i - start), line));
+		if (i > start)
+			res.push_back(Token(WORD, str.substr(start, i - start), line));
 	}
 }
 		
-static bool isWhitespace(char c)
+bool Lexer::isWhitespace(char c)
 {
 	if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
 		return true;
 	return false;
 }
 
-static bool isDelim(char c)
+bool Lexer::isDelim(char c)
 {
 	if (c == '{' || c == '}' || c == ';')
 		return true;
 	return false;
 }
 
-static bool isBlankLine(const std::string& str)
+bool Lexer::isBlankLine(const std::string& str)
 {
 	for (size_t i = 0; i < str.size(); ++i)
 	{
@@ -112,7 +120,7 @@ static bool isBlankLine(const std::string& str)
 	return true;
 }
 
-static void skipComment(std::string& str)
+void Lexer::skipComment(std::string& str)
 {
 	size_t pos = str.find('#'); // pos recoit l index ou se trouve #
 	if (pos != std::string::npos)
@@ -145,24 +153,25 @@ int main(int argc, char** argv)
 	}
 	try
 	{
-		std::vector<Token> toks = lexFile(argv[1]);
-		ParseState ps(toks);
-		std::cout << "ParseState.pos = " << ps.pos << "\n";
-		std::cout << "ParseState.toks.size() = " << ps.toks.size() << "\n";
+		Lexer lx;
+		std::vector<Token> toks = lx.lexFile(argv[1]);
+		//ParseState ps(toks);
+		//std::cout << "ParseState.pos = " << ps.pos << "\n";
+		//std::cout << "ParseState.toks.size() = " << ps.toks.size() << "\n";
 
-		if (!ps.toks.empty())
-		{
-    		std::cout << "Current token at pos 0: "
-              		  << tokenTypeName(ps.toks[ps.pos].type)
-              		  << " \"" << ps.toks[ps.pos].wordText << "\""
-                     << " line " << ps.toks[ps.pos].line << "\n";
-		}
-		//for (size_t i = 0; i < toks.size(); ++i)
+		//if (!ps.toks.empty())
 		//{
-		//	std::cout << toks[i].line << "  "
-          //            << tokenTypeName(toks[i].type) << "  "
-            //          << "\"" << toks[i].wordText << "\"\n";
-        //}
+    	//	std::cout << "Current token at pos 0: "
+          //    		  << tokenTypeName(ps.toks[ps.pos].type)
+            //  		  << " \"" << ps.toks[ps.pos].wordText << "\""
+              //       << " line " << ps.toks[ps.pos].line << "\n";
+		//}
+		for (size_t i = 0; i < toks.size(); ++i)
+		{
+			std::cout << toks[i].line << "  "
+          			  << tokenTypeName(toks[i].type) << "  "
+            		  << "\"" << toks[i].wordText << "\"\n";
+        }
     }
     catch (const std::exception& e)
     {
