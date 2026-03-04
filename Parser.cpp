@@ -1,14 +1,9 @@
 #include "Token.hpp"
 #include "Config.hpp"
-
+#include "Parser.hpp"
 #include <vector>
 #include <string>
-#include <exception>
-#include <sstream>
-#include <cstdlib>   // strtol
-#include <cerrno>    // errno
-#include <climits>   // INT_MAX
-#include <cctype>    // isdigit
+#include <stdexcept>
 
 static bool isNotEnd(const displayState& ds)
 {
@@ -29,9 +24,9 @@ static bool checkType(const displayState& ds, TokenType expectedType)
 static const Token& consume(displayState& ds, TokenType expectedType)
 {
 	if (!isNotEnd(ds))
-		throw std::exception("Fin de fichier");
+		throw std::invalid_argument("Fin de fichier");
 	if (!checkType(ds, expectedType))
-		throw std::exception("Le type de token attendu n est pas correcte");
+		throw std::invalid_argument("Le type de token attendu n est pas correcte");
 	ds.pos++;
 	return ds.toks[ds.pos - 1]; //on retourne par ref&
 }
@@ -41,81 +36,78 @@ static std::vector<std::string> readDirectiveArgs(displayState& ds)
 	std::vector<std::string> args;
 	while (isNotEnd(ds) && checkType(ds, WORD))
 	{
-		Token t = consume(ds, WORD);
+		const Token& t = consume(ds, WORD);
 		args.push_back(t.wordText);
 	}
 	consume(ds, SEMICOLON);
 	return args;
 }
 
-static bool parseOnOffArg(const std::vector<std::string>& args, const std::string& name)
+static bool parseOnOffArg(const std::vector<std::string>& args)
 {
-    if (args.size() != 1)
-        throw std::exception("expects exactly 1 argument");
+	if (args.size() != 1)
+		throw std::invalid_argument("expects exactly 1 argument");
 	if (args[0] == "on")
 		return true;
-    if (args[0] == "off")
-        return false;
-	throw std::exception("on ou off sont uniquement acceptes");
+	if (args[0] == "off")
+		return false;
+	throw std::invalid_argument("on ou off sont uniquement acceptes");
 }
 
-static void parseLocationDirective(displayState& ds, LocationConfig& loc, const std::string& name)
+static void parseLocationDirective(displayState& ds, LocationConfig& loc, const std::string& name) //int line garder ?
 {
 	if (name.empty())
-		throw std::exception("Ne peux pas etre vide");
+		throw std::invalid_argument("Ne peux pas etre vide");
 	if (name == "root")
 	{
 		std::vector<std::string> args = readDirectiveArgs(ds);
 		if (args.size() != 1)
-			throw std::exception ("Seul arg accepte");
+			throw std::invalid_argument("Seul arg accepte");
 		loc.root = args[0];
 	}
 	else if (name == "index")
 	{
 		std::vector<std::string> args = readDirectiveArgs(ds);
 		if (args.size() != 1)
-			throw std::exception("Ne peux pas etre vide");
+			throw std::invalid_argument("Seul arg accepte");
 		loc.index = args[0];
 	}
 	else if (name == "autoindex")
 	{
 		std::vector<std::string> args = readDirectiveArgs(ds);
-		loc.autoindex = parseOnOffArg(args, name);
+		loc.autoindex = parseOnOffArg(args);
 	}
 	else
-		throw std::exception("directive inconnue dans le bloc location");
+		throw std::invalid_argument("directive inconnue dans le bloc location");
 }
 	
-static LocationConfig parseLocationBlock(ParseState& ps, int locationLine)
+LocationConfig parseLocationBlock(displayState& ds)
 {
-    (void)locationLine; // si pas utilisé tout de suite
-
     LocationConfig loc;
-
-    // ex: location /images {
-    int prefixLine = 0;
-    loc.prefix = consumeWord(ps, "expected location prefix after 'location'", &prefixLine);
-
-    consume(ps, LBRACE, "expected '{' after location prefix");
-
-    while (!check(ps, RBRACE))
+	if (!checkType(ds, WORD))
+		throw std::invalid_argument("expected location prefix after 'location'");
+	const Token& prefixTok = consume(ds, WORD); 
+    loc.prefix = prefixTok.wordText;
+    consume(ds, LBRACE);
+    while (!checkType(ds, RBRACE))
     {
-        if (atEnd(ps))
-            throw errorLine(prefixLine, "missing '}' to close location block");
-
-        int line = 0;
-        std::string name = consumeWord(ps, "expected directive name inside location block", &line);
+        if (!isNotEnd(ds))
+            throw std::invalid_argument("missing '}' to close location block");
+		if (!checkType(ds, WORD))
+			throw std::invalid_argument("expected directive name inside location block");
+        const Token& nameTok = consume(ds, WORD);
+		const std::string name = nameTok.wordText;
 
         if (name == "location")
-            throw errorLine(line, "nested 'location' block is not allowed");
+            throw std::invalid_argument("nested 'location' block is not allowed");
 
         if (name == "server")
-            throw errorLine(line, "'server' block is not allowed inside location");
+            throw std::invalid_argument("'server' block is not allowed inside location");
 
-        parseLocationDirective(ps, loc, name, line);
+        parseLocationDirective(ds, loc, name);
     }
 
-    consume(ps, RBRACE, "expected '}' to close location block");
+    consume(ds, RBRACE);
     return loc;
 }
 

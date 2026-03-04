@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/24 11:36:55 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/24 13:06:19 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/04 15:46:06 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,4 +24,5 @@ struct displayState
 	displayState(const std::vector<Token>& t) : toks(t), pos(0) {}
 };
 
+LocationConfig parseLocationBlock(displayState& ds);
 #endif

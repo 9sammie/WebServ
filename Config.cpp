@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 10:08:33 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/02/18 11:29:04 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/04 16:00:26 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,10 @@ ListenConfig::ListenConfig()
 {}
 
 LocationConfig::LocationConfig()
-	: autoindex(false)
+	: prefix("")
+	, root("")
+	, index("")
+	, autoindex(false)
 	, uploadAuthorised(false)
 	, cgiAuthorised(false)
 	, hasRedirection(false)
