@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/04 15:49:11 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/04 17:50:13 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 //void lexLine(const std::string& str, int line, std::vector<Token>& res);
 //static bool isWhitespace(char c);
@@ -36,7 +37,82 @@ Lexer& Lexer::operator=(const Lexer& src)
 	return *this;
 }
 
+std::string Lexer::dirnameOf(const std::string& path)
+{
+	std::string::size_type pos = path.rfind('/');
+	if (pos == std::string::npos)
+		return "."; //pas de / donc dossier courant
+	if (pos == 0)
+		return "/"; //racine
+	return path.substr(0, pos);
+}
+
+std::string Lexer::resolveIncludePath(const std::string& inc, const std::string& currentFile)
+{
+	if (!inc.empty() && inc[0] == '/')
+		return inc; //absolu
+	std::string dir = dirnameOf(currentFile);
+	return dir + "/" + inc;
+}
+
+std::vector<Token> Lexer::expandIncludes(const std::vector<Token>& in,
+                                        const std::string& currentFile,
+                                        std::vector<std::string>& includeStack,
+                                        int depth)
+{
+    if (depth > 32)
+        throw std::runtime_error("include depth too large (possible include loop): " + currentFile);
+
+    if (std::find(includeStack.begin(), includeStack.end(), currentFile) != includeStack.end())
+        throw std::runtime_error("include loop detected with file: " + currentFile);
+
+    includeStack.push_back(currentFile);
+
+    std::vector<Token> out;
+    out.reserve(in.size());
+
+    for (size_t i = 0; i < in.size(); )
+    {
+        // pattern: WORD("include") WORD(<path>) SEMICOLON
+        if (in[i].type == WORD && in[i].wordText == "include")
+        {
+            if (i + 2 >= in.size())
+                throw std::runtime_error("invalid include directive (expected: include <file> ; )");
+
+            if (in[i + 1].type != WORD)
+                throw std::runtime_error("invalid include directive (expected include path as WORD)");
+
+            if (in[i + 2].type != SEMICOLON)
+                throw std::runtime_error("invalid include directive (missing ';')");
+
+            std::string incPath = resolveIncludePath(in[i + 1].wordText, currentFile);
+
+            // lex brut du fichier inclus
+            std::vector<Token> incRaw = lexFileRaw(incPath);
+            // expansion récursive
+            std::vector<Token> incExpanded = expandIncludes(incRaw, incPath, includeStack, depth + 1);
+            out.insert(out.end(), incExpanded.begin(), incExpanded.end());
+
+            i += 3; // skip include, path, ;
+            continue;
+        }
+
+        out.push_back(in[i]);
+        ++i;
+    }
+
+    includeStack.pop_back();
+    return out;
+}
+
 std::vector<Token> Lexer::lexFile(const std::string& path)
+{
+	std::vector<std::string> stack;
+	std::vector<Token> raw = lexFileRaw(path);
+	return expandIncludes(raw, path, stack, 0);
+}
+
+std::vector<Token> Lexer::lexFileRaw(const std::string& path)
 {
     std::ifstream infile(path.c_str());
     if (!infile.is_open())
@@ -127,7 +203,7 @@ void Lexer::skipComment(std::string& str)
 		str.erase(pos); // supprime tout depuis #
 }
 
-/*static const char* tokenTypeName(TokenType t)
+static const char* tokenTypeName(TokenType t)
 {
 	switch (t)
 	{
@@ -179,4 +255,4 @@ int main(int argc, char** argv)
         return 2;
     }
     return 0;
-}*/
+}
