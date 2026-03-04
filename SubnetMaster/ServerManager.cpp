@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include "Colors.hpp"
+#include <sys/wait.h>
 #include "Signal.hpp"
 
 ServerManager::ServerManager(std::list<int> ports){
@@ -29,8 +30,7 @@ ServerManager::ServerManager(std::list<int> ports){
         _pollFds.push_back(tempStructPollFd);
     }
     _portsQuantity = _listeners.size();
-    //Debug
-    std::cout << GREEN << "_listeners ready with " << _portsQuantity << " different ports." << RESET << std::endl;
+    std::cout << GREEN << "_listeners ready with " << _portsQuantity << " different ports." << RESET << std::endl;//Debug
 }
 
 ServerManager::~ServerManager(){
@@ -60,7 +60,7 @@ void ServerManager::acceptNewConnection(int serverFd){
     newSPollFd.events = POLLIN;
     newSPollFd.revents = 0;
     _pollFds.push_back(newSPollFd);
-    _clients[newFd] = Client(newFd);
+    _clients[newFd] = Client(newFd, getListenerPort(serverFd));
     //Debug
     std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
@@ -119,6 +119,14 @@ bool    ServerManager::isListener(int fd){
     return false;
 }
 
+int    ServerManager::getListenerPort(int fd){
+    for (std::vector<TcpListener*>::const_iterator it = _listeners.begin(); it != _listeners.end(); ++it){
+        if ((*it)->getFd() == fd)
+            return (*it)->getPort();
+    }
+    return -1;
+}
+
 
 /************************************************************************************************************ */
 /*                                                                                                            */
@@ -137,7 +145,7 @@ bool    ServerManager::handleRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
-        // COOKER call DEBUG
+        // COOKER call DEBUG will call CgiHandler() if it's a CGI
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
@@ -177,10 +185,8 @@ void    ServerManager::run(){
                         acceptNewConnection(_pollFds[i].fd);
                     }
                     // else if (_cgiClient handler, get response from cgi and store inside client)
-                    else if (_cgiReadFds.count(_pollFds[i].fd)){
-                        readCgiResponse();
-                        //CookCgi()
-                    }
+                    else if (_cgiReadFds.count(_pollFds[i].fd))
+                        readCgiResponse(i);//CookCgi() inside readCgiResponse()
                     else{
                         if (!handleRequest(i))
                             i--; //A client has been disconnected, decrement i because _pollFds has one client less
@@ -192,7 +198,7 @@ void    ServerManager::run(){
                     // IsWritefull ? close pipe/ remove from _pollFds and _cgiWrite
                     // else{ sendResponse()}
                     if (_cgiWriteFds.count(_pollFds[i].fd)){
-                        writeCgiBody();
+                        writeCgiBody(i);
                     }
                     else
                         sendResponse(_pollFds[i].fd, i);
@@ -217,28 +223,30 @@ std::string getBody(const std::string& requestBuffer){
     return requestBuffer.substr(headerEnd + 4);
 }
 
-void    ServerManager::removeWritePipe(int pipeWrite){
+size_t    ServerManager::removeWritePipe(int pipeWrite){
     if (close(pipeWrite) == -1)
         std::cerr << RED << "Error: close(" << pipeWrite <<") failed: " << strerror(errno) << RESET << std::endl;
     _cgiWriteFds.erase(pipeWrite);
-    for (std::vector<struct pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it){
-        if (it->fd == pipeWrite){
-            _pollFds.erase(it);
-            break;
+    for (size_t i = 0; i < _pollFds.size(); ++i){
+        if (_pollFds[i].fd == pipeWrite){
+            _pollFds.erase(_pollFds.begin() + i);
+            return i;
         }
     }
+    return _pollFds.size();
 }
 
-void    ServerManager::removeReadPipe(int pipeRead){
+size_t    ServerManager::removeReadPipe(int pipeRead){
     if (close(pipeRead) == -1)
         std::cerr << RED << "Error: close(" << pipeRead <<") failed: " << strerror(errno) << RESET << std::endl;
     _cgiReadFds.erase(pipeRead);
-    for (std::vector<struct pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it){
-        if (it->fd == pipeRead){
-            _pollFds.erase(it);
-            break;
+    for (size_t i = 0; i < _pollFds.size(); ++i){
+        if (_pollFds[i].fd == pipeRead){
+            _pollFds.erase(_pollFds.begin() + i);
+            return i;
         }
     }
+    return _pollFds.size();
 }
 
 // int ServerManager::findPipeReadByClient(int clientFd){
@@ -251,42 +259,67 @@ void    ServerManager::removeReadPipe(int pipeRead){
 
 
 void    ServerManager::writeCgiBody(size_t& idx){
-    /*
-        idx is for i in _pollFds[i]
-        pipeWrite is where to write the body of the request
-        get body by using getBuffer(request), function from client.
-        extract only the body and write body inside of the pipeWrite.
-        Close pipeWrite
-        remove from _cgiWrite IF all writen  
-
-    */
    int pipeWrite = _pollFds[idx].fd;
    int clientFd = _cgiWriteFds[pipeWrite];
    std::string body = getBody(_clients[clientFd].getBuffer(Client::REQUEST));
     if (body.empty()){
-        removeWritePipe(pipeWrite);
-        --idx;
+        if (removeWritePipe(pipeWrite) <= idx)
+            --idx;
         return ;
     }
-   ssize_t bytesWritten = write(pipeWrite, body.c_str(), body.size());
+    size_t offset = _clients[clientFd].getCgiInfo().bodyWrittenBytes;
+    ssize_t bytesWritten = write(pipeWrite, body.c_str() + offset, body.size() - offset);
     if (bytesWritten > 0){
-        removeWritePipe(pipeWrite);
-        --idx;
+        _clients[clientFd].getCgiInfo().bodyWrittenBytes += bytesWritten;
+        if (_clients[clientFd].getCgiInfo().bodyWrittenBytes == body.size()){
+            if (removeWritePipe(pipeWrite) <= idx)
+                --idx;
+            return ;
+        }
+    }
+    else if (bytesWritten == -1 && errno == EPIPE){//CGI died clean and send reponse 500
+            if (removeWritePipe(pipeWrite) <= idx)
+                --idx;
+            int pipeRead = _clients[clientFd].getCgiInfo().pipeRead;
+            if (removeReadPipe(pipeRead) <= idx)
+                --idx;
+            waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
+            //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT
+            return ;
+        }
+    else{
         return ;
     }
-    else {
-        if (errno == EPIPE)
-        {
-            removeWritePipe(pipeWrite);
-            int pipeRead = _clients[clientFd].getCgiInfo().pipeRead;
-            removeReadPipe(pipeRead);
-            idx -= 2;
-            //IMPORTANT HERE ADD A sendResponse Send a 500 Internal Server Error to the client
-            return ;
-        }
-        else{
-            waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-            return ;
-        }
+}
+
+void    ServerManager::setPollout(int clientFd){
+    for (size_t i = 0; i < _pollFds.size(); ++i){
+            if (_pollFds[i].fd == clientFd){
+                _pollFds[i].events = POLLOUT;
+                break;
+            }
     }
+}
+
+void    ServerManager::readCgiResponse(size_t& idx){
+    int pipeRead = _pollFds[idx].fd;
+    int clientFd = _cgiReadFds[pipeRead];
+    char buffer[4096];
+    ssize_t bytesRead = read(pipeRead, buffer, 4096);
+    if (bytesRead > 0)//CGI still working
+        _clients[clientFd].store(std::string(buffer, bytesRead),Client::RESPONSE);
+    else if (bytesRead == 0){//CGI complete
+        waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
+        // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
+        if (removeReadPipe(pipeRead) <= idx)
+                --idx;
+        setPollout(clientFd);// Set to POLLOUT to then send response
+    }
+    else if (bytesRead == -1 && errno != EINTR){//Error: clean and send 500
+        waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
+        if (removeReadPipe(pipeRead) <= idx)
+                --idx;
+        //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT
+    }
+    return ;
 }

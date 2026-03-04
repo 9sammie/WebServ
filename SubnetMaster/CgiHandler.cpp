@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "Client.hpp"
 
 typedef struct DataCgi{
     std::string method; //GET, POST, DELETE
@@ -12,19 +13,31 @@ typedef struct DataCgi{
     std::string body;
     std::string scriptPath; //Absolute path of script
     std::string interpreter; //ex : /usr/bin/python3
+    std::string serverPort;
 }DataCgi;
 
-int CgiHandler(DataCgi data){
+Client::CgiInfo failedCgiHandler(){
+    Client::CgiInfo fail;
+    fail.isCgi = false;
+    fail.pipeRead = -1;
+    fail.pipeWrite = -1;
+    fail.pid = -1;
+    fail.start_time = -1;
+    fail.bodyWrittenBytes = 0;
+    return fail;
+}
+
+Client::CgiInfo CgiHandler(DataCgi data){
     //Initialize pipes
     int     pipeIn[2];
     int     pipeOut[2];
 
     if (pipe(pipeIn) < 0)
-        return -1;
+        return failedCgiHandler();
     if (pipe(pipeOut) < 0){
         close(pipeIn[0]);
         close(pipeIn[1]);
-        return -1;
+        return failedCgiHandler();
     }
     
     //Initialize envp
@@ -47,9 +60,20 @@ int CgiHandler(DataCgi data){
         }
         envpData.push_back("HTTP_" + key + "=" + it->second);
     }
+    if (data.headers.count("content-type"))
+        envpData.push_back("CONTENT_TYPE=" + data.headers.at("content-type"));
+    if (data.headers.count("content-length"))
+        envpData.push_back("CONTENT_LENGTH=" + data.headers.at("content-length"));
+    envpData.push_back("SERVER_PORT=" + data.serverPort);
+    /*
+        Need to add those env variables : 
+        SERVER_NAME	Your config file — the hostname you configured (e.g. localhost)
+        PATH_INFO	The request URI — the part after the script name
+
+    */
     //envpData was used for maintaining strings
     std::vector<char*> envp;
-    for (size_t i =0; i <envpData.size(); ++i)
+    for (size_t i = 0; i < envpData.size(); ++i)
         envp.push_back((char*)envpData[i].c_str());
     envp.push_back(NULL);
 

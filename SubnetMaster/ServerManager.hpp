@@ -21,11 +21,14 @@ class ServerManager{
         void    closeConnection(int clientFd);
         int     readClientData(int clientFd);
         void    sendResponse(int clientFd, int idx);
+        void    readCgiResponse(size_t& idx);
         void    writeCgiBody(size_t& idx);
-        void    removeWritePipe(int pipeWrite);
-        void    removeReadPipe(int pipeRead);
+        size_t  removeWritePipe(int pipeWrite);
+        size_t  removeReadPipe(int pipeRead);
+        void    setPollout(int clientFd);
         // int     findPipeReadByClient(int clientFd);
         bool    isListener(int fd);
+        int     getListenerPort(int fd);
 
     private :
 

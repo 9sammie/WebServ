@@ -9,7 +9,7 @@ class Client{
 
     public :
         Client();
-        Client(int fd);   
+        Client(int fd, int port);   
         Client(const Client& src);
         Client& operator=(const Client& rhs);
         ~Client();
@@ -19,6 +19,7 @@ class Client{
             bool    isCgi;
             int     pipeRead;
             int     pipeWrite;
+            size_t  bodyWrittenBytes;
             pid_t   pid;
             time_t  start_time;
         }CgiInfo;
@@ -44,6 +45,7 @@ class Client{
         int         _fd;
         bool        _closeAfterResponse;
         CgiInfo     _cgiInfo;
+        id_t        _port;
 };
 
 #endif

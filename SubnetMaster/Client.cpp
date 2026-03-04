@@ -2,22 +2,24 @@
 #include "Colors.hpp"
 #include <iostream>
 
-Client::Client() : _fd(-1), _closeAfterResponse(false){
+Client::Client() : _fd(-1), _port(-1), _closeAfterResponse(false){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
     _cgiInfo.pipeRead = -1;
     _cgiInfo.pipeWrite = -1;
     _cgiInfo.start_time = 0;
+    _cgiInfo.bodyWrittenBytes = 0;
 }
 
-Client::Client(int fd): _fd(fd), _closeAfterResponse(false){
+Client::Client(int fd, int port): _fd(fd),_port(port), _closeAfterResponse(false){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
     _cgiInfo.pipeRead = -1;
     _cgiInfo.pipeWrite = -1;
     _cgiInfo.start_time = 0;
+    _cgiInfo.bodyWrittenBytes = 0;
 }
 
 void Client::store(const std::string& content, BufferType type){
@@ -127,13 +129,14 @@ void    Client::updateActivity(){
 Client::~Client(){}
 
 Client::Client(const Client& src) : _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
-_lastActivity(src._lastActivity), _fd(src._fd), _closeAfterResponse(src._closeAfterResponse){
+_lastActivity(src._lastActivity), _fd(src._fd), _port(src._port), _closeAfterResponse(src._closeAfterResponse){
     _cgiInfo = src._cgiInfo;
 }
 
 Client& Client::operator=(const Client& rhs){
     if (this != &rhs){
         _fd = rhs._fd;
+        _port = rhs._port;
         _lastActivity = rhs._lastActivity;
         _requestBuffer = rhs._requestBuffer;
         _responseBuffer = rhs._responseBuffer;
