@@ -17,14 +17,7 @@ private:
 	bool isSecure(const std::string& fullPath);
 
 	public:
-	UriResolver(const ServerConfig& config);
-
-	enum class uriResult
-	{
-		ALL_OK,
-		INCOMPLETE,
-		INVALID_PATH,
-	};
+	void UriResolver(const ServerConfig& config);
 
 	std::string resolve(const HttpRequest& request);
 };

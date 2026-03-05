@@ -11,43 +11,13 @@ class HttpParser
 		HttpParser& operator=(const HttpParser& other);
 		~HttpParser();
 
-		// use it like this outside of the class:
-		//
-		// HttpParser::ParseResult result = parser.parseRequest(...);
-		// if (result == HttpParser::ParseResult::SOME_ERROR)
-		// response.setStatus(400); Peut etre creer une fonction qui
-		// prend en parametre l'erreur, l'associe a un http status code,
-		// et renvoi ce status code.
-		enum class ParseResult
-		{
-			ALL_OK,
-			INCOMPLETE,
-
-			INVALID_REQUEST_LINE,
-    		INVALID_METHOD,
-    		INVALID_URI,
-    		INVALID_HTTP_VERSION,
-
-    		INVALID_HEADER_FORMAT,
-    		HEADER_TOO_LARGE,
-    		DUPLICATE_CONTENT_LENGTH,
-    		INVALID_CONTENT_LENGTH,
-    		MISSING_HOST_HEADER,
-
-    		BODY_TOO_LARGE,
-    		BODY_SIZE_MISMATCH,
-
-			UNEXPECTED_ERROR,
-			UNEXPECTED_BODY
-		};
-
-		ParseResult parseRequest(std::string& buffer, HttpRequest& request);
-		ParseResult getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
+		void parseRequest(std::string& buffer, HttpRequest& request);
+		void getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
 		
-		ParseResult tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
-		ParseResult parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
-		ParseResult parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
-		ParseResult parseBody(const std::string& bodyPart, HttpRequest& tempRequest);
+		void tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
+		void parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
+		void parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
+		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest);
 };
 
 #endif

@@ -8,7 +8,7 @@ HttpException::HttpException(const HttpException& other)
 
 HttpException& HttpException::operator=(const HttpException& other)
 {
-	if (*this != other)
+	if (this != &other)
 	{
 		_statusCode = other._statusCode;
 		_message = other._message;
