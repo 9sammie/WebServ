@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 10:43:41 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/04 16:53:14 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/05 17:54:47 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,9 @@ class Lexer
 		//void lexLine(const std::string& str, int line, std::vector<Token>& res);
 		std::vector<Token> lexFileRaw(const std::string& path);
 		std::vector<Token> expandIncludes(const std::vector<Token>& in, const std::string& currentFile, std::vector<std::string>& includeStack, int depth);
+		bool isIncludeDirective(const std::vector<Token>& in, size_t i) const;
+		void validateIncludeDirective(const std::vector<Token>& in, size_t i) const;
+		std::string resolveIncludedFile(const std::vector<Token>& in, size_t i, const std::string& currentFile) const;
 		static std::string dirnameOf(const std::string& path);
 		static std::string resolveIncludePath(const std::string& inc, const std::string& currentFile);
 };
