@@ -17,7 +17,8 @@ private:
 	bool isSecure(const std::string& fullPath);
 
 	public:
-	void UriResolver(const ServerConfig& config);
+	UriResolver(const ServerConfig& config);
+	~UriResolver();
 
 	std::string resolve(const HttpRequest& request);
 };
