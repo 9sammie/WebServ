@@ -8,7 +8,9 @@
 #include <poll.h>
 #include <list>
 
-#define MAX_CLIENTS 1000
+#define MAX_CLIENTS    1000
+#define CLIENT_TIMEOUT 60
+#define CGI_TIMEOUT    60
 class ServerManager{
 
     public :
@@ -30,11 +32,17 @@ class ServerManager{
         bool    isListener(int fd);
         int     getListenerPort(int fd);
 
+/*******************************************************************************/
+/*                            TimeOut Functions                                */
+/*******************************************************************************/
+        void   checkCgiTimeOuts();
+        void   checkClientTimeOuts();
+
     private :
 
         std::vector<TcpListener*>    _listeners;
         std::map<int, Client>       _clients;
-        //       pipe, clientFd
+        //       fd, clientFd
         std::map<int, int>          _cgiReadFds;
         std::map<int, int>          _cgiWriteFds;
         std::vector<struct pollfd>  _pollFds;

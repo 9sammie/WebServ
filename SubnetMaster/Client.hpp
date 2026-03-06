@@ -36,6 +36,7 @@ class Client{
         int         getFd()const;
         const std::string& getBuffer(BufferType type);
         CgiInfo&    getCgiInfo();
+        void        resetCgiInfos();
 
     private :
 
@@ -43,9 +44,9 @@ class Client{
         std::string _responseBuffer;
         time_t      _lastActivity;
         int         _fd;
-        bool        _closeAfterResponse;
         CgiInfo     _cgiInfo;
         id_t        _port;
+        bool        _closeAfterResponse;
 };
 
 #endif

@@ -90,7 +90,7 @@ Client::CgiInfo CgiHandler(DataCgi data){
         close(pipeIn[1]);
         close(pipeOut[0]);
         close(pipeOut[1]);
-        return -1;
+        return failedCgiHandler();
     }
 
     if (pid == 0){
@@ -104,12 +104,24 @@ Client::CgiInfo CgiHandler(DataCgi data){
         exit(1);
     }
     else{        
-        if (data.method == "POST" && !data.body.empty())
-            write(pipeIn[1], data.body.c_str(), data.body.size());
-        close(pipeIn[1]);
+        Client::CgiInfo cgiInfos;
+        if (data.method == "POST" && !data.body.empty()){
+            cgiInfos.pipeWrite = pipeIn[1];
+            // write(pipeIn[1], data.body.c_str(), data.body.size());
+        }
+        else{
+            cgiInfos.pipeWrite = -1;
+            close(pipeIn[1]);   
+        }
+        cgiInfos.pipeRead = pipeOut[0];
+        cgiInfos.bodyWrittenBytes = 0;
+        cgiInfos.isCgi = true;
+        cgiInfos.pid = pid;
+        cgiInfos.start_time = time(NULL);
+        // close(pipeIn[1]);
         close(pipeIn[0]);
         close(pipeOut[1]);
-        return pipeOut[0];
+        return cgiInfos;
     }
-    return -1;
+    return failedCgiHandler();
 }

@@ -82,8 +82,8 @@ int ServerManager::readClientData(int clientFd){
 
     ssize_t bytesRead = recv(clientFd, tempBuff, sizeof(tempBuff), 0);
         if (bytesRead > 0){
-            Client& tempClient = _clients[clientFd];
-            tempClient.store(std::string(tempBuff, bytesRead), Client::REQUEST);
+            _clients[clientFd].store(std::string(tempBuff, bytesRead), Client::REQUEST);
+            _clients[clientFd].updateActivity();
             return bytesRead;
         }
         else if (bytesRead == 0){
@@ -101,7 +101,13 @@ int ServerManager::readClientData(int clientFd){
 }
 
 void ServerManager::sendResponse(int clientFd, int idx) {
-    const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed
+    const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
+    /*
+        What sendResponse will do :
+        const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE;
+
+        if (send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL)); 
+    */
 
     if (send(clientFd, response, std::strlen(response), MSG_NOSIGNAL) < 0){
         closeConnection(clientFd);
@@ -138,6 +144,38 @@ int    ServerManager::getListenerPort(int fd){
 /************************************************************************************************************ */
 
 
+void   ServerManager::checkCgiTimeOuts(){
+   for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
+        if (it->second.getCgiInfo().isCgi == true){
+            if (time(NULL) - it->second.getCgiInfo().start_time > 60){
+                kill(it->second.getCgiInfo().pid, SIGKILL);
+                waitpid(it->second.getCgiInfo().pid, NULL, WNOHANG);
+                removeReadPipe(it->second.getCgiInfo().pipeRead);
+                if (it->second.getCgiInfo().pipeWrite != -1)
+                    removeWritePipe(it->second.getCgiInfo().pipeWrite);
+                it->second.resetCgiInfos();
+                //Hardcoded REPSONSE for NOW
+                const std::string response = /*CALL cooker response error ? */"HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n";
+                it->second.store(response, Client::RESPONSE);
+                setPollout(it->second.getFd());
+            }
+        }
+   }
+}
+
+void   ServerManager::checkClientTimeOuts(){
+   for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ){
+        if (it->second.timeSinceLastActivity() > 60){
+            int fd = it->second.getFd();
+            ++it;
+            closeConnection(fd);
+        }
+        else
+            ++it;
+   }
+}
+
+
 bool    ServerManager::handleRequest(int idx){
     int fd = _pollFds[idx].fd;
 
@@ -145,7 +183,7 @@ bool    ServerManager::handleRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
-        // COOKER call DEBUG will call CgiHandler() if it's a CGI
+        // COOKER call will call CgiHandler() if it's a CGI
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
@@ -174,11 +212,13 @@ bool    ServerManager::handleRequest(int idx){
     return true;
 }
 
-// -1 could be changed to 1000 to allow servermanager to clean innactive clients
+// -1 has been changed to 1000 to allow servermanager to clean innactive clients It allows him to 
 void    ServerManager::run(){
     while(true){
+        checkCgiTimeOuts();
+        checkClientTimeOuts();
         //Event go through _pollFds to find the revent On
-        if (poll(&_pollFds[0], _pollFds.size(), -1) >= 0){
+        if (poll(&_pollFds[0], _pollFds.size(), 1000) >= 0){
             for (size_t i = 0; i < _pollFds.size(); ++i){
                 if (_pollFds[i].revents & POLLIN){ // Can read
                     if (isListener(_pollFds[i].fd)){
@@ -284,7 +324,9 @@ void    ServerManager::writeCgiBody(size_t& idx){
             if (removeReadPipe(pipeRead) <= idx)
                 --idx;
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-            //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT
+            //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT HARDCODED for NOW
+            _clients[clientFd].store("HTTP/1.1 500 Innternal Server Error\r\nContent-Length: 0\r\n\r\n", Client::RESPONSE);
+            setPollout(clientFd);
             return ;
         }
     else{
@@ -319,7 +361,9 @@ void    ServerManager::readCgiResponse(size_t& idx){
         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
-        //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT
+        //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT HARDCODED for now
+        _clients[clientFd].store("HTTP/1.1 500 Innternal Server Error\r\nContent-Length: 0\r\n\r\n", Client::RESPONSE);
+            setPollout(clientFd);
     }
     return ;
 }

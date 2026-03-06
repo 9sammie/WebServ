@@ -1,6 +1,8 @@
 #include "Client.hpp"
 #include "Colors.hpp"
 #include <iostream>
+#include <cerrno>
+#include <cstdlib>
 
 Client::Client() : _fd(-1), _port(-1), _closeAfterResponse(false){
     _lastActivity = time(NULL);
@@ -124,6 +126,16 @@ time_t Client::timeSinceLastActivity(){
 
 void    Client::updateActivity(){
     _lastActivity = time(NULL);
+}
+
+void        Client::resetCgiInfos(){
+    _lastActivity = time(NULL);
+    _cgiInfo.isCgi = false;
+    _cgiInfo.pid = -1;
+    _cgiInfo.pipeRead = -1;
+    _cgiInfo.pipeWrite = -1;
+    _cgiInfo.start_time = 0;
+    _cgiInfo.bodyWrittenBytes = 0;
 }
 
 Client::~Client(){}
