@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/05 18:42:31 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/09 09:43:56 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ void Lexer::skipComment(std::string& str)
 		str.erase(pos); // supprime tout depuis #
 }
 
-static const char* tokenTypeName(TokenType t)
+/*static const char* tokenTypeName(TokenType t)
 {
 	switch (t)
 	{
@@ -265,4 +265,4 @@ int main(int argc, char** argv)
         return 2;
     }
     return 0;
-}
+}*/
