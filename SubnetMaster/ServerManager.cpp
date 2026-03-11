@@ -165,8 +165,10 @@ void   ServerManager::checkCgiTimeOuts(){
 
 void   ServerManager::checkClientTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ){
-        if (it->second.timeSinceLastActivity() > 60){
+        if (it->second.timeSinceLastActivity() > CLIENT_TIMEOUT){
+            // Debug, could be added to logFile
             int fd = it->second.getFd();
+            std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
             ++it;
             closeConnection(fd);
         }
