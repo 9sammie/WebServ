@@ -85,14 +85,14 @@ std::string RequestHandler::handleGET(const std::string& path)
         {{"Content-Type", "text/html"}});
 }
 
-std::string RequestHandler::handleRequest(std::string& buffer)
+std::string RequestHandler::handleRequest(Client& Client)
 {
     HttpRequest request;
     std::string fullPath;
 
     try
     {
-        _parser.parseRequest(buffer, request);
+        _parser.parseRequest(Client.getBuffer(Client::REQUEST), request);
     }
     catch (const HttpException& he)
     {

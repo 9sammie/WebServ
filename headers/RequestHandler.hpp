@@ -2,6 +2,7 @@
 #define REQUESTHANDLER_HPP
 
 #include "RequestParser.hpp"
+#include "Client.hpp"
 #include "HttpRequest.hpp"
 #include "UriResolver.hpp"
 #include "Config.hpp"
@@ -20,7 +21,7 @@ class RequestHandler
 		// Traite le buffer (requête complète ou non) et renvoie :
     	// - une réponse HTTP complète si la requête est complète ou en cas d'erreur,
     	// - une string vide si la requête est incomplète (caller doit attendre + données).
-		std::string handleRequest(std::string& buffer);
+		std::string handleRequest(Client& Client);
 	
 	private:
 		const ServerConfig& _config;

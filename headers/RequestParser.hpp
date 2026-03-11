@@ -11,8 +11,8 @@ class HttpParser
 		HttpParser& operator=(const HttpParser& other);
 		~HttpParser();
 
-		void parseRequest(std::string& buffer, HttpRequest& request);
-		void getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
+		void parseRequest(const std::string& buffer, HttpRequest& request);
+		void getRequestParts(const std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
 		
 		void tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
 		void parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);

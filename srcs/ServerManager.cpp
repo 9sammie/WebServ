@@ -10,6 +10,7 @@
 #include "Colors.hpp"
 #include <sys/wait.h>
 #include "Signal.hpp"
+#include "RequestHandler.hpp"
 
 ServerManager::ServerManager(std::list<int> ports){
     _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
@@ -178,7 +179,7 @@ void   ServerManager::checkClientTimeOuts(){
 }
 
 
-bool    ServerManager::handleRequest(int idx){
+bool    ServerManager::receivedRequest(int idx){
     int fd = _pollFds[idx].fd;
 
     if (readClientData(fd) <= 0)
@@ -186,6 +187,9 @@ bool    ServerManager::handleRequest(int idx){
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         // COOKER call will call CgiHandler() if it's a CGI
+		RequestHandler RH();
+		
+		handleRequest(_clients[fd]);
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
@@ -230,7 +234,7 @@ void    ServerManager::run(){
                     else if (_cgiReadFds.count(_pollFds[i].fd))
                         readCgiResponse(i);//CookCgi() inside readCgiResponse()
                     else{
-                        if (!handleRequest(i))
+                        if (!receivedRequest(i))
                             i--; //A client has been disconnected, decrement i because _pollFds has one client less
                     }
                 }

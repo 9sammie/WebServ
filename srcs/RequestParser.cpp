@@ -163,7 +163,7 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 	tempRequest.setVersion(version);
 }
 
-void HttpParser::getRequestParts(std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart)
+void HttpParser::getRequestParts(const std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart)
 {
 	size_t headerEnd = buffer.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
@@ -181,7 +181,7 @@ void HttpParser::getRequestParts(std::string& buffer, std::string& requestLine, 
 
 
 
-void HttpParser::parseRequest(std::string& buffer, HttpRequest& request)
+void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request)
 {
 	HttpRequest tempRequest;
 	std::string requestLine;

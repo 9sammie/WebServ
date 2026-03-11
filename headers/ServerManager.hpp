@@ -18,7 +18,7 @@ class ServerManager{
         ~ServerManager();
 
         void    run();
-        bool    handleRequest(int idx);
+        bool    receivedRequest(int idx);
         void    acceptNewConnection(int serverFd);
         void    closeConnection(int clientFd);
         int     readClientData(int clientFd);
