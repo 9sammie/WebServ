@@ -12,7 +12,9 @@
 #include "Signal.hpp"
 #include "RequestHandler.hpp"
 
-ServerManager::ServerManager(std::list<int> ports){
+ServerManager::ServerManager(HttpConfig httpConfig /*std::list<int> ports*/) : _httpConfig(httpConfig){
+    std::list<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
+    ports.push_back(8080); // Hardcoded will need HttpConfig
     _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
     _pollFds .reserve(MAX_CLIENTS + ports.size());
     for (std::list<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
@@ -187,9 +189,9 @@ bool    ServerManager::receivedRequest(int idx){
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         // COOKER call will call CgiHandler() if it's a CGI
-		RequestHandler RH();
-		
-		handleRequest(_clients[fd]);
+		RequestHandler RH(this->_httpConfig.servers);
+		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
+
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
