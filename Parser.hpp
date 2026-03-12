@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/24 11:36:55 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/09 15:57:11 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/12 13:23:08 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ class Parser
 		Parser(const std::vector<Token>& toks);
 		HttpConfig parseConfig();
 		HttpConfig parseHttpBlock();
-		//ServerConfig parseServerBlock();
+		ServerConfig parseServerBlock();
 		LocationConfig parseLocationBlock();
 		//LocationConfig parseFirstLocationInFile(); // a voir si garder comme cela
 	private:
@@ -41,8 +41,12 @@ class Parser
 		int parsePositiveInt(const std::string& s, const std::string& name);
 
 		std::vector<std::string> readDirectiveArgs();
+		ListenConfig parseListenarg(const std:;string& s);
+		int parsePort(const std::string& s);
+		void parseerrorPage(std::map<int, std::string>& errors, const std::vector<std::string>& args, const std:;string& name);
 		bool parseOnOffArg(const std::vector<std::string>& args);
 		void parseLocationDirective(LocationConfig& loc, const std::string& name);
+		void parseServerDirective(ServerConfig& srv, const std::string& name);
 		void parseHttpDirective(HttpConfig& http, const std::string& name);
 		
 };

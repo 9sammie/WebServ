@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/09 15:57:02 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/12 13:23:03 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -244,9 +244,9 @@ HttpConfig Parser::parseHttpBlock()
 		std::string name = consume(WORD).wordText;
 		if (name == "server")
 		{
-			skipBlock();
-			//ServerConfig srv = parseServerBlock();
-			http.servers.push_back(ServerConfig());
+			//skipBlock();
+			ServerConfig srv = parseServerBlock();
+			http.servers.push_back(ServerConfig(srv));
 			continue;
 		}
 		if (name == "location")
@@ -255,6 +255,80 @@ HttpConfig Parser::parseHttpBlock()
 	}
 	consume(RBRACE);
 	return http;
+}
+
+void Parser::parseServerDirective(ServerConfig& srv, const std::string& name)
+{
+	if (name == "listen")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("listen expects exactly 1 argument");
+		ListenConfig lc = parseListenArg(args[0]);
+		srv.listens.push_back(lc);
+		return;
+	}
+	if (name == "server_name")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("server_name expects exactly 1 argument");
+		srv.serverName = args[0];
+		return;
+	}
+	if (name == "keepalive_timeout")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("keepalive_timeout expects exactly 1 argument");
+		srv.keepaliveTimeoutSec = parsePositiveInt(args[0], "keepalive_timeout");
+		return;
+	}
+	if (name == "client_max_body_size")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("client_max_body_size expects exactly 1 argument");
+		srv.maxBodySize = parseSizeT(args[0], "client_max_body_size");
+		srv.maxBodySize = true;
+		return;
+	}
+	if (name == "error_page")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		parseErrorPage(srv.errors, args, "server");
+		return;
+	}
+	throw std::invalid_argument("unknown directive in server block: " + name);
+}
+		
+ServerConfig Parser::parseServerBlock()
+{
+	ServerConfig srv;
+	consume(LBRACE);
+	while(!checkType(RBRACE))
+	{
+		if (!isNotEnd())
+			throw st::invalid_argument("missing '}' to close server block");
+		if (!checkType(WORD))
+			throw std::invalid_argument("expected directive name or 'location' inside server block");
+		std::string name = consome(WORD).wordText;
+		if (name == "server")
+			throw std::invalid_argument("'server' block is not allowed");
+		if (name == "http")
+			throw std::invalid_argument("'http' block is not allowed inside server");
+		if (name == "location")
+		{
+			LocationConfig loc = parseLocationBlock();
+			srv.locations.push_back(loc);
+			continue;
+		}
+		parseServerDirective(srv, name);
+	}
+	consume(RBRACE);
+	if (srv.listens.empty())
+		throw std::invalid_argument("server must have at least one listen directive");
+	return srv;
 }
 
 /*LocationConfig Parser::parseFirstLocationInFile()
