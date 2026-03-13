@@ -10,27 +10,41 @@
 #include "Colors.hpp"
 #include <sys/wait.h>
 #include "Signal.hpp"
+#include <set>
 #include "RequestHandler.hpp"
 
-ServerManager::ServerManager(std::list<int> ports){
+ServerManager::ServerManager(const HttpConfig& httpConfig /*std::list<int> ports*/) : _httpConfig(httpConfig){
+    std::set<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
+    for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it){
+        for (size_t i = 0; i < it->listens.size(); ++i){
+            ports.insert(it->listens[i].port);
+        }
+    }
+    // ports.push_back(8080); // Hardcoded will need HttpConfig
     _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
     _pollFds .reserve(MAX_CLIENTS + ports.size());
-    for (std::list<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
+    for (std::set<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
     {
-        _listeners.push_back(new TcpListener (*it));
+        // _listeners.push_back(new TcpListener (*it));
+        TcpListener* tmp = new TcpListener(*it);
         try{
-            _listeners.back()->init();
+            tmp->init();
+            _listeners.push_back(tmp);
+            struct pollfd tempStructPollFd;
+            tempStructPollFd.fd = tmp->getFd();
+            tempStructPollFd.events = POLLIN;
+            tempStructPollFd.revents = 0;
+            _pollFds.push_back(tempStructPollFd);
         }
         catch (std::exception& e){
+            delete tmp;
             std::cerr << e.what() << std::endl;
         }
-        struct pollfd tempStructPollFd;
-        tempStructPollFd.fd = _listeners.back()->getFd();
-        tempStructPollFd.events = POLLIN;
-        tempStructPollFd.revents = 0;
-        _pollFds.push_back(tempStructPollFd);
     }
     _portsQuantity = _listeners.size();
+    if (_pollFds.empty()) {
+        throw std::runtime_error("No listeners created from HttpConfig: _pollFds is empty. Check your listen directives and permissions.");
+    }
     std::cout << GREEN << "_listeners ready with " << _portsQuantity << " different ports." << RESET << std::endl;//Debug
 }
 
@@ -101,7 +115,7 @@ int ServerManager::readClientData(int clientFd){
         }
 }
 
-void ServerManager::sendResponse(int clientFd, int idx) {
+void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
     const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
     /*
         What sendResponse will do :
@@ -115,8 +129,34 @@ void ServerManager::sendResponse(int clientFd, int idx) {
     }
     // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
     _clients[clientFd].clean(Client::REQUEST);
+    _clients[clientFd].clean(Client::RESPONSE);
     _pollFds[idx].events = POLLIN;
 }
+
+// void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
+    
+//     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
+//     size_t& offset = _clients[clientFd].getResponseOffsetSent();
+//     const void* dataToSend = response.c_str() + offset;
+//     size_t sizeToSend = response.size() - offset;
+//     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
+
+//     if (sent > 0){
+//         offset += sent;
+//         if (offset >= response.size()){
+//             _clients[clientFd].clean(Client::REQUEST);
+//             _clients[clientFd].clean(Client::RESPONSE);
+//             _clients[clientFd].resetResponseOffsetSent();
+//             _pollFds[idx].events = POLLIN;
+//         }
+//     }
+//     else if (sent == -1){//signaux / error a gerer
+//         if (errno == EINTR)
+//             return ;
+//         else
+//             closeConnection(clientFd);
+//     }
+// }
 
 bool    ServerManager::isListener(int fd){
     for (std::vector<TcpListener*>::const_iterator it = _listeners.begin(); it != _listeners.end(); ++it){
@@ -187,9 +227,9 @@ bool    ServerManager::receivedRequest(int idx){
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         // COOKER call will call CgiHandler() if it's a CGI
-		RequestHandler RH();
-		
-		RH.handleRequest(_clients[fd]);
+		RequestHandler RH(this->_httpConfig.servers);
+		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
+
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
