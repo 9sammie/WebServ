@@ -14,6 +14,16 @@ typedef struct DataCgi{
     std::string scriptPath; //Absolute path of script
     std::string interpreter; //ex : /usr/bin/python3
     std::string serverPort;
+    std::string contentType;
+    std::string contentLength;
+    std::string serverName;
+    std::string pathInfo;
+
+    std::string scriptName;
+    std::string remoteAddr; //adress IP client
+    std::string remotePort;
+    std::string scriptFilename; // equal to scriptPath but used by cgi-PHP
+    std::string redirectStatus;// used by php, usually 200, could crash if not present
 }DataCgi;
 
 Client::CgiInfo failedCgiHandler(){
@@ -27,22 +37,9 @@ Client::CgiInfo failedCgiHandler(){
     return fail;
 }
 
-Client::CgiInfo CgiHandler(DataCgi data){
-    //Initialize pipes
-    int     pipeIn[2];
-    int     pipeOut[2];
-
-    if (pipe(pipeIn) < 0)
-        return failedCgiHandler();
-    if (pipe(pipeOut) < 0){
-        close(pipeIn[0]);
-        close(pipeIn[1]);
-        return failedCgiHandler();
-    }
-    
-    //Initialize envp
+std::vector<std::string> buildEnvpData(DataCgi data){
     std::vector<std::string> envpData;
-    envpData.clear();
+
     envpData.push_back("REQUEST_METHOD=" + data.method);
     envpData.push_back("QUERY_STRING=" + data.queryString);
     envpData.push_back("SCRIPT_NAME=" + data.URI);
@@ -51,8 +48,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
 
     for (std::map<std::string, std::string>::const_iterator it = data.headers.begin(); it != data.headers.end(); ++it){
          std::string key = it->first;
-         if (key == "content-type" || key == "content-length")
-            continue;
         for(size_t i = 0; i <key.size(); ++i){
             if (key[i] == '-')
                 key[i] = '_';
@@ -60,17 +55,27 @@ Client::CgiInfo CgiHandler(DataCgi data){
         }
         envpData.push_back("HTTP_" + key + "=" + it->second);
     }
-    if (data.headers.count("content-type"))
-        envpData.push_back("CONTENT_TYPE=" + data.headers.at("content-type"));
-    if (data.headers.count("content-length"))
-        envpData.push_back("CONTENT_LENGTH=" + data.headers.at("content-length"));
+    envpData.push_back("CONTENT_TYPE=" + data.contentType);
+    envpData.push_back("CONTENT_LENGTH=" + data.contentLength);
     envpData.push_back("SERVER_PORT=" + data.serverPort);
-    /*
-        Need to add those env variables : 
-        SERVER_NAME	Your config file — the hostname you configured (e.g. localhost)
-        PATH_INFO	The request URI — the part after the script name
+    envpData.push_back("SERVER_NAME=" + data.serverName);
+    envpData.push_back("PATH_INFO=" + data.pathInfo);
+    return envpData;
+}
 
-    */
+Client::CgiInfo CgiHandler(DataCgi data){
+    //Initialize pipes
+    int     pipeIn[2];
+    int     pipeOut[2];
+    if (pipe(pipeIn) < 0)
+        return failedCgiHandler();
+    if (pipe(pipeOut) < 0){
+        close(pipeIn[0]);
+        close(pipeIn[1]);
+        return failedCgiHandler();
+    }
+    //Initialize envp
+    std::vector<std::string> envpData = buildEnvpData(data);
     //envpData was used for maintaining strings
     std::vector<char*> envp;
     for (size_t i = 0; i < envpData.size(); ++i)
@@ -92,7 +97,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         close(pipeOut[1]);
         return failedCgiHandler();
     }
-
     if (pid == 0){
         dup2(pipeIn[0], STDIN_FILENO);
         dup2(pipeOut[1], STDOUT_FILENO);
@@ -107,7 +111,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         Client::CgiInfo cgiInfos;
         if (data.method == "POST" && !data.body.empty()){
             cgiInfos.pipeWrite = pipeIn[1];
-            // write(pipeIn[1], data.body.c_str(), data.body.size());
         }
         else{
             cgiInfos.pipeWrite = -1;
@@ -118,7 +121,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         cgiInfos.isCgi = true;
         cgiInfos.pid = pid;
         cgiInfos.start_time = time(NULL);
-        // close(pipeIn[1]);
         close(pipeIn[0]);
         close(pipeOut[1]);
         return cgiInfos;

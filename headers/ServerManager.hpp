@@ -7,6 +7,7 @@
 #include <map>
 #include <poll.h>
 #include <list>
+#include "Config.hpp"
 
 #define MAX_CLIENTS    1000
 #define CLIENT_TIMEOUT 60
@@ -14,7 +15,7 @@
 class ServerManager{
 
     public :
-        ServerManager(std::list<int> ports);
+        ServerManager(const HttpConfig& HttpConfig/*std::list<int> ports*/);
         ~ServerManager();
 
         void    run();
@@ -40,7 +41,8 @@ class ServerManager{
 
     private :
 
-        std::vector<TcpListener*>    _listeners;
+        const HttpConfig            _httpConfig;
+        std::vector<TcpListener*>   _listeners;
         std::map<int, Client>       _clients;
         //       fd, clientFd
         std::map<int, int>          _cgiReadFds;

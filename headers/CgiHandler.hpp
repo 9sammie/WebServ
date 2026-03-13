@@ -1,3 +1,7 @@
+#include "Client.hpp"
+#include <vector>
 
+struct DataCgi{};
 
-int CgiHandler(/*infos to adapt, if i want to do scripts better than  hello world types*/);
+Client::CgiInfo CgiHandler(DataCgi data);
+std::vector<std::string> buildEnvpData(DataCgi data);

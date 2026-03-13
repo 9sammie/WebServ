@@ -37,6 +37,9 @@ class Client{
         const std::string& getBuffer(BufferType type);
         CgiInfo&    getCgiInfo();
         void        resetCgiInfos();
+        size_t&     getResponseOffsetSent();
+        void        resetResponseOffsetSent();
+
 
     private :
 
@@ -47,6 +50,7 @@ class Client{
         CgiInfo     _cgiInfo;
         id_t        _port;
         bool        _closeAfterResponse;
+        size_t      _responseOffsetSent;
 };
 
 #endif

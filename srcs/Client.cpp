@@ -14,7 +14,7 @@ Client::Client() : _fd(-1), _port(-1), _closeAfterResponse(false){
     _cgiInfo.bodyWrittenBytes = 0;
 }
 
-Client::Client(int fd, int port): _fd(fd),_port(port), _closeAfterResponse(false){
+Client::Client(int fd, int port): _fd(fd),_port(port), _closeAfterResponse(false), _responseOffsetSent(0){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
@@ -138,11 +138,20 @@ void        Client::resetCgiInfos(){
     _cgiInfo.bodyWrittenBytes = 0;
 }
 
+size_t&      Client::getResponseOffsetSent(){
+    return _responseOffsetSent;
+}
+
+void        Client::resetResponseOffsetSent(){
+    _responseOffsetSent = 0;
+}
+
 Client::~Client(){}
 
 Client::Client(const Client& src) : _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
-_lastActivity(src._lastActivity), _fd(src._fd), _port(src._port), _closeAfterResponse(src._closeAfterResponse){
-    _cgiInfo = src._cgiInfo;
+_lastActivity(src._lastActivity), _fd(src._fd), _port(src._port), _closeAfterResponse(src._closeAfterResponse),
+_responseOffsetSent(src._responseOffsetSent){
+   _cgiInfo = src._cgiInfo;
 }
 
 Client& Client::operator=(const Client& rhs){
@@ -154,6 +163,7 @@ Client& Client::operator=(const Client& rhs){
         _responseBuffer = rhs._responseBuffer;
         _closeAfterResponse = rhs._closeAfterResponse;
         _cgiInfo = rhs._cgiInfo;
+        _responseOffsetSent = rhs._responseOffsetSent;
     }
     return *this;
 }
