@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 13:00:35 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/12 13:22:16 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/13 13:10:03 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,41 +212,7 @@ void Lexer::skipComment(std::string& str)
 	if (pos != std::string::npos)
 		str.erase(pos); // supprime tout depuis #
 }
-//////////////////////////////////////////////////////////
-ListenConfig Parser::parseListenArg(const std::string& s)
-{
-    ListenConfig lc;
-    lc.host = "";
-    lc.port = 0;
 
-    // Cherche ':'
-    size_t pos = s.find(':');
-    if (pos == std::string::npos)
-    {
-        // seulement port
-        lc.port = parsePort(s);
-        return lc;
-    }
-
-    // host:port
-    std::string hostPart = s.substr(0, pos);
-    std::string portPart = s.substr(pos + 1);
-
-    if (hostPart.empty())
-        throw std::invalid_argument("listen host is empty");
-
-    lc.host = hostPart;
-    lc.port = parsePort(portPart);
-    return lc;
-}
-
-int Parser::parsePort(const std::string& s)
-{
-    int port = parsePositiveInt_strtol(s, "listen port");
-    if (port < 1 || port > 65535)
-        throw std::invalid_argument("listen port must be between 1 and 65535");
-    return port;
-}
 /*static const char* tokenTypeName(TokenType t)
 {
 	switch (t)

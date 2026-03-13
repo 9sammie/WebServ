@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/12 13:23:03 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/13 14:05:06 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,6 +137,60 @@ std::size_t Parser::parseSizeT(const std::string& s, const std::string& name)
 	return static_cast<size_t>(res);
 } 
 
+int Parser::parsePort(const std::string& s)
+{
+	int port = parsePositiveInt(s, "listen port");
+	if (port < 1 || port > 65535)
+		throw std::invalid_argument("listen port must be between 1 and 65535");
+	return port;
+}
+
+static bool isHttpMethod(const std::string& m)
+{
+	return (m == "GET" || m == "POST" || m == "DELETE");
+}
+
+static bool containsMethod(const std::vector<std::string>& v, const std::string& s)
+{
+	for (std::size_t i = 0; i < v.size(); ++i)
+	{
+		if (v[i] == s)
+			return true;
+	}
+	return false;
+}
+
+void Parser::applyMethods(LocationConfig& loc, const std::vector<std::string>& args)
+{
+	if (args.empty())
+		throw std::invalid_argument("methods expects at least 1 argument");
+	loc.methods.clear();
+	for (std::size_t i = 0; i < args.size(); ++i)
+	{
+		std::string m = args[i];
+		if (!isHttpMethod(m))
+			throw std::invalid_argument("unknown HTTP method: " + m);
+		if (containsMethod(loc.methods, m))
+			throw std::invalid_argument("duplicate method: " + m);
+		loc.methods.push_back(m);
+	}
+	loc.uploadAuthorised = containsMethod(loc.methods, "POST");
+}
+
+void Parser::parseErrorPage(std::map<int, std::string>& errors, const std::vector<std::string>& args, const std::string& name)
+{
+	if (args.size() < 2)
+		throw std::invalid_argument("error_page expects: <code...> <path> in " + name);
+	const std::string& path = args[args.size() - 1];
+	for (std::size_t i = 0; i + 1 < args.size(); ++i)
+	{
+		int code = parsePositiveInt(args[i], "error_page code");
+		if (code < 300 || code > 599)
+			throw std::invalid_argument("error_page code must be between 300 and 599");
+		errors[code] = path;
+	}
+}
+
 void Parser::parseLocationDirective(LocationConfig& loc, const std::string& name) //int line garder ?
 {
 	if (name.empty())
@@ -157,10 +211,56 @@ void Parser::parseLocationDirective(LocationConfig& loc, const std::string& name
 		loc.index = args[0];
 		return;
 	}
-	else if (name == "autoindex")
+	if (name == "autoindex")
 	{
 		std::vector<std::string> args = readDirectiveArgs();
 		loc.autoindex = parseOnOffArg(args);
+		return;
+	}
+	if (name == "methods")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		applyMethods(loc, args);
+		return;
+	}
+	if (name == "return")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 2)
+			throw std::invalid_argument("return expects: <code> <target>");
+		int code = parsePositiveInt(args[0], "return code");
+		if (code != 301 && code != 302 && code != 307 && code != 308)
+			throw std::invalid_argument("return code must be one of 301, 302, 307, 308");
+		loc.hasRedirection = true;
+		loc.redirectCode = code;
+		loc.redirectTarget = args[1];
+		return;
+	}
+	if (name == "client_max_body_size")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("client_max_body_size expects exactly 1 argument");
+		loc.maxBodySize = parseSizeT(args[0], "client_max_body_size");
+		loc.hasMaxBodySize = true;
+		return;
+	}
+	if (name == "cgi_ext")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("cgi_ext expects exactly 1 argument");
+		loc.cgiExt = args[0];
+		loc.cgiAuthorised = true;
+		return;
+	}
+	if (name == "cgi_path")
+	{
+		std::vector<std::string> args = readDirectiveArgs();
+		if (args.size() != 1)
+			throw std::invalid_argument("cgi_path expects exactly 1 argument");
+		loc.cgiPath = args[0];
+		loc.cgiAuthorised = true;
 		return;
 	}
 	throw std::invalid_argument("directive inconnue dans le bloc location");
@@ -257,6 +357,26 @@ HttpConfig Parser::parseHttpBlock()
 	return http;
 }
 
+ListenConfig Parser::parseListenArg(const std::string& s)
+{
+	ListenConfig lc;
+	lc.host = "";
+	lc.port = 0;
+	std::size_t pos = s.find(':');//on peut ecrire listen 127.0.0.1:8080; ou listen 8080;
+	if (pos == std::string::npos)
+	{
+		lc.port = parsePort(s);
+		return lc;
+	}
+	std::string hostPart = s.substr(0, pos);
+	std::string portPart = s.substr(pos + 1);
+	if (hostPart.empty())
+		throw std::invalid_argument("listen host is empty");
+	lc.host = hostPart;
+	lc.port = parsePort(portPart);
+	return lc;
+}
+
 void Parser::parseServerDirective(ServerConfig& srv, const std::string& name)
 {
 	if (name == "listen")
@@ -309,10 +429,10 @@ ServerConfig Parser::parseServerBlock()
 	while(!checkType(RBRACE))
 	{
 		if (!isNotEnd())
-			throw st::invalid_argument("missing '}' to close server block");
+			throw std::invalid_argument("missing '}' to close server block");
 		if (!checkType(WORD))
 			throw std::invalid_argument("expected directive name or 'location' inside server block");
-		std::string name = consome(WORD).wordText;
+		std::string name = consume(WORD).wordText;
 		if (name == "server")
 			throw std::invalid_argument("'server' block is not allowed");
 		if (name == "http")
@@ -331,6 +451,43 @@ ServerConfig Parser::parseServerBlock()
 	return srv;
 }
 
+/////////////////////////////////func will be modified///////////////
+void Parser::applyEffectifData(HttpConfig& http)
+{
+    for (size_t si = 0; si < http.servers.size(); ++si)
+    {
+        ServerConfig& srv = http.servers[si];
+
+        // server hérite de http si non défini
+        if (!srv.hasKeepalive)
+        {
+            srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
+            srv.hasKeepalive = true;
+        }
+        if (!srv.hasMaxBodySize)
+        {
+            srv.maxBodySize = http.maxBodySize;
+            srv.hasMaxBodySize = true;
+        }
+
+        // location hérite de server si non défini
+        for (size_t li = 0; li < srv.locations.size(); ++li)
+        {
+            LocationConfig& loc = srv.locations[li];
+
+            if (!loc.hasKeepalive)
+            {
+                loc.keepaliveTimeoutSec = srv.keepaliveTimeoutSec;
+                loc.hasKeepalive = true;
+            }
+            if (!loc.hasMaxBodySize)
+            {
+                loc.maxBodySize = srv.maxBodySize;
+                loc.hasMaxBodySize = true;
+            }
+        }
+    }
+}
 /*LocationConfig Parser::parseFirstLocationInFile()
 {
 	// cherche "location"
@@ -346,6 +503,24 @@ ServerConfig Parser::parseServerBlock()
 	throw std::invalid_argument("no 'location' found");
 }*/
 /////////////////////////////////////////////////////////////////////////////
+
+/*static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConfig& srv, const LocationConfig& loc)
+{
+	if (loc.hasKeepalive)
+		return loc.keepaliveTimeoutSec;
+	if (srv.hasKeepalive)
+		return srv.keepaliveTimeoutSec;
+	return http.keepaliveTimeoutSec;
+}
+
+static std::size_t effectiveBodySize(const HttpConfig& http, const ServerConfig& srv, const LocationConfig& loc)
+{
+	if (loc.hasMaxBodySize)
+		return loc.maxBodySize;
+	if (srv.hasMaxBodySize)
+		return srv.maxBodySize;
+	return http.maxBodySize;
+}*/
 
 HttpConfig Parser::parseConfig()
 {
@@ -368,6 +543,7 @@ HttpConfig Parser::parseConfig()
 	}
 	consume(WORD);
 	http = parseHttpBlock();
+	applyEffectifData(http);
 	return http;
 }
 

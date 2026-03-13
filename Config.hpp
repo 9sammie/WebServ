@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 10:13:49 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/09 10:36:28 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/13 14:05:02 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,11 +41,14 @@ struct LocationConfig
 	std::string redirectTarget; //new path ?
 	bool hasMaxBodySize;
 	size_t maxBodySize;
+	bool hasKeepalive;
+	int keepaliveTimeoutSec;
 };
 
 struct ServerConfig
 {
 	ServerConfig();
+	bool hasKeepalive;
 	int keepaliveTimeoutSec;
 	std::vector<ListenConfig> listens; // au moins 1 dans ce container, En mémoire, ça donne :
 										//listens.size() == 1

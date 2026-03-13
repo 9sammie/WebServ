@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/24 11:36:55 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/12 13:23:08 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/13 13:57:05 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,11 @@ class Parser
 		HttpConfig parseConfig();
 		HttpConfig parseHttpBlock();
 		ServerConfig parseServerBlock();
-		LocationConfig parseLocationBlock();
+		LocationConfig parseLocationBlock();		
 		//LocationConfig parseFirstLocationInFile(); // a voir si garder comme cela
 	private:
 		const std::vector<Token>& _toks;
 		std::size_t _pos;
-
 		bool isNotEnd() const;
 		bool checkType(TokenType expectedType) const;
 		const Token& consume(TokenType expectedType);
@@ -39,15 +38,17 @@ class Parser
 		void skipBlock();
 		std::size_t parseSizeT(const std::string& s, const std::string& name);
 		int parsePositiveInt(const std::string& s, const std::string& name);
-
 		std::vector<std::string> readDirectiveArgs();
-		ListenConfig parseListenarg(const std:;string& s);
+		ListenConfig parseListenArg(const std::string& s);
 		int parsePort(const std::string& s);
-		void parseerrorPage(std::map<int, std::string>& errors, const std::vector<std::string>& args, const std:;string& name);
+		void parseErrorPage(std::map<int, std::string>& errors, const std::vector<std::string>& args, const std::string& name);
 		bool parseOnOffArg(const std::vector<std::string>& args);
 		void parseLocationDirective(LocationConfig& loc, const std::string& name);
 		void parseServerDirective(ServerConfig& srv, const std::string& name);
 		void parseHttpDirective(HttpConfig& http, const std::string& name);
+		void applyMethods(LocationConfig& loc, const std::vector<std::string>& args);
+		void applyEffectifData(HttpConfig& http);
+		//ListenConfig Parser::parseListenArg(const std::string& s);
 		
 };
 
