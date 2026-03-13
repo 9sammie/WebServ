@@ -189,7 +189,7 @@ bool    ServerManager::receivedRequest(int idx){
         // COOKER call will call CgiHandler() if it's a CGI
 		RequestHandler RH();
 		
-		handleRequest(_clients[fd]);
+		RH.handleRequest(_clients[fd]);
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
