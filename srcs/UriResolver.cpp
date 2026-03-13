@@ -21,8 +21,8 @@ bool UriResolver::isPathSecure(const std::string& fullPath)
 	std::string realFullPath(actualPath);
 
 	char rootAbs[PATH_MAX];
-	if (realpath(_config.getRoot().c_str(), rootAbs) == NULL)
-		return false; // Racine invalide dans la config !
+	if (realpath(_config.getRoot().c_str(), rootAbs) == NULL) // creer une variable Root dans serverConfig.
+		return false;
 
 	std::string realRoot(rootAbs);
 
@@ -37,10 +37,10 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	std::string fullPath;
 	std::string base;
 
-	if (loc && !loc->getAlias().empty())
+	if (loc && !loc->getAlias().empty()) // creer une variable Alias dans LocationConfig.
 	{
-		std::string prefix = loc->getPath();
-		std::string alias = loc->getAlias();
+		std::string prefix = loc->prefix;
+		std::string alias = loc->getAlias(); // creer une variable Alias dans LocationConfig.
 
 		std::string remaining = path.substr(prefix.size());
 		base = alias;
@@ -49,9 +49,9 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	else
 	{
 		if (loc)
-			base = loc->getRoot();
+			base = loc->root;
 		else
-			base = _config.getRoot();
+			base = _config.getRoot(); // creer une variable Root dans serverConfig.
 
 		fullPath = base + path;
 	}
@@ -71,11 +71,11 @@ const LocationConfig* UriResolver::findMatchingLocation(const std::string& path)
     const LocationConfig* bestMatch = NULL;
     size_t longestLength = 0;
 
-    const std::vector<LocationConfig>& locations = _config.getLocations(); // Normalement config possede une fonction pour ça.
+    const std::vector<LocationConfig>& locations = _config.locations;
 
     for (size_t i = 0; i < locations.size(); ++i)
     {
-        const std::string& prefix = locations[i].getPath(); // Normalement config possede une fonction pour ça.
+        const std::string& prefix = locations[i].prefix;
         
         if (path.compare(0, prefix.size(), prefix) == 0)
         {
