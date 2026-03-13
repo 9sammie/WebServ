@@ -15,7 +15,7 @@
 class ServerManager{
 
     public :
-        ServerManager(HttpConfig HttpConfig/*std::list<int> ports*/);
+        ServerManager(const HttpConfig& HttpConfig/*std::list<int> ports*/);
         ~ServerManager();
 
         void    run();
@@ -41,7 +41,7 @@ class ServerManager{
 
     private :
 
-        const HttpConfig                  _httpConfig;
+        const HttpConfig            _httpConfig;
         std::vector<TcpListener*>   _listeners;
         std::map<int, Client>       _clients;
         //       fd, clientFd
