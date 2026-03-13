@@ -27,13 +27,18 @@ class RequestHandler
 		const ServerConfig& _config;
 		HttpParser			_parser;
 
-	std::string handleGET(const std::string& path);
+	std::string handleGET(const HttpRequest& request, const std::string& path);
+	bool		resolvePath(const HttpRequest& request, const std::string& path,
+									std::string& outPath, std::string& outResponse);
 	std::string handlePOST(const HttpRequest& request, const std::string& path);
 	std::string handleDELETE(const std::string& path);
 
-	std::string buildHttpResponse(int statusCode, const std::string& reason,
-                const std::string& body,
-                const std::map<std::string, std::string>& extraHeaders = {}) const;
+	std::string buildStatusResponse(int code) const;
+	std::string buildHttpResponse(int statusCode,
+									const std::string& reason,
+									const std::string& body,
+									const std::map<std::string, std::string>& extraHeaders
+									= std::map<std::string, std::string>()) const;
 };
 
 #endif

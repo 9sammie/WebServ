@@ -12,77 +12,58 @@ RequestHandler::RequestHandler(const RequestHandler& other)
 
 RequestHandler::~RequestHandler() {}
 
+
+
+static std::string getReasonPhrase(int code)
+{
+	if (code == 200) return "OK";
+	if (code == 201) return "Created";
+	if (code == 204) return "No Content";
+	if (code == 400) return "Bad Request";
+	if (code == 403) return "Forbidden";
+	if (code == 404) return "Not Found";
+	if (code == 405) return "Method Not Allowed";
+	if (code == 500) return "Internal Server Error";
+	return "Internal Server Error";
+}
+
+std::string RequestHandler::buildStatusResponse(int code) const
+{
+	if (code == 204)
+		return buildHttpResponse(204, "No Content", "");
+	std::string reason = getReasonPhrase(code);
+	std::ostringstream oss;
+	oss << "<html><body><h1>" << code << " " << reason << "</h1></body></html>";
+	return buildHttpResponse(code, reason, oss.str());
+}
+
 // Je travail dessus, ce n'est pas du tout finis :)
 
-std::string RequestHandler::buildHttpResponse(
-    int statusCode,
-    const std::string& reason,
-    const std::string& body,
-    const std::map<std::string,std::string>& extraHeaders) const
+std::string RequestHandler::buildHttpResponse(int statusCode,
+                                               const std::string& reason,
+                                               const std::string& body,
+                                               const std::map<std::string, std::string>& extraHeaders) const
 {
-    std::ostringstream oss;
+	std::ostringstream oss;
+	oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
+	oss << "Connection: close\r\n";
 
-    oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
-    oss << "Content-Length: " << body.size() << "\r\n";
-    oss << "Connection: close\r\n";
-
-    for (std::map<std::string,std::string>::const_iterator it = extraHeaders.begin();
-         it != extraHeaders.end(); ++it)
+    if (!body.empty())
     {
-        oss << it->first << ": " << it->second << "\r\n";
+        oss << "Content-Length: " << body.size() << "\r\n";
+        if (extraHeaders.find("Content-Type") == extraHeaders.end())
+            oss << "Content-Type: text/html\r\n";
     }
 
-    oss << "\r\n";
-    oss << body;
+	for (std::map<std::string,std::string>::const_iterator it = extraHeaders.begin();
+		it != extraHeaders.end(); ++it)
+	{
+		oss << it->first << ": " << it->second << "\r\n";
+	}
 
-    return oss.str();
-}
-
-std::string RequestHandler::handleDELETE(const std::string& path)
-{
-    if (std::remove(path.c_str()) != 0)
-    {
-        return buildHttpResponse(404, "Not Found",
-            "<html><body><h1>404 Not Found</h1></body></html>");
-    }
-
-    return buildHttpResponse(200, "OK",
-        "<html><body><h1>200 File deleted</h1></body></html>");
-}
-
-std::string RequestHandler::handlePOST(const HttpRequest& request, const std::string& path)
-{
-    std::ofstream file(path.c_str(), std::ios::binary);
-
-    if (!file)
-    {
-        return buildHttpResponse(500, "Internal Server Error",
-            "<html><body><h1>500 Internal Server Error</h1></body></html>");
-    }
-
-    file << request.getBody();
-
-    return buildHttpResponse(201, "Created",
-        "<html><body><h1>201 Created</h1></body></html>");
-}
-
-std::string RequestHandler::handleGET(const std::string& path)
-{
-    std::ifstream file(path.c_str(), std::ios::binary);
-
-    if (!file)
-    {
-        return buildHttpResponse(404, "Not Found",
-            "<html><body><h1>404 Not Found</h1></body></html>");
-    }
-
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-
-    std::string body = buffer.str();
-
-    return buildHttpResponse(200, "OK", body,
-        {{"Content-Type", "text/html"}});
+	oss << "\r\n";
+	oss << body;
+	return oss.str();
 }
 
 std::string RequestHandler::handleRequest(Client& Client)
@@ -99,35 +80,29 @@ std::string RequestHandler::handleRequest(Client& Client)
         int code = he.getStatusCode();
         if (code == 203)
             return "";
-
-        return buildHttpResponse(400, "Bad Request",
-            "<html><body><h1>400 Bad Request</h1></body></html>");
+		return buildStatusResponse(code);
     }
 
     try
     {
-        UriResolver resolver(_config);
-        fullPath = resolver.resolve(request);
+        UriResolver locateRessource(_config);
+        fullPath = locateRessource.resolve(request);
     }
     catch (const HttpException& he)
     {
         int code = he.getStatusCode();
-        std::string reason = (code == 404 ? "Not Found" : "Internal Server Error");
-
-        return buildHttpResponse(code, reason,
-            "<html><body><h1>" + std::to_string(code) + " " + reason + "</h1></body></html>");
+		if (code < 400)
+			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>");
+		return buildStatusResponse(code);
     }
 
     if (fullPath.empty())
-    {
-        return buildHttpResponse(404, "Not Found",
-            "<html><body><h1>404 Not Found</h1></body></html>");
-    }
+        return buildStatusResponse(404);
 
     const std::string& method = request.getMethod();
 
     if (method == "GET")
-        return handleGET(fullPath);
+        return handleGET(request, fullPath);
 
     if (method == "POST")
         return handlePOST(request, fullPath);
@@ -135,6 +110,5 @@ std::string RequestHandler::handleRequest(Client& Client)
     if (method == "DELETE")
         return handleDELETE(fullPath);
 
-    return buildHttpResponse(405, "Method Not Allowed",
-        "<html><body><h1>405 Method Not Allowed</h1></body></html>");
+    return buildStatusResponse(405);
 }

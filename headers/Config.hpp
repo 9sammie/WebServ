@@ -29,7 +29,7 @@ struct LocationConfig
 	LocationConfig();
 	std::string prefix; // /srcs, /files, /
 	std::string root; 
-	std::string index; 
+	std::string index;
 	bool autoindex;
 	std::vector<std::string> methods; //si non precise, j autorise GET seulement par defaut, a verifier des doublons..
 	bool uploadAuthorised; // si cette location accepte upload, pour stocker body, mais pas pour CGI (ou dire si POST autorise et pas CGI) 
