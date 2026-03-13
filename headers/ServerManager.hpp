@@ -33,6 +33,9 @@ class ServerManager{
         bool    isListener(int fd);
         int     getListenerPort(int fd);
 
+        //Functions to pas the good server infos to requestHandler
+        std::string getServerName(const std::string& body)const;
+
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
 /*******************************************************************************/

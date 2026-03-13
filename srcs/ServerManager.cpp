@@ -12,6 +12,7 @@
 #include "Signal.hpp"
 #include <set>
 #include "RequestHandler.hpp"
+#include <string>
 
 ServerManager::ServerManager(const HttpConfig& httpConfig /*std::list<int> ports*/) : _httpConfig(httpConfig){
     std::set<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
@@ -412,4 +413,13 @@ void    ServerManager::readCgiResponse(size_t& idx){
             setPollout(clientFd);
     }
     return ;
+}
+
+
+std::string ServerManager::getServerName(const std::string& body)const{
+    std::string bodyToLower = body.to_lo
+    size_t startPos = body.find("host:") + 6;
+    size_t endPos = body.find("\r\n", startPos);
+    std::string serverName = body.substr(startPos, endPos - startPos);
+    return serverName;
 }
