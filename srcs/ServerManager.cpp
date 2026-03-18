@@ -228,7 +228,9 @@ bool    ServerManager::receivedRequest(int idx){
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         // COOKER call will call CgiHandler() if it's a CGI
-		RequestHandler RH(this->_httpConfig.servers);
+        const ServerConfig& serverToSend = getServer(_clients[fd].getPort());
+		RequestHandler RH(serverToSend);
+
 		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
 
         // CgiInfo
@@ -416,10 +418,22 @@ void    ServerManager::readCgiResponse(size_t& idx){
 }
 
 
-std::string ServerManager::getServerName(const std::string& body)const{
-    std::string bodyToLower = body.to_lo
-    size_t startPos = body.find("host:") + 6;
-    size_t endPos = body.find("\r\n", startPos);
-    std::string serverName = body.substr(startPos, endPos - startPos);
-    return serverName;
+
+// std::string ServerManager::getServerName(const std::string& body)const{
+//     std::string bodyToLower = body.to_lo
+//     size_t startPos = body.find("host:") + 6;
+//     size_t endPos = body.find("\r\n", startPos);
+//     std::string serverName = body.substr(startPos, endPos - startPos);
+//     return serverName;
+// }
+
+const ServerConfig& ServerManager::getServer(int port) const {
+    for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
+        for (size_t i = 0; i < it->listens.size(); ++i) {
+            if (it->listens[i].port == port) {
+                return *it;
+            }
+        }
+    }
+    throw std::runtime_error("No ServerConfig found for port: " + std::to_string(port));
 }

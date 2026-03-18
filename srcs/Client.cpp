@@ -167,3 +167,7 @@ Client& Client::operator=(const Client& rhs){
     }
     return *this;
 }
+
+id_t        Client::getPort()const{
+    return _port;
+}
