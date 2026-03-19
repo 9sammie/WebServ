@@ -11,6 +11,7 @@ UriResolver::UriResolver(const ServerConfig& config): _config(config) {}
 UriResolver::~UriResolver() {}
 
 
+
 bool UriResolver::isPathSecure(const std::string& fullPath)
 {
 	char actualPath[PATH_MAX];
