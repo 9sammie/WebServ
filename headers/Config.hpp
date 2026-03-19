@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 10:13:49 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/13 14:05:02 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/19 15:38:51 by maballet         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ struct LocationConfig
 {
 	LocationConfig();
 	std::string prefix; // /srcs, /files, /
-	std::string root; 
+	std::string root;
+	std::string alias; 
 	std::string index;
 	bool autoindex;
 	std::vector<std::string> methods; //si non precise, j autorise GET seulement par defaut, a verifier des doublons..
@@ -59,6 +60,8 @@ struct ServerConfig
 	size_t maxBodySize;
 	std::map<int, std::string> errors; // cle : code d erreur, 
 										//valeur : le chemin de la page a afficher
+	std::string root;
+	std::string index;
 	std::vector<LocationConfig> locations; // en memoire, cela donne :
 											//locations[0].prefix = "/"
 											//locations[1].prefix = "/srcs"

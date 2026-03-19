@@ -27,8 +27,8 @@ class RequestHandler
 		const ServerConfig& _config;
 		HttpParser			_parser;
 
-	std::string handleGET(const HttpRequest& request, const std::string& path);
-	bool		resolvePath(const HttpRequest& request, const std::string& path,
+	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+	bool		resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc,
 									std::string& outPath, std::string& outResponse);
 	std::string handlePOST(const HttpRequest& request, const std::string& path);
 	std::string handleDELETE(const std::string& path);

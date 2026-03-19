@@ -14,8 +14,8 @@ public:
 	HttpException& operator=(const HttpException& other);
 	~HttpException();
     
-    const char* what() const throw() { return _message.c_str(); }
-    int getStatusCode() const { return _statusCode; }
+    const char* what() const throw();
+    int getStatusCode() const;
 };
 
 #endif

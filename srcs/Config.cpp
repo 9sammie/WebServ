@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 10:08:33 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/13 13:39:07 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/19 15:38:24 by maballet         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ ListenConfig::ListenConfig()
 LocationConfig::LocationConfig()
 	: prefix("")
 	, root("")
+	, alias("")
 	, index("")
 	, autoindex(false)
 	, uploadAuthorised(false)
@@ -44,6 +45,8 @@ ServerConfig::ServerConfig()
 	, hasMaxBodySize(false)
 	, maxBodySize(0)
 	, errors()
+	, root("")
+	, index("")
 	, locations()
 {}
 
