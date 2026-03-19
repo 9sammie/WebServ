@@ -36,6 +36,7 @@ class Client{
         int         getFd()const;
         const std::string& getBuffer(BufferType type);
         CgiInfo&    getCgiInfo();
+        id_t        getPort()const;
         void        resetCgiInfos();
         size_t&     getResponseOffsetSent();
         void        resetResponseOffsetSent();

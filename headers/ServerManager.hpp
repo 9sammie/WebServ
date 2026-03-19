@@ -8,6 +8,7 @@
 #include <poll.h>
 #include <list>
 #include "Config.hpp"
+#include <sys/types.h>
 
 #define MAX_CLIENTS    1000
 #define CLIENT_TIMEOUT 60
@@ -32,6 +33,10 @@ class ServerManager{
         // int     findPipeReadByClient(int clientFd);
         bool    isListener(int fd);
         int     getListenerPort(int fd);
+        const ServerConfig& getServer(int port)const;
+
+        //Functions to pas the good server infos to requestHandler
+        std::string getServerName(const std::string& body)const;
 
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
