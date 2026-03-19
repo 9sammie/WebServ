@@ -8,7 +8,7 @@ class HttpParser
 	public:
 		HttpParser();
 		HttpParser(const HttpParser& other);
-		HttpParser& operator=(const HttpParser& other);
+		// HttpParser& operator=(const HttpParser& other);
 		~HttpParser();
 
 		void parseRequest(const std::string& buffer, HttpRequest& request);

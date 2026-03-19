@@ -69,7 +69,7 @@ static std::string getMimeType(const std::string& path)
     return "application/octet-stream";
 }
 
-// Helper : génère une page HTML listant le contenu d'un dossier
+// génère une page HTML listant le contenu d'un dossier
 static std::string buildDirectoryListing(const std::string& uriPath, const std::string& fsPath)
 {
     std::ostringstream html;
@@ -94,7 +94,7 @@ static std::string buildDirectoryListing(const std::string& uriPath, const std::
     return html.str();
 }
 
-bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, std::string& outPath, std::string& outResponse)
+bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc, std::string& outPath, std::string& outResponse)
 {
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
@@ -105,7 +105,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 
     if (S_ISDIR(st.st_mode))
     {
-		const std::string& defaultFile = _config.getDefaultFile();
+		const std::string& defaultFile = loc->index;
 		if (!defaultFile.empty())
 		{
 			std::string indexPath = path;
@@ -119,7 +119,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 				return true;
 			}
 		}
-		if (_config.isDirectoryListingEnabled())
+		if (loc->autoindex)
 		{
 			std::string listing = buildDirectoryListing(request.getUri(), path);
 			if (listing.empty())
@@ -140,12 +140,12 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 	return true;
 }
 
-std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path)
+std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
 {
 	std::string resolvedPath;
 	std::string earlyResponse;
 
-	if(!resolvePath(request, path, resolvedPath, earlyResponse))
+	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
 		return earlyResponse;
 
 	struct stat st;

@@ -70,6 +70,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 {
     HttpRequest request;
     std::string fullPath;
+	const LocationConfig* loc = NULL;
 
     try
     {
@@ -86,7 +87,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     try
     {
         UriResolver locateRessource(_config);
-        fullPath = locateRessource.resolve(request);
+        fullPath = locateRessource.resolve(request, loc);
     }
     catch (const HttpException& he)
     {
@@ -102,7 +103,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     const std::string& method = request.getMethod();
 
     if (method == "GET")
-        return handleGET(request, fullPath);
+        return handleGET(request, fullPath, loc);
 
     if (method == "POST")
         return handlePOST(request, fullPath);
