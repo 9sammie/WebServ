@@ -436,7 +436,7 @@ const ServerConfig& ServerManager::getServer(int port) const {
             }
         }
     }
-    std::stringstream ss;
-    ss << port;
+	std::stringstream ss;
+	ss << port;
     throw std::runtime_error("No ServerConfig found for port: " + ss.str());
 }

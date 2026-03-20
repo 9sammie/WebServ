@@ -16,7 +16,7 @@ HttpException& HttpException::operator=(const HttpException& other)
 	return *this;
 }
 
-HttpException::~HttpException() {}
+HttpException::~HttpException() throw() {}
 
 const char* HttpException::what() const throw()
 {

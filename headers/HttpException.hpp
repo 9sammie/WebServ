@@ -12,7 +12,7 @@ public:
     HttpException(int code, const std::string& msg);
 	HttpException(const HttpException& other);
 	HttpException& operator=(const HttpException& other);
-	~HttpException();
+	~HttpException() throw();
     
     const char* what() const throw();
     int getStatusCode() const;
