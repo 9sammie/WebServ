@@ -18,6 +18,9 @@ ServerManager::ServerManager(const HttpConfig& httpConfig /*std::list<int> ports
     std::set<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
     for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it){
         for (size_t i = 0; i < it->listens.size(); ++i){
+            int currentPort = it->listens[i].port;
+            if (ports.count(currentPort) > 0)
+                throw std::runtime_error("Error: Virtual hosting isn't supported.");
             ports.insert(it->listens[i].port);
         }
     }
