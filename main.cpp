@@ -4,15 +4,28 @@
 #include <exception>
 #include "Signal.hpp"
 #include "Config.hpp"
+#include "Lexer.hpp"
+#include "Parser.hpp"
 
-int main(void){
+int main(int ac, char** av){
+    if (ac != 2){
+        if (ac < 2)
+            std::cerr << "Error: Webserv need a config file.";
+        else if (ac > 2)
+            std::cerr << "Error: Webserv only need a config file.";
+        return 1;
+    }
 
     // signal(SIGPIPE, SIG_IGN); // For MacOS only, and change sendResponse function too, uncomment
     init_signal_handler();
-    HttpConfig httpConfig;
-    std::list<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
-    ports.push_back(8080); // Hardcoded will need HttpConfig
+
     try {
+        Lexer lexer;
+        std::vector<Token> tokens = lexer.lexFile(av[1]);
+        
+        Parser parser(tokens);
+        HttpConfig httpConfig = parser.parseConfig();
+
         ServerManager manager(httpConfig);
         manager.run();
     }
