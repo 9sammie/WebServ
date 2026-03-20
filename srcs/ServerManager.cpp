@@ -13,6 +13,7 @@
 #include <set>
 #include "RequestHandler.hpp"
 #include <string>
+#include <sstream>
 
 ServerManager::ServerManager(const HttpConfig& httpConfig /*std::list<int> ports*/) : _httpConfig(httpConfig){
     std::set<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
@@ -435,5 +436,7 @@ const ServerConfig& ServerManager::getServer(int port) const {
             }
         }
     }
-    throw std::runtime_error("No ServerConfig found for port: " + std::to_string(port));
+    std::stringstream ss;
+    ss << port;
+    throw std::runtime_error("No ServerConfig found for port: " + ss.str());
 }
