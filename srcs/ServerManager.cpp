@@ -118,7 +118,7 @@ int ServerManager::readClientData(int clientFd){
 }
 
 void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
-    const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
+    // const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
     /*
         What sendResponse will do :
         const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE;
@@ -126,7 +126,7 @@ void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
         if (send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL)); 
     */
 
-    if (send(clientFd, response, std::strlen(response), MSG_NOSIGNAL) < 0){
+    if (send(clientFd, _clients[clientFd].getBuffer(Client::RESPONSE).c_str(), std::strlen(_clients[clientFd].getBuffer(Client::RESPONSE).c_str()), MSG_NOSIGNAL) < 0){
         closeConnection(clientFd);
     }
     // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
