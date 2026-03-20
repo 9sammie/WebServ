@@ -99,7 +99,7 @@ int ServerManager::readClientData(int clientFd){
 
     ssize_t bytesRead = recv(clientFd, tempBuff, sizeof(tempBuff), 0);
         if (bytesRead > 0){
-            _clients[clientFd].store(std::string(tempBuff, bytesRead), Client::REQUEST);
+            _clients[clientFd].store(std::string(tempBuff, bytesRead), Client::RAW);
             _clients[clientFd].updateActivity();
             return bytesRead;
         }
@@ -117,48 +117,52 @@ int ServerManager::readClientData(int clientFd){
         }
 }
 
-void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
-    // const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
-    /*
-        What sendResponse will do :
-        const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE;
+// void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
+//     // const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
+//     /*
+//         What sendResponse will do :
+//         const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE;
 
-        if (send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL)); 
-    */
+//         if (send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL)); 
+//     */
 
-    if (send(clientFd, _clients[clientFd].getBuffer(Client::RESPONSE).c_str(), std::strlen(_clients[clientFd].getBuffer(Client::RESPONSE).c_str()), MSG_NOSIGNAL) < 0){
-        closeConnection(clientFd);
-    }
-    // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
-    _clients[clientFd].clean(Client::REQUEST);
-    _clients[clientFd].clean(Client::RESPONSE);
-    _pollFds[idx].events = POLLIN;
-}
-
-// void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
-    
-//     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
-//     size_t& offset = _clients[clientFd].getResponseOffsetSent();
-//     const void* dataToSend = response.c_str() + offset;
-//     size_t sizeToSend = response.size() - offset;
-//     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
-
-//     if (sent > 0){
-//         offset += sent;
-//         if (offset >= response.size()){
-//             _clients[clientFd].clean(Client::REQUEST);
-//             _clients[clientFd].clean(Client::RESPONSE);
-//             _clients[clientFd].resetResponseOffsetSent();
-//             _pollFds[idx].events = POLLIN;
-//         }
+//     if (send(clientFd, _clients[clientFd].getBuffer(Client::RESPONSE).c_str(), std::strlen(_clients[clientFd].getBuffer(Client::RESPONSE).c_str()), MSG_NOSIGNAL) < 0){
+//         closeConnection(clientFd);
 //     }
-//     else if (sent == -1){//signaux / error a gerer
-//         if (errno == EINTR)
-//             return ;
-//         else
-//             closeConnection(clientFd);
-//     }
+//     // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
+//     _clients[clientFd].clean(Client::REQUEST);
+//     _clients[clientFd].clean(Client::RESPONSE);
+//     _pollFds[idx].events = POLLIN;
 // }
+
+void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
+    
+    const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
+    std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
+    std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
+    std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+
+    size_t& offset = _clients[clientFd].getResponseOffsetSent();
+    const void* dataToSend = response.c_str() + offset;
+    size_t sizeToSend = response.size() - offset;
+    ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
+
+    if (sent >= 0){
+        offset += sent;
+        if (offset >= response.size()){
+            _clients[clientFd].clean(Client::REQUEST);
+            _clients[clientFd].clean(Client::RESPONSE);
+            _clients[clientFd].resetResponseOffsetSent();
+            _pollFds[idx].events = POLLIN;
+        }
+    }
+    else if (sent == -1){//signaux / error a gerer
+        if (errno == EINTR)
+            return ;
+        else
+            closeConnection(clientFd);
+    }
+}
 
 bool    ServerManager::isListener(int fd){
     for (std::vector<TcpListener*>::const_iterator it = _listeners.begin(); it != _listeners.end(); ++it){
@@ -228,6 +232,7 @@ bool    ServerManager::receivedRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
+        _clients[fd].extractRequest();
         // COOKER call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort());
 		RequestHandler RH(serverToSend);
