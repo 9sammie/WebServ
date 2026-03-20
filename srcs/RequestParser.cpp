@@ -1,5 +1,8 @@
 #include "RequestParser.hpp"
 #include <sstream>
+#include <cerrno>
+#include <cstdlib>
+#include <climits>
 
 HttpParser::HttpParser() {}
 
@@ -37,8 +40,8 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	len = std::strtoul(value.c_str(), &end, 10);
 
 	// if (len > MAX_BODY_SIZE)
-	//	return ParseResult::BODY_TOO_LARGE;    //ask where we stock maxBodySize 
-	if (len > static_cast<unsigned long>(SIZE_MAX))
+	//	throw HttpException(203, "body too large");    //ask where we stock maxBodySize 
+	if ((errno == ERANGE && len == ULONG_MAX) || (errno != 0 && len == 0))
 		throw HttpException(203, "invalid content length");
 	if (errno != 0 || *end != '\0')
 			throw HttpException(203, "invalid content length");
