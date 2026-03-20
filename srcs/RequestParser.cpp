@@ -118,27 +118,27 @@ void HttpParser::tockeniseRequestLine(const std::string& requestLine,
 
 	firstSpace = requestLine.find(' ');
 	if (firstSpace == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "invalid request line");
 	method = requestLine.substr(0, firstSpace);
 
 	pathStart = requestLine.find_first_not_of(' ', firstSpace);
 	if (pathStart == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "invalid request line");
 	secondSpace = requestLine.find(' ', firstSpace + 1);
 	if (secondSpace == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "invalid request line");
 	path = requestLine.substr(pathStart, secondSpace - pathStart);
 
 	versionStart = requestLine.find_first_not_of(' ', secondSpace);
 	if (versionStart == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "invalid request line");
 	versionEnd = requestLine.find(' ', versionStart);
 	if (versionEnd == std::string::npos)
 	    version = requestLine.substr(versionStart);
 	else
 	{
 		if (requestLine.find_first_not_of(' ', versionEnd) != std::string::npos)
-			throw HttpException(203, "invalid request line");
+			throw HttpException(400, "invalid request line");
 	    version = requestLine.substr(versionStart, versionEnd - versionStart);
 	}
 }
@@ -154,13 +154,13 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 	tockeniseRequestLine(requestLine, method, path, version);
 
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw HttpException(203, "invalid method");
+		throw HttpException(400, "invalid method");
 
 	if (checkPath(path))
-		throw HttpException(203, "invalid uri");
+		throw HttpException(400, "invalid uri");
 
 	if (version != "HTTP/1.1")
-		throw HttpException(203, "invalid http version");
+		throw HttpException(400, "invalid http version");
 
 	tempRequest.setMethod(method);
 	tempRequest.setUri(path);

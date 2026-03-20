@@ -22,7 +22,7 @@ bool UriResolver::isPathSecure(const std::string& fullPath)
 	std::string realFullPath(actualPath);
 
 	char rootAbs[PATH_MAX];
-	if (realpath(_config.root.c_str(), rootAbs) == NULL) // creer une variable Root dans serverConfig.
+	if (realpath(_config.root.c_str(), rootAbs) == NULL)
 		return false;
 
 	std::string realRoot(rootAbs);
@@ -38,10 +38,10 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	std::string fullPath;
 	std::string base;
 
-	if (loc && !loc->alias.empty()) // creer une variable Alias dans LocationConfig.
+	if (loc && !loc->alias.empty())
 	{
 		std::string prefix = loc->prefix;
-		std::string alias = loc->alias; // creer une variable Alias dans LocationConfig.
+		std::string alias = loc->alias;
 
 		std::string remaining = path.substr(prefix.size());
 		base = alias;
@@ -52,7 +52,7 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 		if (loc)
 			base = loc->root;
 		else
-			base = _config.root; // creer une variable Root dans serverConfig.
+			base = _config.root;
 
 		fullPath = base + path;
 	}

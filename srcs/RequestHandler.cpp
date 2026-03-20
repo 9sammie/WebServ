@@ -38,7 +38,6 @@ std::string RequestHandler::buildStatusResponse(int code) const
 }
 
 // Je travail dessus, ce n'est pas du tout finis :)
-
 std::string RequestHandler::buildHttpResponse(int statusCode,
                                                const std::string& reason,
                                                const std::string& body,
@@ -66,6 +65,8 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
 	return oss.str();
 }
 
+#include <iostream>
+
 std::string RequestHandler::handleRequest(Client& Client)
 {
     HttpRequest request;
@@ -92,6 +93,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     catch (const HttpException& he)
     {
         int code = he.getStatusCode();
+		std::cout << "[CRITIQUE] Exception capturée dans handleRequest : " << code << " - " << he.what() << std::endl;
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>");
 		return buildStatusResponse(code);

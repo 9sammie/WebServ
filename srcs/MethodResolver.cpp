@@ -94,9 +94,12 @@ static std::string buildDirectoryListing(const std::string& uriPath, const std::
     return html.str();
 }
 
+#include <iostream>
+
 bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc, std::string& outPath, std::string& outResponse)
 {
     struct stat st;
+	std::cout << "DEBUG: Le serveur cherche le fichier ici -> " << path << std::endl;
     if (stat(path.c_str(), &st) != 0)
     {
         outResponse = buildStatusResponse(404);
@@ -155,12 +158,21 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 	if (access(resolvedPath.c_str(), R_OK) != 0)
 		return buildStatusResponse(403);
 
+	std::cout << "[DEBUG] Tentative d'ouverture de : " << resolvedPath << std::endl;
 	std::ifstream file(resolvedPath.c_str(), std::ios::binary);
 	if (!file)
+	{
+		std::cout << "[DEBUG] Erreur : Impossible d'ouvrir le fichier (ifstream a échoué)" << std::endl;
 		return buildStatusResponse(500);	
+	}
 	
 	std::ostringstream buffer;
 	buffer << file.rdbuf();
+	if (file.fail() && !file.eof())
+	{
+		std::cout << "[DEBUG] Erreur : La lecture du contenu a échoué" << std::endl;
+		return buildStatusResponse(500);
+	}
 
 	std::map<std::string, std::string>	headers;
 	std::string							body = buffer.str();

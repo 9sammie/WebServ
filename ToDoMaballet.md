@@ -1,7 +1,9 @@
-A faire:
+## A faire:
 
 -checker ma formulation de reponse quand il y a un
 body et ou je renvoie/stock la reponse.
 
 -est-ce que je detecte si debut de deuxieme requete
 s'il y n a une.
+
+c++ -std=c++98 main.cpp srcs/*.cpp -Iheaders
