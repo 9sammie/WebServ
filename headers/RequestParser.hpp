@@ -11,13 +11,13 @@ class HttpParser
 		// HttpParser& operator=(const HttpParser& other);
 		~HttpParser();
 
-		void parseRequest(const std::string& buffer, HttpRequest& request);
+		void parseRequest(const std::string& buffer, HttpRequest& request, const ServerConfig& _config);
 		void getRequestParts(const std::string& buffer, std::string& requestLine, std::string& headerLines, std::string& bodyPart);
 		
 		void tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
 		void parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
 		void parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
-		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest);
+		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config);
 };
 
 #endif

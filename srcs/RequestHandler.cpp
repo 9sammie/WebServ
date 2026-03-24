@@ -74,13 +74,15 @@ std::string RequestHandler::handleRequest(Client& Client)
 
     try
     {
-        _parser.parseRequest(Client.getBuffer(Client::REQUEST), request);
+        _parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);
     }
     catch (const HttpException& he)
     {
         int code = he.getStatusCode();
         if (code == 203)
             return "";
+		if (Client.getCloseStatus() == false)
+			Client.getCloseStatus() = true;
 		return buildStatusResponse(code);
     }
 
@@ -94,6 +96,8 @@ std::string RequestHandler::handleRequest(Client& Client)
         int code = he.getStatusCode();
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>");
+		if (Client.getCloseStatus() == false)
+			Client.getCloseStatus() = true;
 		return buildStatusResponse(code);
     }
 
