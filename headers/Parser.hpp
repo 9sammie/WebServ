@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/24 11:36:55 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/20 15:45:25 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/24 19:03:38 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,6 @@ class Parser
 	public:
 		Parser(const std::vector<Token>& toks);
 		HttpConfig parseConfig();
-		HttpConfig parseHttpBlock();
-		ServerConfig parseServerBlock();
-		LocationConfig parseLocationBlock();		
-		//LocationConfig parseFirstLocationInFile(); // a voir si garder comme cela
 	private:
 		const std::vector<Token>& _toks;
 		std::size_t _pos;
@@ -35,21 +31,35 @@ class Parser
 		const Token& consume(TokenType expectedType);
 		bool checkWord(const std::string& w) const;
 		void consumeWord(const std::string& w);
-		void skipBlock();
-		std::size_t parseSizeT(const std::string& s, const std::string& name);
-		int parsePositiveInt(const std::string& s, const std::string& name);
-		std::vector<std::string> readDirectiveArgs();
-		ListenConfig parseListenArg(const std::string& s);
+		//void skipBlock();
+		std::size_t parseSizeT(const Token& directiveTok, const std::string& s) const;
+		int parsePositiveInt(const Token& directiveTok, const std::string& s) const;
+		std::vector<std::string> readDirectiveArgs(const Token& directiveTok);
+		ListenConfig parseListenArg(const Token& directiveTok, const std::string& s);
 		int parsePort(const std::string& s);
-		void parseErrorPage(std::map<int, std::string>& errors, const std::vector<std::string>& args, const std::string& name);
-		bool parseOnOffArg(const std::vector<std::string>& args);
-		void parseLocationDirective(LocationConfig& loc, const std::string& name);
-		void parseServerDirective(ServerConfig& srv, const std::string& name);
-		void parseHttpDirective(HttpConfig& http, const std::string& name);
-		void applyMethods(LocationConfig& loc, const std::vector<std::string>& args);
+		void parseErrorPage(std::map<int, std::string>& errors, const Token& directiveTok, const std::vector<std::string>& args);
+		bool parseOnOffArg(const Token& directiveTok, const std::vector<std::string>& args);
+		void parseLocationDirective(LocationConfig& loc, const Token& nameTok);
+		void parseServerDirective(ServerConfig& srv, const Token& nameTok);
+		void parseHttpDirective(HttpConfig& http, const Token& nameTok);
+		void applyMethods(LocationConfig& loc, const Token& directiveTok, const std::vector<std::string>& args);
 		void applyEffectifData(HttpConfig& http);
-		//ListenConfig Parser::parseListenArg(const std::string& s);
-		
+
+		const Token& currentToken() const;
+		const Token& previousToken() const;
+		std::string formatError(const Token& tok, const std::string& msg) const;
+		void throwUnexpectedEof(const std::string& expected) const;
+		void throwUnexpectedToken(const Token& tok) const;
+		void throwInvalidArgs(const Token& directiveTok) const;
+		void throwUnknownDirective(const Token& directiveTok) const;
+		void throwDirectiveNotAllowedHere(const Token& directiveTok) const;
+		void throwDirectiveNotTerminated(const Token& directiveTok) const;
+		void throwNoOpeningBrace(const Token& directiveTok) const;
+		void throwInvalidValue(const Token& directiveTok, const std::string& value) const;
+		void throwDuplicateValue(const Token& directiveTok, const std::string& value) const;
+		HttpConfig parseHttpBlock(const Token& httpTok);
+		ServerConfig parseServerBlock(const Token& serverTok);
+		LocationConfig parseLocationBlock(const Token& locationTok);
 };
 
 #endif
