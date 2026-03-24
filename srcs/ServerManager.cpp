@@ -75,7 +75,7 @@ void ServerManager::acceptNewConnection(int serverFd){
     newSPollFd.events = POLLIN;
     newSPollFd.revents = 0;
     _pollFds.push_back(newSPollFd);
-    _clients[newFd] = Client(newFd, getListenerPort(serverFd));
+    _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port);
     //Debug
     std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
@@ -214,7 +214,7 @@ bool    ServerManager::receivedRequest(int idx){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         _clients[fd].extractRequest();
         // COOKER call will call CgiHandler() if it's a CGI
-        const ServerConfig& serverToSend = getServer(_clients[fd].getPort());
+        const ServerConfig& serverToSend = getServer(_clients[fd].getPort(Client::SERVER));
 		RequestHandler RH(serverToSend);
 
 		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);

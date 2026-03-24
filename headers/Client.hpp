@@ -9,12 +9,13 @@ class Client{
 
     public :
         Client();
-        Client(int fd, int port);   
+        Client(int fd, int serverPort, int clientPort);   
         Client(const Client& src);
         Client& operator=(const Client& rhs);
         ~Client();
 
         enum        BufferType {REQUEST, RESPONSE, RAW};
+        enum        PortType {SERVER, CLIENT};
         typedef struct CgiInfo{
             bool    isCgi;
             int     pipeRead;
@@ -39,7 +40,7 @@ class Client{
         int         getFd()const;
         const std::string& getBuffer(BufferType type);
         CgiInfo&    getCgiInfo();
-        id_t        getPort()const;
+        id_t        getPort(PortType type)const;
         void        resetCgiInfos();
         size_t&     getResponseOffsetSent();
         void        resetResponseOffsetSent();
@@ -58,7 +59,8 @@ class Client{
         time_t      _lastActivity;
         int         _fd;
         CgiInfo     _cgiInfo;
-        id_t        _port;
+        int         _serverPort;
+        int         _clientPort;
         bool        _closeAfterResponse;
         size_t      _responseOffsetSent;
         size_t      _requestSize;
