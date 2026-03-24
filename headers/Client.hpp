@@ -29,6 +29,7 @@ class Client{
         bool        hasContentLengthHeader()const;
         bool        hasTransferEncodingHeader()const;
         bool        getCloseStatus()const;
+        void        setCloseStatus(bool value);
         ssize_t     getContentLenthSize()const;
         size_t      availableDataAfterHeaders();
         void        store(const std::string& content, BufferType type);

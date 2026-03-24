@@ -82,7 +82,7 @@ std::string RequestHandler::handleRequest(Client& Client)
         if (code == 203)
             return "";
 		if (Client.getCloseStatus() == false)
-			Client.getCloseStatus() = true;
+			Client.setCloseStatus(true);
 		return buildStatusResponse(code);
     }
 
@@ -97,7 +97,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>");
 		if (Client.getCloseStatus() == false)
-			Client.getCloseStatus() = true;
+			Client.setCloseStatus(true);
 		return buildStatusResponse(code);
     }
 

@@ -217,6 +217,9 @@ bool Client::getCloseStatus()const{
     return _closeAfterResponse;
 }
 
+void Client::setCloseStatus(bool value){
+	_closeAfterResponse = value;
+}
 
 int Client::getFd() const{
     return _fd;
