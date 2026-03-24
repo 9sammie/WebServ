@@ -30,13 +30,13 @@ class Parser
 		bool checkType(TokenType expectedType) const;
 		const Token& consume(TokenType expectedType);
 		bool checkWord(const std::string& w) const;
-		void consumeWord(const std::string& w);
+		const Token& consumeWord(const std::string& w);
 		//void skipBlock();
 		std::size_t parseSizeT(const Token& directiveTok, const std::string& s) const;
 		int parsePositiveInt(const Token& directiveTok, const std::string& s) const;
 		std::vector<std::string> readDirectiveArgs(const Token& directiveTok);
 		ListenConfig parseListenArg(const Token& directiveTok, const std::string& s);
-		int parsePort(const std::string& s);
+		int parsePort(const Token& directiveTok, const std::string& s);
 		void parseErrorPage(std::map<int, std::string>& errors, const Token& directiveTok, const std::vector<std::string>& args);
 		bool parseOnOffArg(const Token& directiveTok, const std::vector<std::string>& args);
 		void parseLocationDirective(LocationConfig& loc, const Token& nameTok);

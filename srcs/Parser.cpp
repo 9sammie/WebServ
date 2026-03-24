@@ -41,7 +41,7 @@ const Token& Parser::previousToken() const
 std::string Parser::formatError(const Token& tok, const std::string& msg) const
 {
 	std::ostringstream out;
-	out << "webserv: [emerge] " << msg;
+	out << "webserv: [emerg] " << msg;
 	if (tok.line > 0)
 		out << " at line " << tok.line;
 	return out.str();
@@ -95,7 +95,7 @@ void Parser::throwNoOpeningBrace(const Token& directiveTok) const
 
 void Parser::throwInvalidValue(const Token& directiveTok, const std::string& value) const
 {
-	throw std::invalid_argument(formatError(directiveTok, "invalid value \"" + value + "\" in \"" + directiveTok.wordText + "\"directive"));
+	throw std::invalid_argument(formatError(directiveTok, "invalid value \"" + value + "\" in \"" + directiveTok.wordText + "\" directive"));
 }
 
 void Parser::throwDuplicateValue(const Token& directiveTok, const std::string& value) const
@@ -141,7 +141,7 @@ const Token& Parser::consumeWord(const std::string& expected)
 	if (!isNotEnd())
 		throwUnexpectedEof(expected);
 	if (!checkWord(expected))
-		throwUnexpectedToken(_toks[_pos]);
+		throwUnexpectedToken(currentToken());
 	return consume(WORD);
 }
 
@@ -171,7 +171,7 @@ const Token& Parser::consumeWord(const std::string& expected)
 std::vector<std::string> Parser::readDirectiveArgs(const Token& directiveTok)
 {
 	std::vector<std::string> args;
-	while (isNotEnd() && checkType(WORD))
+	while (checkType(WORD))
 	{
 		const Token& t = consume(WORD);
 		args.push_back(t.wordText);
@@ -197,6 +197,7 @@ bool Parser::parseOnOffArg(const Token& directiveTok, const std::vector<std::str
 	if (args[0] == "off")
 		return false;
 	throwInvalidValue(directiveTok, args[0]);
+	return false;
 }
 
 int Parser::parsePositiveInt(const Token& directiveTok, const std::string& s) const
@@ -231,9 +232,9 @@ std::size_t Parser::parseSizeT(const Token& directiveTok, const std::string& s) 
 	return static_cast<size_t>(res);
 } 
 
-int Parser::parsePort(const std::string& s)
+int Parser::parsePort(const Token& directiveTok, const std::string& s)
 {
-	int port = parsePositiveInt(s, "listen port");
+	int port = parsePositiveInt(directiveTok, s);
 	if (port < 1 || port > 65535)
 		throwInvalidValue(directiveTok, s);
 	return port;
@@ -366,7 +367,7 @@ LocationConfig Parser::parseLocationBlock(const Token& locationTok)
 	if (!checkType(WORD))
 	{
 		if (!isNotEnd())
-			throwUnexpectedEof("{");
+			throwUnexpectedEof("location modifier or prefix");
 		throwUnexpectedToken(currentToken());
 	}
 	const Token& prefixTok = consume(WORD); 
@@ -511,7 +512,7 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 		srv.maxBodySize = parseSizeT(nameTok, args[0]);
-		srv.maxBodySize = true;
+		srv.hasMaxBodySize = true;
 		return;
 	}
 	if (name == "error_page")

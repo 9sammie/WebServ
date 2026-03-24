@@ -22,7 +22,7 @@ BUILD_DIR = build
 TEST_DIR = tests
 
 SRC = \
-	srcs/main.cpp \
+	srcs/main2.cpp \
 	srcs/Lexer.cpp \
 	srcs/Parser.cpp \
 	srcs/Token.cpp \
