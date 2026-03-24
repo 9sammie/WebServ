@@ -6,7 +6,7 @@
 
 HttpParser::HttpParser() {}
 
-// HttpParser::HttpParser(const HttpParser& other) {}
+HttpParser::HttpParser(const HttpParser& other) {}
 
 // HttpParser& HttpParser::operator=(const HttpParser& other)
 // {
@@ -19,7 +19,7 @@ HttpParser::~HttpParser() {}
 
 
 // If there is a body, then retrieve and check out his size conformity.
-void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest)
+void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config)
 {
 	unsigned long	len;
 	std::string		value;
@@ -39,16 +39,20 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	errno = 0;
 	len = std::strtoul(value.c_str(), &end, 10);
 
-	// if (len > MAX_BODY_SIZE)
-	//	throw HttpException(203, "body too large");    //ask where we stock maxBodySize 
 	if ((errno == ERANGE && len == ULONG_MAX) || (errno != 0 && len == 0))
-		throw HttpException(203, "invalid content length");
+		throw HttpException(400, "invalid Content-Length");
+
 	if (errno != 0 || *end != '\0')
-			throw HttpException(203, "invalid content length");
+			throw HttpException(400, "invalid Content-Length");
+
+	if (len > _config.maxBodySize)
+		throw HttpException(413, "request entity too large");
+
 	if (bodyPart.size() < len)
-		throw HttpException(203, "incomplete");
+		throw HttpException(203, "incomplete body");
+
 	if (bodyPart.size() > len)
-		throw HttpException(203, "body size mismatch");
+		throw HttpException(400, "body size mismatch");
 	
 	tempRequest.setContentLength(len);
 	tempRequest.setBody(bodyPart.substr(0, len));
@@ -185,7 +189,7 @@ void HttpParser::getRequestParts(const std::string& buffer, std::string& request
 
 
 
-void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request)
+void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, const ServerConfig& _config)
 {
 	HttpRequest tempRequest;
 	std::string requestLine;
@@ -198,7 +202,7 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request)
 
 	parseHeaders(headerLines, tempRequest);
 
-	parseBody(bodyPart, tempRequest);
+	parseBody(bodyPart, tempRequest, _config);
 
 	request = tempRequest;
 }
