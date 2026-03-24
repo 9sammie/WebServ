@@ -14,7 +14,7 @@ class Client{
         Client& operator=(const Client& rhs);
         ~Client();
 
-        enum        BufferType {REQUEST, RESPONSE};
+        enum        BufferType {REQUEST, RESPONSE, RAW};
         typedef struct CgiInfo{
             bool    isCgi;
             int     pipeRead;
@@ -26,9 +26,9 @@ class Client{
         bool        isRequestComplete();
         bool        hasHeadersSeparator();
         bool        hasBody();
-        bool        hasContentLengthHeader();
-        ssize_t     getContentLenthSize();
-        size_t      actualBodySize();
+        bool        hasContentLengthHeader()const;
+        ssize_t     getContentLenthSize()const;
+        size_t      availableDataAfterHeaders();
         void        store(const std::string& content, BufferType type);
         void        clean(BufferType type);
         time_t      timeSinceLastActivity();
@@ -40,10 +40,13 @@ class Client{
         void        resetCgiInfos();
         size_t&     getResponseOffsetSent();
         void        resetResponseOffsetSent();
+        void        extractRequest();
+        size_t      getRequestSize()const;
 
 
     private :
 
+        std::string _rawBuffer;
         std::string _requestBuffer;
         std::string _responseBuffer;
         time_t      _lastActivity;
@@ -52,6 +55,7 @@ class Client{
         id_t        _port;
         bool        _closeAfterResponse;
         size_t      _responseOffsetSent;
+        size_t      _requestSize;
 };
 
 #endif

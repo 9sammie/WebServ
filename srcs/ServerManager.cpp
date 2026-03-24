@@ -15,19 +15,17 @@
 #include <string>
 #include <sstream>
 
-ServerManager::ServerManager(const HttpConfig& httpConfig /*std::list<int> ports*/) : _httpConfig(httpConfig){
-    std::set<int> ports;// Hardcoded, will use all ports listeners found inside serverConfig
+ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpConfig){
+    std::set<int> ports;
     for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it){
         for (size_t i = 0; i < it->listens.size(); ++i){
             ports.insert(it->listens[i].port);
         }
     }
-    // ports.push_back(8080); // Hardcoded will need HttpConfig
     _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
     _pollFds .reserve(MAX_CLIENTS + ports.size());
     for (std::set<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
     {
-        // _listeners.push_back(new TcpListener (*it));
         TcpListener* tmp = new TcpListener(*it);
         try{
             tmp->init();
@@ -99,7 +97,7 @@ int ServerManager::readClientData(int clientFd){
 
     ssize_t bytesRead = recv(clientFd, tempBuff, sizeof(tempBuff), 0);
         if (bytesRead > 0){
-            _clients[clientFd].store(std::string(tempBuff, bytesRead), Client::REQUEST);
+            _clients[clientFd].store(std::string(tempBuff, bytesRead), Client::RAW);
             _clients[clientFd].updateActivity();
             return bytesRead;
         }
@@ -117,48 +115,34 @@ int ServerManager::readClientData(int clientFd){
         }
 }
 
-void ServerManager::sendResponse(int clientFd, int idx) {// HARDCODED VERSION
-    // const char* response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";// TEMP, cooker needed HARDCODED for NOW
-    /*
-        What sendResponse will do :
-        const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE;
-
-        if (send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL)); 
-    */
-
-    if (send(clientFd, _clients[clientFd].getBuffer(Client::RESPONSE).c_str(), std::strlen(_clients[clientFd].getBuffer(Client::RESPONSE).c_str()), MSG_NOSIGNAL) < 0){
-        closeConnection(clientFd);
-    }
-    // send(clientFd, response, std::strlen(response), 0); // On MacOS, and change in the main, uncomment signal()...
-    _clients[clientFd].clean(Client::REQUEST);
-    _clients[clientFd].clean(Client::RESPONSE);
-    _pollFds[idx].events = POLLIN;
-}
-
-// void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
+void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     
-//     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
-//     size_t& offset = _clients[clientFd].getResponseOffsetSent();
-//     const void* dataToSend = response.c_str() + offset;
-//     size_t sizeToSend = response.size() - offset;
-//     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
+    const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
+    std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
+    std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
+    std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
-//     if (sent > 0){
-//         offset += sent;
-//         if (offset >= response.size()){
-//             _clients[clientFd].clean(Client::REQUEST);
-//             _clients[clientFd].clean(Client::RESPONSE);
-//             _clients[clientFd].resetResponseOffsetSent();
-//             _pollFds[idx].events = POLLIN;
-//         }
-//     }
-//     else if (sent == -1){//signaux / error a gerer
-//         if (errno == EINTR)
-//             return ;
-//         else
-//             closeConnection(clientFd);
-//     }
-// }
+    size_t& offset = _clients[clientFd].getResponseOffsetSent();
+    const void* dataToSend = response.c_str() + offset;
+    size_t sizeToSend = response.size() - offset;
+    ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
+
+    if (sent >= 0){
+        offset += sent;
+        if (offset >= response.size()){
+            _clients[clientFd].clean(Client::REQUEST);
+            _clients[clientFd].clean(Client::RESPONSE);
+            _clients[clientFd].resetResponseOffsetSent();
+            _pollFds[idx].events = POLLIN;
+        }
+    }
+    else if (sent == -1){
+        if (errno == EINTR)
+            return ;
+        else
+            closeConnection(clientFd);
+    }
+}
 
 bool    ServerManager::isListener(int fd){
     for (std::vector<TcpListener*>::const_iterator it = _listeners.begin(); it != _listeners.end(); ++it){
@@ -228,6 +212,7 @@ bool    ServerManager::receivedRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
+        _clients[fd].extractRequest();
         // COOKER call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort());
 		RequestHandler RH(serverToSend);
@@ -283,10 +268,6 @@ void    ServerManager::run(){
                     }
                 }
                 else if (_pollFds[i].revents & POLLOUT){ // Can write
-                    // if () Is cgiPOLLOUT (body needs to be write into pipeWrite)
-                    // write body inside pipeWrite. (client.getCgiInfo.pipeWrite)
-                    // IsWritefull ? close pipe/ remove from _pollFds and _cgiWrite
-                    // else{ sendResponse()}
                     if (_cgiWriteFds.count(_pollFds[i].fd)){
                         writeCgiBody(i);
                     }
@@ -338,15 +319,6 @@ size_t    ServerManager::removeReadPipe(int pipeRead){
     }
     return _pollFds.size();
 }
-
-// int ServerManager::findPipeReadByClient(int clientFd){
-//     for (std::map<int, int>::iterator it = _cgiReadFds.begin(); it != _cgiReadFds.end(); ++it){
-//         if (it->second == clientFd)
-//             return it->first;
-//     }
-//     return -1;
-// }
-
 
 void    ServerManager::writeCgiBody(size_t& idx){
    int pipeWrite = _pollFds[idx].fd;
@@ -417,16 +389,6 @@ void    ServerManager::readCgiResponse(size_t& idx){
     }
     return ;
 }
-
-
-
-// std::string ServerManager::getServerName(const std::string& body)const{
-//     std::string bodyToLower = body.to_lo
-//     size_t startPos = body.find("host:") + 6;
-//     size_t endPos = body.find("\r\n", startPos);
-//     std::string serverName = body.substr(startPos, endPos - startPos);
-//     return serverName;
-// }
 
 const ServerConfig& ServerManager::getServer(int port) const {
     for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
