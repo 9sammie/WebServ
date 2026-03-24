@@ -27,6 +27,8 @@ class Client{
         bool        hasHeadersSeparator();
         bool        hasBody();
         bool        hasContentLengthHeader()const;
+        bool        hasTransferEncodingHeader()const;
+        bool        getCloseStatus()const;
         ssize_t     getContentLenthSize()const;
         size_t      availableDataAfterHeaders();
         void        store(const std::string& content, BufferType type);
@@ -42,6 +44,9 @@ class Client{
         void        resetResponseOffsetSent();
         void        extractRequest();
         size_t      getRequestSize()const;
+        ssize_t     updateChunkSize();
+        ssize_t     getChunkData();
+        bool        finalChunkReceived();
 
 
     private :
@@ -56,6 +61,8 @@ class Client{
         bool        _closeAfterResponse;
         size_t      _responseOffsetSent;
         size_t      _requestSize;
+        ssize_t     _chunkSize;
+        bool        _transferEncoding;
 };
 
 #endif
