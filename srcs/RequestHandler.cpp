@@ -42,7 +42,7 @@ std::string RequestHandler::buildStatusResponse(int code) const
 std::string RequestHandler::buildHttpResponse(int statusCode,
                                                const std::string& reason,
                                                const std::string& body,
-                                               const std::map<std::string, std::string>& extraHeaders) const
+                                               const std::map<std::string, std::string>& extraHeaders)
 {
 	std::ostringstream oss;
 	oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
