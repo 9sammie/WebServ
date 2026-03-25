@@ -41,7 +41,7 @@ struct LocationConfig
 	int redirectCode; // 301 permanent 302 temporaire, 307 et 308 ??? dans quelle mesure c est important ?
 	std::string redirectTarget; //new path ?
 	bool hasMaxBodySize;
-	size_t maxBodySize;
+	std::size_t maxBodySize;
 	bool hasKeepalive;
 	int keepaliveTimeoutSec;
 };
@@ -57,7 +57,7 @@ struct ServerConfig
 										//listens[0].port == 8080
 	std::string serverName;
 	bool hasMaxBodySize; // ou je prends celui de hpp ?
-	size_t maxBodySize;
+	std::size_t maxBodySize;
 	std::map<int, std::string> errors; // cle : code d erreur, 
 										//valeur : le chemin de la page a afficher
 	std::string root;
@@ -73,8 +73,10 @@ struct ServerConfig
 struct HttpConfig
 {
 	HttpConfig();
+	bool hasKeepalive;
 	int keepaliveTimeoutSec;
-	size_t maxBodySize;
+	bool hasMaxBodySize;
+	std::size_t maxBodySize;
 	std::map<int, std::string> errors;
 	std::vector<ServerConfig> servers;
 };

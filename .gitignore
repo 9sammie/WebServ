@@ -1,0 +1,7 @@
+webserv
+build/
+*.o
+*.d
+*.swp
+.vscode/
+test_config
