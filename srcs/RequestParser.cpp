@@ -28,7 +28,7 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	if (!tempRequest.hasHeader("content-length"))
 	{
 		if (!bodyPart.empty())
-			throw HttpException(203, "unexpected body");
+			throw HttpException(411, "Length Required: Body present without Content-Length");
 
 		tempRequest.setBody("");
 		tempRequest.setContentLength(0);
@@ -40,10 +40,10 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	len = std::strtoul(value.c_str(), &end, 10);
 
 	if ((errno == ERANGE && len == ULONG_MAX) || (errno != 0 && len == 0))
-		throw HttpException(400, "invalid Content-Length");
+		throw HttpException(400, "bad request: invalid Content-Length");
 
 	if (errno != 0 || *end != '\0')
-			throw HttpException(400, "invalid Content-Length");
+			throw HttpException(400, "bad request: invalid Content-Length");
 
 	if (len > _config.maxBodySize)
 		throw HttpException(413, "request entity too large");
@@ -52,7 +52,7 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 		throw HttpException(203, "incomplete body");
 
 	if (bodyPart.size() > len)
-		throw HttpException(400, "body size mismatch");
+		throw HttpException(400, "bad request: body size mismatch");
 	
 	tempRequest.setContentLength(len);
 	tempRequest.setBody(bodyPart.substr(0, len));
@@ -71,21 +71,28 @@ void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& temp
 	{
 		if (!line.empty() && line[line.size() - 1] == '\r')
 		    line.erase(line.size() - 1);
+
 		if (line.empty())
-			throw HttpException(203, "invalid header format");
+			continue;
+
 		colon = line.find(':');
 		if (colon == std::string::npos)
-		throw HttpException(203, "invalid header format");
+			throw HttpException(400, "bad request: invalid header format");
 
 		key = line.substr(0, colon);
 		value = line.substr(colon + 1);
 
-		start = value.find_first_not_of(' ');
-		if (start == std::string::npos)
-			throw HttpException(203, "unexpected error");
-		value = value.substr(start);
+		for (size_t i = 0; i < key.size(); ++i)
+			key[i] = std::tolower(static_cast<unsigned char>(key[i]));
+
+		start = value.find_first_not_of(" \t");
+		if (start != std::string::npos)
+			value = value.substr(start);
+		else
+			value = "";
+
 		if (key.empty())
-			throw HttpException(203, "invalid header format");
+			throw HttpException(400, "bad request: invalid header key");
 
 		tempRequest.setHeader(key, value);
 	}
@@ -122,27 +129,27 @@ void HttpParser::tockeniseRequestLine(const std::string& requestLine,
 
 	firstSpace = requestLine.find(' ');
 	if (firstSpace == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "bad request: missing method separator");
 	method = requestLine.substr(0, firstSpace);
 
 	pathStart = requestLine.find_first_not_of(' ', firstSpace);
 	if (pathStart == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "bad request: missing path");
 	secondSpace = requestLine.find(' ', firstSpace + 1);
 	if (secondSpace == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "bad request: missing version separator");
 	path = requestLine.substr(pathStart, secondSpace - pathStart);
 
 	versionStart = requestLine.find_first_not_of(' ', secondSpace);
 	if (versionStart == std::string::npos)
-		throw HttpException(203, "invalid request line");
+		throw HttpException(400, "bad request: missing HTTP version");
 	versionEnd = requestLine.find(' ', versionStart);
 	if (versionEnd == std::string::npos)
 	    version = requestLine.substr(versionStart);
 	else
 	{
 		if (requestLine.find_first_not_of(' ', versionEnd) != std::string::npos)
-			throw HttpException(203, "invalid request line");
+			throw HttpException(400, "bad request: extra data after version");
 	    version = requestLine.substr(versionStart, versionEnd - versionStart);
 	}
 }
@@ -158,13 +165,13 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 	tockeniseRequestLine(requestLine, method, path, version);
 
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw HttpException(203, "invalid method");
+		throw HttpException(405, "method not allowed");
 
 	if (checkPath(path))
-		throw HttpException(203, "invalid uri");
+		throw HttpException(400, "bad request: invalid uri");
 
 	if (version != "HTTP/1.1")
-		throw HttpException(203, "invalid http version");
+		throw HttpException(505, "invalid http version");
 
 	tempRequest.setMethod(method);
 	tempRequest.setUri(path);
