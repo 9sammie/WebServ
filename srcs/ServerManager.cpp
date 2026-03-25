@@ -350,9 +350,8 @@ void    ServerManager::writeCgiBody(size_t& idx){
             if (removeReadPipe(pipeRead) <= idx)
                 --idx;
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-            //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT HARDCODED for NOW
-            // _clients[clientFd].store(buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
-            _clients[clientFd].store("HTTP/1.1 500 Innternal Server Error\r\nContent-Length: 0\r\n\r\n", Client::RESPONSE);
+            _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
+                "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
             setPollout(clientFd);
             return ;
         }
@@ -388,8 +387,8 @@ void    ServerManager::readCgiResponse(size_t& idx){
         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
-        //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT HARDCODED for now
-        _clients[clientFd].store("HTTP/1.1 500 Innternal Server Error\r\nContent-Length: 0\r\n\r\n", Client::RESPONSE);
+            _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
+                "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
             setPollout(clientFd);
     }
     return ;
