@@ -15,8 +15,8 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <iostream>
 #include <algorithm>
+#include <sstream>
 
 //void lexLine(const std::string& str, int line, std::vector<Token>& res);
 //static bool isWhitespace(char c);
@@ -37,6 +37,27 @@ Lexer& Lexer::operator=(const Lexer& src)
 	return *this;
 }
 
+std::string Lexer::formatError(const std::string& file, int line, const std::string& msg) const
+{
+    std::ostringstream out;
+    out << "webserv: [emerg] " << msg;
+    if (!file.empty())
+        out << " in " << file;
+    if (line > 0)
+        out << ":" << line;
+    return out.str();
+}
+
+void Lexer::throwLexError(const std::string& file, int line, const std::string& msg) const
+{
+    throw std::runtime_error(formatError(file, line, msg));
+}
+
+void Lexer::throwIncludeError(const std::string& file, int line, const std::string& msg) const //voir si ce n est pas redondant ???
+{
+    throw std::runtime_error(formatError(file, line, msg));
+}
+
 bool Lexer::isIncludeDirective(const std::vector<Token>& in, size_t i) const
 {
 	if (i < in.size() && in[i].type == WORD && in[i].wordText == "include")
@@ -45,7 +66,7 @@ bool Lexer::isIncludeDirective(const std::vector<Token>& in, size_t i) const
 		return false;
 }
 
-void Lexer::validateIncludeDirective(const std::vector<Token>& in, size_t i) const
+/*void Lexer::validateIncludeDirective(const std::vector<Token>& in, size_t i) const
 {
 	if (i + 2 >= in.size())
 		throw std::runtime_error("invalid include directive (expected: include <file> ; )");
@@ -53,6 +74,27 @@ void Lexer::validateIncludeDirective(const std::vector<Token>& in, size_t i) con
 		throw std::runtime_error("invalid include directive (expected include path as WORD)");
 	if (in[i + 2].type != SEMICOLON)
 		throw std::runtime_error("invalid include directive ( missing ';')");
+}*/
+
+void Lexer::validateIncludeDirective(const std::vector<Token>& in,
+                                     size_t i,
+                                     const std::string& currentFile) const
+{
+    int line = 0;
+    if (i < in.size())
+        line = in[i].line;
+
+    if (i + 2 >= in.size())
+        throwIncludeError(currentFile, line,
+            "invalid number of arguments in \"include\" directive");
+
+    if (in[i + 1].type != WORD)
+        throwIncludeError(currentFile, line,
+            "invalid value in \"include\" directive");
+
+    if (in[i + 2].type != SEMICOLON)
+        throwIncludeError(currentFile, line,
+            "directive \"include\" is not terminated by \";\"");
 }
 
 std::string Lexer::resolveIncludedFile(const std::vector<Token>& in, size_t i, const std::string& currentFile) const
@@ -85,14 +127,11 @@ std::vector<Token> Lexer::expandIncludes(const std::vector<Token>& in,
                                         std::vector<std::string>& includeStack,
                                         int depth)
 {
-    if (depth > 5)
-        throw std::runtime_error("include depth too large (possible include loop): " + currentFile);
-
-    if (std::find(includeStack.begin(), includeStack.end(), currentFile) != includeStack.end())
-        throw std::runtime_error("include loop detected with file: " + currentFile);
-
+	if (depth > 5)
+		throw std::runtime_error(formatError(currentFile, 0, "too many nested includes"));
+	if (std::find(includeStack.begin(), includeStack.end(), currentFile) != includeStack.end())
+		throw std::runtime_error(formatError(currentFile, 0, "include cycle detected"));
     includeStack.push_back(currentFile);
-
     std::vector<Token> out;
     out.reserve(in.size());
 
@@ -100,10 +139,10 @@ std::vector<Token> Lexer::expandIncludes(const std::vector<Token>& in,
     {
 		if (isIncludeDirective(in, i))
 		{
-			validateIncludeDirective(in, i);
+			validateIncludeDirective(in, i, currentFile);
 			std::string incPath = resolveIncludedFile(in, i, currentFile);
 			std::vector<Token> incRaw = lexFileRaw(incPath);
-			std::vector<Token> incExpanded = expandIncludes(incRaw, incPath, includeStack, depth = 1);
+			std::vector<Token> incExpanded = expandIncludes(incRaw, incPath, includeStack, depth + 1);
 			out.insert(out.end(), incExpanded.begin(), incExpanded.end());
 			i = i + 3;
 			continue;
@@ -126,7 +165,7 @@ std::vector<Token> Lexer::lexFileRaw(const std::string& path)
 {
     std::ifstream infile(path.c_str());//ouvrir le fichier
     if (!infile.is_open())
-        throw std::runtime_error("cannot open file: " + path);
+        throw std::runtime_error(formatError(path, 0, "open() \"" + path + "\" failed"));
     std::vector<Token> res;
     int line = 1;
     while (std::getline(infile, _buf))//parcourir ligne par ligne
@@ -137,17 +176,17 @@ std::vector<Token> Lexer::lexFileRaw(const std::string& path)
             continue;
         }
 
-        lexLine(_buf, line, res); //decouper la ligne en tokens
+        lexLine(_buf, line, res, path); //decouper la ligne en tokens
         ++line;
     }
 	
     if (res.empty())
-        throw std::runtime_error("empty or comment only " + path);
+        throw std::runtime_error(formatError(path, 0, "no tokens found in configuration"));
 
     return res;//retourne des tokens en vector
 }
 
-void Lexer::lexLine(const std::string& str, int line, std::vector<Token>& res)
+/*void Lexer::lexLine(const std::string& str, int line, std::vector<Token>& res)//peut avoir un souci, a revoir
 {
 	size_t i = 0;
 	while (i < str.size())
@@ -180,6 +219,53 @@ void Lexer::lexLine(const std::string& str, int line, std::vector<Token>& res)
 		if (i > start)
 			res.push_back(Token(WORD, str.substr(start, i - start), line));
 	}
+}*/
+
+void Lexer::lexLine(const std::string& str, int line, std::vector<Token>& res, const std::string& path)
+{
+    std::size_t i = 0;
+    while (i < str.size())
+    {
+        while (i < str.size() && isWhitespace(str[i]))
+            ++i;
+
+        if (i >= str.size())
+            return;
+
+        if (str[i] == '{')
+        {
+            res.push_back(Token(LBRACE, "{", line));
+            ++i;
+            continue;
+        }
+
+        if (str[i] == '}')
+        {
+            res.push_back(Token(RBRACE, "}", line));
+            ++i;
+            continue;
+        }
+
+        if (str[i] == ';')
+        {
+            res.push_back(Token(SEMICOLON, ";", line));
+            ++i;
+            continue;
+        }
+
+        std::size_t start = i;
+        while (i < str.size() && !isWhitespace(str[i]) && !isDelim(str[i]) && str[i] != '#')
+            ++i;
+
+        if (i > start)
+        {
+            res.push_back(Token(WORD, str.substr(start, i - start), line));
+            continue;
+        }
+
+        throwLexError(path, line,
+            std::string("unexpected character \"") + str[i] + "\"");
+    }
 }
 		
 bool Lexer::isWhitespace(char c)

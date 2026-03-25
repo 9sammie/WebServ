@@ -22,7 +22,6 @@ class RequestHandler
     	// - une réponse HTTP complète si la requête est complète ou en cas d'erreur,
     	// - une string vide si la requête est incomplète (caller doit attendre + données).
 		std::string handleRequest(Client& Client);
-		static bool getCloseConnection();
 	
 	private:
 		const ServerConfig& _config;
