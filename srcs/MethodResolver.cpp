@@ -129,7 +129,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 			}
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "text/html";
-			outResponse = buildHttpResponse(200, "OK", listing, headers);
+			outResponse = buildHttpResponse(200, "OK", listing, false, headers);
 			return false;
 		}
 		outResponse = buildStatusResponse(403);
@@ -166,5 +166,5 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 	std::string							body = buffer.str();
 
 	headers["Content-Type"] = getMimeType(resolvedPath);
-	return buildHttpResponse(200, "OK", body, headers);
+	return buildHttpResponse(200, "OK", body, false, headers);
 }

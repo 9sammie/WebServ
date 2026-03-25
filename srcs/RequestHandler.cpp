@@ -1,14 +1,15 @@
 #include "RequestHandler.hpp"
+#include "CgiHandler.hpp"
 #include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <cctype>
 
 RequestHandler::RequestHandler(const ServerConfig& config)
-    : _config(config), _parser() {}
+    : _config(config), _parser(), _closeConnection(false) {}
 
 RequestHandler::RequestHandler(const RequestHandler& other)
-	: _config(other._config), _parser() {}
+	: _config(other._config), _parser(), _closeConnection(false) {}
 
 RequestHandler::~RequestHandler() {}
 
@@ -29,24 +30,24 @@ static std::string getReasonPhrase(int code)
 
 std::string RequestHandler::buildStatusResponse(int code) const
 {
-	if (code == 204)
-		return buildHttpResponse(204, "No Content", "");
+	if (code >= 200 && code < 300)
+		return buildHttpResponse(code, "No Content", "", false);
 	std::string reason = getReasonPhrase(code);
 	std::ostringstream oss;
 	oss << "<html><body><h1>" << code << " " << reason << "</h1></body></html>";
-	return buildHttpResponse(code, reason, oss.str());
+	return buildHttpResponse(code, reason, oss.str(), true);
 }
-
-// Je travail dessus, ce n'est pas du tout finis :)
 
 std::string RequestHandler::buildHttpResponse(int statusCode,
                                                const std::string& reason,
                                                const std::string& body,
+											   const bool closeConnection,
                                                const std::map<std::string, std::string>& extraHeaders)
 {
 	std::ostringstream oss;
 	oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
-	oss << "Connection: close\r\n";
+	if (closeConnection == true)
+		oss << "Connection: close\r\n";
 
     if (!body.empty())
     {
@@ -71,6 +72,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     HttpRequest request;
     std::string fullPath;
 	const LocationConfig* loc = NULL;
+	DataCgi data;
 
     try
     {
@@ -95,7 +97,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     {
         int code = he.getStatusCode();
 		if (code < 400)
-			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>");
+			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
 		if (Client.getCloseStatus() == false)
 			Client.setCloseStatus(true);
 		return buildStatusResponse(code);
@@ -114,6 +116,12 @@ std::string RequestHandler::handleRequest(Client& Client)
 
     if (method == "DELETE")
         return handleDELETE(fullPath);
+
+	// if (method == "DataCgi")
+	// {
+
+	// 	data = CgiHandler(data);
+	// }
 
     return buildStatusResponse(405);
 }

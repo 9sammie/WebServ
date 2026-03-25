@@ -1,7 +1,9 @@
 A faire:
 
--checker ma formulation de reponse quand il y a un
-body et ou je renvoie/stock la reponse.
+-implementer le 0 pour le content length = body size illimité
 
--est-ce que je detecte si debut de deuxieme requete
-s'il y n a une.
+-gerer le 0 pour timeout = renvoyer closeconnection
+
+-gerer le cgi
+
+-
