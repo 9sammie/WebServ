@@ -34,11 +34,11 @@ class RequestHandler
 	std::string handleDELETE(const std::string& path);
 
 	std::string buildStatusResponse(int code) const;
-	std::string buildHttpResponse(int statusCode,
+	static std::string buildHttpResponse(int statusCode,
 									const std::string& reason,
 									const std::string& body,
 									const std::map<std::string, std::string>& extraHeaders
-									= std::map<std::string, std::string>()) const;
+									= std::map<std::string, std::string>());
 };
 
 #endif
