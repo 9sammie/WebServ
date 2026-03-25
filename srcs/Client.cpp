@@ -14,7 +14,7 @@ Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _closeAfterRespons
     _cgiInfo.bodyWrittenBytes = 0;
 }
 
-Client::Client(int fd, int serverPort, int clientPort): _fd(fd),_serverPort(serverPort), _clientPort(clientPort), _closeAfterResponse(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false){
+Client::Client(int fd, int serverPort, int clientPort, std::string remoteAddr): _fd(fd),_serverPort(serverPort), _clientPort(clientPort), _remoteAddr(remoteAddr), _closeAfterResponse(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
@@ -268,8 +268,8 @@ void        Client::resetResponseOffsetSent(){
 Client::~Client(){}
 
 Client::Client(const Client& src) : _rawBuffer(src._rawBuffer), _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
-_lastActivity(src._lastActivity), _fd(src._fd), _serverPort(src._serverPort), _clientPort(src._clientPort), _closeAfterResponse(src._closeAfterResponse),
-_responseOffsetSent(src._responseOffsetSent), _chunkSize(src._chunkSize), _transferEncoding(src._transferEncoding){
+_lastActivity(src._lastActivity), _fd(src._fd), _serverPort(src._serverPort), _clientPort(src._clientPort), _remoteAddr(src._remoteAddr), 
+_closeAfterResponse(src._closeAfterResponse), _responseOffsetSent(src._responseOffsetSent), _chunkSize(src._chunkSize), _transferEncoding(src._transferEncoding){
    _cgiInfo = src._cgiInfo;
 }
 
@@ -287,14 +287,19 @@ Client& Client::operator=(const Client& rhs){
         _responseOffsetSent = rhs._responseOffsetSent;
         _chunkSize = rhs._chunkSize;
         _transferEncoding = rhs._transferEncoding;
+        _remoteAddr = rhs._remoteAddr;
     }
     return *this;
 }
 
-id_t        Client::getPort(PortType type)const{
+int        Client::getPort(PortType type)const{
     if (type == SERVER)
         return _serverPort;
     return _clientPort;
+}
+
+std::string Client::getRemoteAddr()const{
+    return _remoteAddr;
 }
 
 size_t      Client::getRequestSize()const{

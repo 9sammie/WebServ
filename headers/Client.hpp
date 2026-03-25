@@ -9,7 +9,7 @@ class Client{
 
     public :
         Client();
-        Client(int fd, int serverPort, int clientPort);   
+        Client(int fd, int serverPort, int clientPort, std::string remoteAddr);   
         Client(const Client& src);
         Client& operator=(const Client& rhs);
         ~Client();
@@ -37,10 +37,13 @@ class Client{
         void        clean(BufferType type);
         time_t      timeSinceLastActivity();
         void        updateActivity();
+
         int         getFd()const;
-        const std::string& getBuffer(BufferType type);
         CgiInfo&    getCgiInfo();
-        id_t        getPort(PortType type)const;
+        int         getPort(PortType type)const;
+        std::string getRemoteAddr()const;
+        const std::string& getBuffer(BufferType type);
+
         void        resetCgiInfos();
         size_t&     getResponseOffsetSent();
         void        resetResponseOffsetSent();
@@ -61,6 +64,7 @@ class Client{
         CgiInfo     _cgiInfo;
         int         _serverPort;
         int         _clientPort;
+        std::string _remoteAddr;
         bool        _closeAfterResponse;
         size_t      _responseOffsetSent;
         size_t      _requestSize;

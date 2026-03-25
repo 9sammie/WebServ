@@ -14,6 +14,8 @@
 #include "RequestHandler.hpp"
 #include <string>
 #include <sstream>
+#include "RequestHandler.hpp"
+#include <arpa/inet.h>
 
 ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpConfig){
     std::set<int> ports;
@@ -75,7 +77,8 @@ void ServerManager::acceptNewConnection(int serverFd){
     newSPollFd.events = POLLIN;
     newSPollFd.revents = 0;
     _pollFds.push_back(newSPollFd);
-    _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port);
+    std::string remoteAddr = inet_ntoa(address.sin_addr);
+    _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     //Debug
     std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
@@ -348,6 +351,7 @@ void    ServerManager::writeCgiBody(size_t& idx){
                 --idx;
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
             //IMPORTANT HERE ADD A store  a 500 Internal Server Error to the client _reponseBuffer and then switch to POLLOUT HARDCODED for NOW
+            // _clients[clientFd].store(buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
             _clients[clientFd].store("HTTP/1.1 500 Innternal Server Error\r\nContent-Length: 0\r\n\r\n", Client::RESPONSE);
             setPollout(clientFd);
             return ;

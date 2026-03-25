@@ -12,7 +12,7 @@ typedef struct DataCgi{
 
     std::string method; //GET, POST, DELETE
     std::string serverProtocol;// HTTP/1.1
-    std::string URI; // /cgi-bin/script.py/foo/bar?x=1
+    std::string requestURI; // /cgi-bin/script.py/foo/bar?x=1
     std::string scriptName;// /cgi-bin/script.py
     std::string pathInfo;///foo/bar    extra path information that comes after the CGI script name in the URL
     std::string queryString; // x=1 part after ? in URI, first line of request
@@ -36,16 +36,16 @@ typedef struct DataCgi{
     /*       during client/listenners initialisation         */
     /*********************************************************/
 
-    std::string remoteAddr; //adress IP client
     std::string serverPort;// port on which a client is connected, stored inside each client
+    std::string remoteAddr; //adress IP client
     std::string remotePort;//client port stored inside each client
 
     /*********************************************************/
     /*          just initialize it                           */
     /*********************************************************/
 
-    std::string redirectStatus;// used by php, usually 200, could crash if not present
     std::string gateWayInterface;//version of the cgi CGI/1.1
+    std::string redirectStatus;// used by php, usually 200, could crash if not present
 
     /*********************************************************/
     /*          Bonus                                        */
@@ -68,13 +68,12 @@ Client::CgiInfo failedCgiHandler(){
 
 std::vector<std::string> buildEnvpData(DataCgi data){
     std::vector<std::string> envpData;
-
     envpData.push_back("REQUEST_METHOD=" + data.method);
+    envpData.push_back("SERVER_PROTOCOL=" + data.serverProtocol);
+    envpData.push_back("SCRIPT_NAME=" + data.scriptName);
+    envpData.push_back("REQUEST_URI=" + data.requestURI);
+    envpData.push_back("PATH_INFO=" + data.pathInfo);
     envpData.push_back("QUERY_STRING=" + data.queryString);
-    envpData.push_back("SCRIPT_NAME=" + data.URI);
-    envpData.push_back("GATEWAY_INTERFACE=CGI/1.1");
-    envpData.push_back("SERVER_PROTOCOL=HTTP/1.1");
-
     for (std::map<std::string, std::string>::const_iterator it = data.headers.begin(); it != data.headers.end(); ++it){
          std::string key = it->first;
         for(size_t i = 0; i <key.size(); ++i){
@@ -86,9 +85,17 @@ std::vector<std::string> buildEnvpData(DataCgi data){
     }
     envpData.push_back("CONTENT_TYPE=" + data.contentType);
     envpData.push_back("CONTENT_LENGTH=" + data.contentLength);
-    envpData.push_back("SERVER_PORT=" + data.serverPort);
+
+
     envpData.push_back("SERVER_NAME=" + data.serverName);
-    envpData.push_back("PATH_INFO=" + data.pathInfo);
+    envpData.push_back("SCRIPT_FILENAME=" + data.scriptFilename);
+    envpData.push_back("DOCUMENT_ROOT=" + data.documentRoot);
+    envpData.push_back("SERVER_PORT=" + data.serverPort);
+    envpData.push_back("REMOTE_ADDR=" + data.remoteAddr);
+    envpData.push_back("REMOTE_PORT=" + data.remotePort);
+
+    envpData.push_back("GATEWAY_INTERFACE=" + data.gateWayInterface);
+    envpData.push_back("REDIRECT_STATUS=" + data.redirectStatus);
     return envpData;
 }
 
