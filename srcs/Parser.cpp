@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/24 19:03:47 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/25 12:33:04 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,7 +212,7 @@ int Parser::parsePositiveInt(const Token& directiveTok, const std::string& s) co
 	if (res < 0)
 		throwInvalidValue(directiveTok, s); //positifs
 	if (res > std::numeric_limits<int>::max())
-		throwInvalidValue(directiveTok, s); //doit rentrer dans int
+		throwInvalidValue(directiveTok, s); //doit rentrer dans int, on peut changer pour des valeurs plus raisonnables :)
 	return static_cast<int>(res);
 }	
 
@@ -227,7 +227,7 @@ std::size_t Parser::parseSizeT(const Token& directiveTok, const std::string& s) 
 	unsigned long long res = std::strtoull(s.c_str(), &end, 10);
 	if (errno != 0 || end == s.c_str() || *end != '\0')
 		throwInvalidValue(directiveTok, s);
-	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max()))
+	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) //on peux changer aussi pour le temps raisonnable
 		throwInvalidValue(directiveTok, s);
 	return static_cast<size_t>(res);
 } 

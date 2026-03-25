@@ -6,7 +6,7 @@
 #    By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/03/20 12:17:54 by vakozhev         ###   ########lyon.fr    #
+#    Updated: 2026/03/25 14:22:47 by vakozhev         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ NAME = webserv
 TEST_NAME = testLexer
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror
 DEPFLAGS = -MMD -MP #creer un fichier de dep
 
 SRC_DIR = srcs
@@ -22,11 +22,22 @@ BUILD_DIR = build
 TEST_DIR = tests
 
 SRC = \
-	srcs/main2.cpp \
+	srcs/main.cpp \
 	srcs/Lexer.cpp \
 	srcs/Parser.cpp \
 	srcs/Token.cpp \
-	srcs/Config.cpp
+	srcs/Config.cpp \
+	srcs/CgiHandler.cpp \
+	srcs/Client.cpp \
+	srcs/HttpException.cpp \
+	srcs/HttpRequest.cpp \
+	srcs/MethodResolver.cpp \
+	srcs/RequestHandler.cpp \
+	srcs/RequestParser.cpp \
+	srcs/ServerManager.cpp \
+	srcs/Signal.cpp \
+	srcs/TcpListener.cpp \
+	srcs/UriResolver.cpp
 
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEP = $(OBJ:.o=.d)
