@@ -197,23 +197,22 @@ std::string UriResolver::extractPath(const std::string& uri)
 	return path;
 }
 
-std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc)
+std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc, Client& Client)
 {
 	std::string path;
 	std::string fullPath;
 
 	path = extractPath(request.getUri());
-	printf("Path: %s\n", path.c_str());
 	path = urlDecode(path);
-	printf("Path: %s\n", path.c_str());
 	path = normalize(path);
-	printf("Path: %s\n", path.c_str());
+
 	loc = findMatchingLocation(path);
-	printf("loc: %s\n", loc->root.c_str());
 	if (!loc)
 		throw HttpException(400, "invalid path");
+	if (loc->keepaliveTimeoutSec == 0)
+		Client.setCloseStatus(true);
+
 	fullPath = applyRootOrAlias(path, loc);
-	printf("Path: %s\n", fullPath.c_str());
 	if (!isPathSecure(fullPath, loc))
 		throw HttpException(400, "invalid path");
 

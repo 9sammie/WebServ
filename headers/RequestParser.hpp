@@ -17,7 +17,7 @@ class HttpParser
 		void tockeniseRequestLine(const std::string& requestLine, std::string& method, std::string& path, std::string& version);
 		void parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
 		void parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
-		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config);
+		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc);
 
 		private:
 		HttpParser(const HttpParser& other);

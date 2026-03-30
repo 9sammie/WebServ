@@ -6,7 +6,7 @@
 /*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/30 14:30:05 by maballet         ###   ########lyon.fr   */
+/*   Updated: 2026/03/30 15:53:35 by maballet         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,7 +297,6 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 
-		printf("hey\n");
 		char absPath[PATH_MAX];
         if (realpath(args[0].c_str(), absPath) != NULL)
 		{

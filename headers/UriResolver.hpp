@@ -3,6 +3,7 @@
 
 #include "HttpRequest.hpp"
 #include "Config.hpp"
+#include "Client.hpp"
 
 class UriResolver
 {
@@ -12,15 +13,15 @@ private:
 	std::string				extractPath(const std::string& uri);
 	std::string				urlDecode(const std::string& path);
 	std::string				normalize(const std::string& path);
-	const LocationConfig*	findMatchingLocation(const std::string& path);
 	std::string				applyRootOrAlias(const std::string& path, const LocationConfig*);
 	bool					isPathSecure(const std::string& fullPath, const LocationConfig* loc);
-
+	
 	public:
 	UriResolver(const ServerConfig& config);
 	~UriResolver();
-
-	std::string				resolve(const HttpRequest& request, const LocationConfig*& loc);
+	
+	std::string				resolve(const HttpRequest& request, const LocationConfig*& loc, Client& client);
+	const LocationConfig*	findMatchingLocation(const std::string& path);
 };
 
 #endif

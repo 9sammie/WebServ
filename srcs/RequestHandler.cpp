@@ -74,7 +74,6 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	DataCgi data;
 
-	printf("hey\n");
     try
     {
         _parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);
@@ -84,23 +83,21 @@ std::string RequestHandler::handleRequest(Client& Client)
         int code = he.getStatusCode();
         if (code == 203)
             return "";
-		if (Client.getCloseStatus() == false)
-			Client.setCloseStatus(true);
+		Client.setCloseStatus(true);
 		return buildStatusResponse(code);
     }
 
     try
     {
         UriResolver locateRessource(_config);
-        fullPath = locateRessource.resolve(request, loc);
+        fullPath = locateRessource.resolve(request, loc, Client);
     }
     catch (const HttpException& he)
     {
         int code = he.getStatusCode();
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
-		if (Client.getCloseStatus() == false)
-			Client.setCloseStatus(true);
+		Client.setCloseStatus(true);
 		return buildStatusResponse(code);
     }
 

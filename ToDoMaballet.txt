@@ -1,9 +1,7 @@
 A faire:
 
--implementer le 0 pour le content length = body size illimité
+-implementer le 0 pour le content length = body size illimité ✅
 
--gerer le 0 pour timeout = renvoyer closeconnection
+-gerer le 0 pour timeout = renvoyer closeconnection ✅
 
 -gerer le cgi
-
--

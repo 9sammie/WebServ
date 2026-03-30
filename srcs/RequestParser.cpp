@@ -1,4 +1,5 @@
 #include "RequestParser.hpp"
+#include "UriResolver.hpp"
 #include <sstream>
 #include <cerrno>
 #include <cstdlib>
@@ -19,11 +20,12 @@ HttpParser::~HttpParser() {}
 
 
 // If there is a body, then retrieve and check out his size conformity.
-void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config)
+void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
 {
 	unsigned long	len;
 	std::string		value;
 	char*			end;
+	size_t limit;
 
 	if (!tempRequest.hasHeader("content-length"))
 	{
@@ -45,7 +47,9 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	if (errno != 0 || *end != '\0')
 			throw HttpException(400, "bad request: invalid Content-Length");
 
-	if (len > _config.maxBodySize)
+	limit = (loc && loc->hasMaxBodySize) ? loc->maxBodySize : _config.maxBodySize;
+
+	if (loc->maxBodySize != 0 && len > loc->maxBodySize)
 		throw HttpException(413, "request entity too large");
 
 	if (bodyPart.size() < len)
@@ -202,6 +206,9 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	std::string requestLine;
 	std::string headerLines;
 	std::string bodyPart;
+	UriResolver locateRessource(_config);
+	const LocationConfig* loc = NULL;
+
 
 	getRequestParts(buffer, requestLine, headerLines, bodyPart);
 
@@ -209,7 +216,10 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 
 	parseHeaders(headerLines, tempRequest);
 
-	parseBody(bodyPart, tempRequest, _config);
+	loc = locateRessource.findMatchingLocation(tempRequest.getUri());
+
+	parseBody(bodyPart, tempRequest, _config, loc);
+
 
 	request = tempRequest;
 }
