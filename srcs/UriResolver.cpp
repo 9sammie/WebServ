@@ -12,61 +12,81 @@ UriResolver::~UriResolver() {}
 
 
 
-bool UriResolver::isPathSecure(const std::string& fullPath)
+bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig* loc)
 {
 	char actualPath[PATH_MAX];
-
-	if (realpath(fullPath.c_str(), actualPath) == NULL)
-		return true; 
-
-	std::string realFullPath(actualPath);
-
 	char rootAbs[PATH_MAX];
-	if (realpath(_config.root.c_str(), rootAbs) == NULL)
+	std::string realFullPath;
+	std::string realRoot;
+	std::string dirPath;
+	std::string realDir;
+	size_t lastSlash;
+
+	if (realpath(loc->root.c_str(), rootAbs) == NULL)
 		return false;
+	realRoot = rootAbs;
 
-	std::string realRoot(rootAbs);
-
-	if (realFullPath.compare(0, realRoot.size(), realRoot) == 0)
-		return true;
-
-	return false;
+	if (realpath(fullPath.c_str(), actualPath) != NULL)
+	{
+		realFullPath = actualPath;
+		if (realFullPath.compare(0, realRoot.size(), realRoot) == 0)
+		{
+			if (realFullPath.size() == realRoot.size() || realFullPath[realRoot.size()] == '/')
+				return true;
+		}
+		return false;
+	}
+	else
+	{
+		dirPath = fullPath;
+		lastSlash = dirPath.find_last_of('/');
+		if (dirPath.empty())
+			dirPath = ".";
+		if (realpath(dirPath.c_str(), actualPath) != NULL)
+		{
+			realDir = actualPath;
+			if (realDir.compare(0, realRoot.size(), realRoot) == 0)
+			{
+				if (realDir.size() == realRoot.size() || realDir[realRoot.size()] == '/')
+					return true;
+			}
+		}
+		return false;
+	}
 }
 
 std::string UriResolver::applyRootOrAlias(const std::string& path, const LocationConfig* loc)
 {
-std::string base;
-    std::string remaining;
+	std::string fullPath;
+	std::string base;
 
-    if (loc)
-    {
-        base = loc->root;
-        std::string prefix = loc->prefix;
+	if (loc && !loc->alias.empty())
+	{
+		std::string prefix = loc->prefix;
+		std::string alias = loc->alias;
 
-        if (path.compare(0, prefix.size(), prefix) == 0)
-        {
-            remaining = path.substr(prefix.size());
-        }
-        else
-        {
-            remaining = path;
-        }
-    }
-    else
-    {
-        base = _config.root;
-        remaining = path;
-    }
+		std::string remaining = path.substr(prefix.size());
+		base = alias;
+		fullPath = base + remaining;
+	}
+	else
+	{
+		if (loc)
+			base = loc->root;
+		else
+			base = _config.root;
 
-    std::string fullPath = base + "/" + remaining;
+		fullPath = base + path;
+	}
 
-    std::string cleanPath;
-    for (size_t i = 0; i < fullPath.size(); ++i) {
-        if (fullPath[i] == '/' && i + 1 < fullPath.size() && fullPath[i+1] == '/')
-            continue;
-        cleanPath += fullPath[i];
-    }
-    return cleanPath;
+	std::string cleanPath;
+	for (size_t i = 0; i < fullPath.size(); ++i) {
+		if (fullPath[i] == '/' && i + 1 < fullPath.size() && fullPath[i+1] == '/')
+			continue;
+		cleanPath += fullPath[i];
+	}
+
+	return cleanPath;
 }
 
 const LocationConfig* UriResolver::findMatchingLocation(const std::string& path)
@@ -75,22 +95,18 @@ const LocationConfig* UriResolver::findMatchingLocation(const std::string& path)
     size_t longestLength = 0;
     const std::vector<LocationConfig>& locations = _config.locations;
 
-	printf("--- DEBUG MATCHING pour : %s ---\n", path.c_str());		
     for (size_t i = 0; i < locations.size(); ++i)
     {
         const std::string& prefix = locations[i].prefix;
-        printf("  Check prefix: [%s] \n", prefix.c_str());
 
         if (path.compare(0, prefix.size(), prefix) == 0)
         {
             if (path.size() == prefix.size() || prefix[prefix.size() - 1] == '/' || path[prefix.size()] == '/')
             {
-				printf(" -> MATCH\n");
                 if (prefix.size() >= longestLength)
                 {
                     longestLength = prefix.size();
                     bestMatch = &locations[i];
-					printf("NOUBEAU BEST\n");
                 }
             }
         }
@@ -132,7 +148,7 @@ std::string UriResolver::normalize(const std::string& path)
     return res;
 }
 
-// Ici on check s'il y a des caracteres encodé et on les remplacent par leur valeur en ascii (ex: )
+// Check s'il y a des caracteres encodé et on les remplacent par leur valeur en ascii
 std::string UriResolver::urlDecode(const std::string& path)
 {
 	std::string result;
@@ -187,12 +203,19 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	std::string fullPath;
 
 	path = extractPath(request.getUri());
+	printf("Path: %s\n", path.c_str());
 	path = urlDecode(path);
+	printf("Path: %s\n", path.c_str());
 	path = normalize(path);
+	printf("Path: %s\n", path.c_str());
 	loc = findMatchingLocation(path);
+	printf("loc: %s\n", loc->root.c_str());
+	if (!loc)
+		throw HttpException(400, "invalid path");
 	fullPath = applyRootOrAlias(path, loc);
-	if (!isPathSecure(fullPath))
-		throw HttpException(203, "invalid path");
-	printf("77777777777777777 fullPath:     %s", fullPath.c_str());
+	printf("Path: %s\n", fullPath.c_str());
+	if (!isPathSecure(fullPath, loc))
+		throw HttpException(400, "invalid path");
+
 	return fullPath;
 }

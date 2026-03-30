@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/25 12:33:04 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/03/30 14:30:05 by maballet         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <cerrno>
 #include <limits>
 #include <sstream>
+#include <climits>
 
 Parser::Parser(const std::vector<Token>& toks) : _toks(toks), _pos(0)
 {}
@@ -295,7 +296,17 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
-		loc.root = args[0];
+
+		printf("hey\n");
+		char absPath[PATH_MAX];
+        if (realpath(args[0].c_str(), absPath) != NULL)
+		{
+            loc.root = std::string(absPath);
+        }
+		else
+		{
+            loc.root = args[0];
+        }
 		return;
 	}
 	if (name == "index")

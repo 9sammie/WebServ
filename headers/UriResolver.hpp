@@ -14,7 +14,7 @@ private:
 	std::string				normalize(const std::string& path);
 	const LocationConfig*	findMatchingLocation(const std::string& path);
 	std::string				applyRootOrAlias(const std::string& path, const LocationConfig*);
-	bool					isPathSecure(const std::string& fullPath);
+	bool					isPathSecure(const std::string& fullPath, const LocationConfig* loc);
 
 	public:
 	UriResolver(const ServerConfig& config);
