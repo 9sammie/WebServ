@@ -22,6 +22,12 @@ class RequestHandler
     	// - une réponse HTTP complète si la requête est complète ou en cas d'erreur,
     	// - une string vide si la requête est incomplète (caller doit attendre + données).
 		std::string handleRequest(Client& Client);
+		static std::string buildHttpResponse(int statusCode,
+									const std::string& reason,
+									const std::string& body,
+									const bool closeConnection,
+									const std::map<std::string, std::string>& extraHeaders
+									= std::map<std::string, std::string>());
 	
 	private:
 		const ServerConfig& _config;
@@ -35,12 +41,6 @@ class RequestHandler
 	std::string handleDELETE(const std::string& path);
 
 	std::string buildStatusResponse(int code) const;
-	static std::string buildHttpResponse(int statusCode,
-									const std::string& reason,
-									const std::string& body,
-									const bool closeConnection,
-									const std::map<std::string, std::string>& extraHeaders
-									= std::map<std::string, std::string>());
 };
 
 #endif

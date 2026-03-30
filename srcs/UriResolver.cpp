@@ -22,7 +22,7 @@ bool UriResolver::isPathSecure(const std::string& fullPath)
 	std::string realFullPath(actualPath);
 
 	char rootAbs[PATH_MAX];
-	if (realpath(_config.root.c_str(), rootAbs) == NULL) // creer une variable Root dans serverConfig.
+	if (realpath(_config.root.c_str(), rootAbs) == NULL)
 		return false;
 
 	std::string realRoot(rootAbs);
@@ -35,57 +35,62 @@ bool UriResolver::isPathSecure(const std::string& fullPath)
 
 std::string UriResolver::applyRootOrAlias(const std::string& path, const LocationConfig* loc)
 {
-	std::string fullPath;
-	std::string base;
+std::string base;
+    std::string remaining;
 
-	if (loc && !loc->alias.empty()) // creer une variable Alias dans LocationConfig.
-	{
-		std::string prefix = loc->prefix;
-		std::string alias = loc->alias; // creer une variable Alias dans LocationConfig.
+    if (loc)
+    {
+        base = loc->root;
+        std::string prefix = loc->prefix;
 
-		std::string remaining = path.substr(prefix.size());
-		base = alias;
-		fullPath = base + remaining;
-	}
-	else
-	{
-		if (loc)
-			base = loc->root;
-		else
-			base = _config.root; // creer une variable Root dans serverConfig.
+        if (path.compare(0, prefix.size(), prefix) == 0)
+        {
+            remaining = path.substr(prefix.size());
+        }
+        else
+        {
+            remaining = path;
+        }
+    }
+    else
+    {
+        base = _config.root;
+        remaining = path;
+    }
 
-		fullPath = base + path;
-	}
+    std::string fullPath = base + "/" + remaining;
 
-	std::string cleanPath;
-	for (size_t i = 0; i < fullPath.size(); ++i) {
-		if (fullPath[i] == '/' && i + 1 < fullPath.size() && fullPath[i+1] == '/')
-			continue;
-		cleanPath += fullPath[i];
-	}
-
-	return cleanPath;
+    std::string cleanPath;
+    for (size_t i = 0; i < fullPath.size(); ++i) {
+        if (fullPath[i] == '/' && i + 1 < fullPath.size() && fullPath[i+1] == '/')
+            continue;
+        cleanPath += fullPath[i];
+    }
+    return cleanPath;
 }
 
 const LocationConfig* UriResolver::findMatchingLocation(const std::string& path)
 {
     const LocationConfig* bestMatch = NULL;
     size_t longestLength = 0;
-
     const std::vector<LocationConfig>& locations = _config.locations;
 
+	printf("--- DEBUG MATCHING pour : %s ---\n", path.c_str());		
     for (size_t i = 0; i < locations.size(); ++i)
     {
         const std::string& prefix = locations[i].prefix;
-        
+        printf("  Check prefix: [%s] \n", prefix.c_str());
+
         if (path.compare(0, prefix.size(), prefix) == 0)
         {
             if (path.size() == prefix.size() || prefix[prefix.size() - 1] == '/' || path[prefix.size()] == '/')
             {
+				printf(" -> MATCH\n");
                 if (prefix.size() >= longestLength)
                 {
                     longestLength = prefix.size();
                     bestMatch = &locations[i];
+					printf("NOUBEAU BEST\n");
                 }
             }
         }
@@ -188,5 +193,6 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	fullPath = applyRootOrAlias(path, loc);
 	if (!isPathSecure(fullPath))
 		throw HttpException(203, "invalid path");
+	printf("77777777777777777 fullPath:     %s", fullPath.c_str());
 	return fullPath;
 }

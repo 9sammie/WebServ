@@ -6,7 +6,7 @@
 
 HttpParser::HttpParser() {}
 
-HttpParser::HttpParser(const HttpParser& other) {}
+// HttpParser::HttpParser(const HttpParser& other) {}
 
 // HttpParser& HttpParser::operator=(const HttpParser& other)
 // {

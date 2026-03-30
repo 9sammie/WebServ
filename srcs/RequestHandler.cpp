@@ -74,6 +74,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	DataCgi data;
 
+	printf("hey\n");
     try
     {
         _parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);

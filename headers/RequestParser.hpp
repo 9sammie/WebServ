@@ -7,7 +7,7 @@ class HttpParser
 {
 	public:
 		HttpParser();
-		HttpParser(const HttpParser& other);
+		// HttpParser(const HttpParser& other);
 		// HttpParser& operator=(const HttpParser& other);
 		~HttpParser();
 
@@ -18,6 +18,11 @@ class HttpParser
 		void parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest);
 		void parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
 		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config);
+
+		private:
+		HttpParser(const HttpParser& other);
+		HttpParser& operator=(const HttpParser& other);
+
 };
 
 #endif

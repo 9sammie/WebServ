@@ -351,7 +351,7 @@ void    ServerManager::writeCgiBody(size_t& idx){
                 --idx;
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
             _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
-                "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
+                "<html><body><h1>500 Internal Server Error</h1></body></html>", true), Client::RESPONSE);
             setPollout(clientFd);
             return ;
         }
@@ -388,7 +388,7 @@ void    ServerManager::readCgiResponse(size_t& idx){
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
             _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
-                "<html><body><h1>500 Internal Server Error</h1></body></html>"), Client::RESPONSE);
+                "<html><body><h1>500 Internal Server Error</h1></body></html>", true), Client::RESPONSE);
             setPollout(clientFd);
     }
     return ;
