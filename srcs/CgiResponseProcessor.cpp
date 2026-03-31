@@ -75,16 +75,19 @@ std::string getBodySizeStr(std::string body){
     return ss.str();
 }
 
-void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std::string& body){
+void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std::string& body, ServerConfig& server){
     // DATE, SERVER, CONNECTION, STATUS, CONTENTLENGTH
     headersMap.erase("status");
     headersMap["server"] = "Rats_du_port_80";
     headersMap["date"] = getDate();
     headersMap["content-length"] = getBodySizeStr(body);
-    headersMap["connection"] = /*Here i need informations from http config to know if i put close or keep-alive*/"";
+    if (server.hasKeepalive == true)
+        headersMap["connection"] = "keep-alive";
+    else
+        headersMap["connection"] = "close";
 }
 
-std::string cgiResultHandler(std::string result){
+std::string cgiResultHandler(std::string result, ServerConfig& server){
     std::string cgiResponse;
     std::string headers = getRawHeaders(result);
     if (headers.empty())
@@ -99,7 +102,7 @@ std::string cgiResultHandler(std::string result){
         cgiResponse += "HTTP/1.1 302 Found\r\n";
     else
         cgiResponse += "HTTP/1.1 " + itS->second + "\r\n";
-    enforceHttpCompliance(headersMap, body);
+    enforceHttpCompliance(headersMap, body, server);
     for (std::map<std::string, std::string>::iterator it = headersMap.begin(); it != headersMap.end(); ++it){
         cgiResponse += it->first + ": " + it->second + "\r\n";
     }
