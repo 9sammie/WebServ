@@ -1,5 +1,4 @@
 #include "RequestHandler.hpp"
-#include "CgiHandler.hpp"
 #include <algorithm>
 #include <sstream>
 #include <fstream>
@@ -102,7 +101,24 @@ std::string RequestHandler::handleRequest(Client& Client)
     }
 
     if (fullPath.empty())
+	{
         return buildStatusResponse(404);
+	}
+
+
+
+	if (loc && !loc->cgiPath.empty() && isCgiRequest(fullPath, loc))
+	{
+		DataCgi data = fillCgiData(request, fullPath, loc, Client);
+		Client::CgiInfo cgi = CgiHandler(data);
+
+		if (cgi.isCgi)
+		{
+			Client.setCgiInfo(cgi); 
+			return "CGI_STARTED";
+		}
+		return buildStatusResponse(500);
+	}
 
     const std::string& method = request.getMethod();
 
@@ -115,11 +131,7 @@ std::string RequestHandler::handleRequest(Client& Client)
     if (method == "DELETE")
         return handleDELETE(fullPath);
 
-	// if (method == "DataCgi")
-	// {
 
-	// 	data = CgiHandler(data);
-	// }
 
     return buildStatusResponse(405);
 }

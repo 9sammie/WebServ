@@ -40,6 +40,7 @@ class Client{
 
         int         getFd()const;
         CgiInfo&    getCgiInfo();
+		void		setCgiInfo(CgiInfo& info);
         int         getPort(PortType type)const;
         std::string getRemoteAddr()const;
         const std::string& getBuffer(BufferType type);

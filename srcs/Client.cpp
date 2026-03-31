@@ -238,6 +238,10 @@ Client::CgiInfo&    Client::getCgiInfo(){
     return _cgiInfo;
 }
 
+void				Client::setCgiInfo(CgiInfo& info){
+	_cgiInfo = info;
+}
+
 
 time_t Client::timeSinceLastActivity(){
     return time(NULL) - _lastActivity;
