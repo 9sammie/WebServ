@@ -168,7 +168,7 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 
 	tockeniseRequestLine(requestLine, method, path, version);
 
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE" && method != "dataCgi")
 		throw HttpException(405, "method not allowed");
 
 	if (checkPath(path))

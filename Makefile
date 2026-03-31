@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+         #
+#    By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/03/25 14:22:47 by vakozhev         ###   ########lyon.fr    #
+#    Updated: 2026/03/31 17:20:38 by maballet         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,8 @@ SRC = \
 	srcs/ServerManager.cpp \
 	srcs/Signal.cpp \
 	srcs/TcpListener.cpp \
-	srcs/UriResolver.cpp
+	srcs/UriResolver.cpp \
+	srcs/fillCgiData.cpp
 
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEP = $(OBJ:.o=.d)
