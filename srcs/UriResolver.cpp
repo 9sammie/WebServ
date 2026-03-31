@@ -12,25 +12,47 @@ UriResolver::~UriResolver() {}
 
 
 
-bool UriResolver::isPathSecure(const std::string& fullPath)
+bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig* loc)
 {
 	char actualPath[PATH_MAX];
-
-	if (realpath(fullPath.c_str(), actualPath) == NULL)
-		return true; 
-
-	std::string realFullPath(actualPath);
-
 	char rootAbs[PATH_MAX];
-	if (realpath(_config.root.c_str(), rootAbs) == NULL) // creer une variable Root dans serverConfig.
+	std::string realFullPath;
+	std::string realRoot;
+	std::string dirPath;
+	std::string realDir;
+	size_t lastSlash;
+
+	if (realpath(loc->root.c_str(), rootAbs) == NULL)
 		return false;
+	realRoot = rootAbs;
 
-	std::string realRoot(rootAbs);
-
-	if (realFullPath.compare(0, realRoot.size(), realRoot) == 0)
-		return true;
-
-	return false;
+	if (realpath(fullPath.c_str(), actualPath) != NULL)
+	{
+		realFullPath = actualPath;
+		if (realFullPath.compare(0, realRoot.size(), realRoot) == 0)
+		{
+			if (realFullPath.size() == realRoot.size() || realFullPath[realRoot.size()] == '/')
+				return true;
+		}
+		return false;
+	}
+	else
+	{
+		dirPath = fullPath;
+		lastSlash = dirPath.find_last_of('/');
+		if (dirPath.empty())
+			dirPath = ".";
+		if (realpath(dirPath.c_str(), actualPath) != NULL)
+		{
+			realDir = actualPath;
+			if (realDir.compare(0, realRoot.size(), realRoot) == 0)
+			{
+				if (realDir.size() == realRoot.size() || realDir[realRoot.size()] == '/')
+					return true;
+			}
+		}
+		return false;
+	}
 }
 
 std::string UriResolver::applyRootOrAlias(const std::string& path, const LocationConfig* loc)
@@ -38,10 +60,10 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	std::string fullPath;
 	std::string base;
 
-	if (loc && !loc->alias.empty()) // creer une variable Alias dans LocationConfig.
+	if (loc && !loc->alias.empty())
 	{
 		std::string prefix = loc->prefix;
-		std::string alias = loc->alias; // creer une variable Alias dans LocationConfig.
+		std::string alias = loc->alias;
 
 		std::string remaining = path.substr(prefix.size());
 		base = alias;
@@ -52,7 +74,7 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 		if (loc)
 			base = loc->root;
 		else
-			base = _config.root; // creer une variable Root dans serverConfig.
+			base = _config.root;
 
 		fullPath = base + path;
 	}
@@ -71,13 +93,12 @@ const LocationConfig* UriResolver::findMatchingLocation(const std::string& path)
 {
     const LocationConfig* bestMatch = NULL;
     size_t longestLength = 0;
-
     const std::vector<LocationConfig>& locations = _config.locations;
 
     for (size_t i = 0; i < locations.size(); ++i)
     {
         const std::string& prefix = locations[i].prefix;
-        
+
         if (path.compare(0, prefix.size(), prefix) == 0)
         {
             if (path.size() == prefix.size() || prefix[prefix.size() - 1] == '/' || path[prefix.size()] == '/')
@@ -127,7 +148,7 @@ std::string UriResolver::normalize(const std::string& path)
     return res;
 }
 
-// Ici on check s'il y a des caracteres encodé et on les remplacent par leur valeur en ascii (ex: )
+// Check s'il y a des caracteres encodé et on les remplacent par leur valeur en ascii
 std::string UriResolver::urlDecode(const std::string& path)
 {
 	std::string result;
@@ -176,7 +197,7 @@ std::string UriResolver::extractPath(const std::string& uri)
 	return path;
 }
 
-std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc)
+std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc, Client& Client)
 {
 	std::string path;
 	std::string fullPath;
@@ -184,9 +205,16 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	path = extractPath(request.getUri());
 	path = urlDecode(path);
 	path = normalize(path);
+
 	loc = findMatchingLocation(path);
+	if (!loc)
+		throw HttpException(400, "invalid path");
+	if (loc->keepaliveTimeoutSec == 0)
+		Client.setCloseStatus(true);
+
 	fullPath = applyRootOrAlias(path, loc);
-	if (!isPathSecure(fullPath))
-		throw HttpException(203, "invalid path");
+	if (!isPathSecure(fullPath, loc))
+		throw HttpException(400, "invalid path");
+
 	return fullPath;
 }
