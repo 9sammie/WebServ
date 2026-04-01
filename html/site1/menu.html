@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rémy's Menu - Chez Gusteau</title>
+    <style>
+        /* Base styles consistent with the theme */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2b1d1a; /* Dark wood-like background */
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #5d4037;
+        }
+
+        /* Large, flexible hero container for the menu card */
+        .menu-wrapper {
+            width: 95vw;
+            height: 90vh;
+            
+            /* Background configuration */
+            background-image: url('/assets/menu_background.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain; /* Card is always fully visible */
+            
+            /* Text elements positioning */
+            position: relative;
+            display: flex;
+            flex-direction: column; /* Stack columns on top, surprise below */
+            justify-content: center;
+            align-items: center;
+            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.8));
+        }
+
+        /* Container for the two main columns (Left and Right) */
+        .items-overlay {
+            display: flex;
+            width: 70%; /* Narrows the links to fit the parchment area */
+            justify-content: space-around;
+            align-items: flex-start;
+            z-index: 10;
+            margin-top: -50px; /* Slight offset to align with paper */
+            margin-bottom: 30px; /* Space for the surprise button */
+        }
+
+        .menu-column {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h2 {
+            font-variant: small-caps;
+            border-bottom: 2px solid #5d4037;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin: 30px 0;
+        }
+
+        .dish-link {
+            font-size: 2.5rem; /* Large links for readability */
+            color: #5d4037;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
+        }
+
+        .dish-link:hover {
+            color: #d35400; /* Darker orange on hover */
+            transform: scale(1.1) rotate(-2deg);
+        }
+
+        /* NEW SECTION: Chef's Surprise Button
+           Positioned centrally below the two columns
+        */
+        .surprise-section {
+            /* Change to absolute to move it freely over the background */
+            position: absolute; 
+            
+            /* --- ADJUST THESE VALUES TO MOVE THE BUTTON --- */
+            top: 73%;   /* Increase % to move DOWN, decrease to move UP */
+            left: 50%;  /* Increase % to move RIGHT, decrease to move LEFT */
+            /* ---------------------------------------------- */
+            
+            transform: translate(-50%, -50%); /* Keeps the button perfectly centered on its coordinates */
+            z-index: 20;
+            text-align: center;
+            width: 100%; /* Ensures the text stays on one line */
+        }
+
+        .surprise-link {
+            font-size: 1.8rem;
+            color: #e67e22; /* Ratatouille Orange */
+            font-style: italic;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 2px dashed #e67e22;
+            border-radius: 15px;
+            background-color: rgba(255, 253, 240, 0.3); /* Translucent cream */
+            transition: all 0.3s ease;
+        }
+
+        .surprise-link:hover {
+            color: white;
+            background-color: #e67e22;
+            transform: scale(1.05);
+        }
+
+        /* Navigation at the very bottom */
+        .navigation {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #fdf5e6;
+            background-color: #8d6e63;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+            border: 2px solid white;
+        }
+
+        .back-btn:hover {
+            background-color: #e67e22;
+        }
+
+        /* Responsive fixes for mobile */
+        @media (max-width: 1024px) {
+            .items-overlay { flex-direction: column; align-items: center; width: 90%; }
+            .dish-link { font-size: 1.8rem; }
+            .surprise-link { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-wrapper">
+        
+        <div class="items-overlay">
+            
+            <div class="menu-column">
+                <h2>Our Specialties</h2>
+                <ul>
+                    <li><a href="/dishes/ratatouille.html" class="dish-link">Ratatouille</a></li>
+                </ul>
+            </div>
+
+            <div class="menu-column">
+                <h2>Daily Creations</h2>
+                <ul>
+                    <li><a href="/dishes/soupe.html" class="dish-link">The Soup</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="surprise-section">
+            <p style="font-size: 0.9rem; font-style: italic; margin-bottom: 10px; color: #8d6e63;">
+                "Anyone can cook, but only the fearless can decide."
+            </p>
+            <a href="/cgi-bin/random_plate.py" class="surprise-link">
+                Chef's Choice (CGI Surprise)
+            </a>
+        </div>
+
+        <div class="navigation">
+            <a href="/home.html" class="back-btn">← Back to Gusteau's Entrance</a>
+        </div>
+    </div>
+
+</body>
+</html>
