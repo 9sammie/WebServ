@@ -66,6 +66,8 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	std::string fullPath;
 	std::string base;
 
+	printf("prefix: %s\n", loc->prefix.c_str());
+
 	if (loc && !loc->alias.empty())
 	{
 		std::string prefix = loc->prefix;
@@ -77,12 +79,16 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	}
 	else
 	{
-		if (loc)
-			base = loc->root;
+		base = loc? loc->root: _config.root;
+		if (loc && loc->prefix != "/")
+		{
+			std::string remaining = path.substr(loc->prefix.size());
+            fullPath = base + remaining;
+		}
 		else
-			base = _config.root;
-
-		fullPath = base + path;
+		{
+			fullPath = base + path;
+		}
 	}
 
 	std::string cleanPath;
@@ -219,6 +225,7 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 		Client.setCloseStatus(true);
 
 	fullPath = applyRootOrAlias(path, loc);
+
 	if (!isPathSecure(fullPath, loc))
 		throw HttpException(400, "invalid path");
 

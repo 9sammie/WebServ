@@ -12,7 +12,14 @@ RequestHandler::RequestHandler(const RequestHandler& other)
 
 RequestHandler::~RequestHandler() {}
 
+int RequestHandler::extractStatusCode(const std::string& response) const
+{
+	if (response.size() < 12) 
+		return 0;
 
+	std::string codeStr = response.substr(9, 3);
+	return std::atoi(codeStr.c_str());
+}
 
 static std::string getReasonPhrase(int code)
 {
@@ -48,9 +55,10 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
 	if (closeConnection == true)
 		oss << "Connection: close\r\n";
 
+	oss << "Content-Length: " << body.size() << "\r\n";
+
     if (!body.empty())
     {
-        oss << "Content-Length: " << body.size() << "\r\n";
         if (extraHeaders.find("Content-Type") == extraHeaders.end())
             oss << "Content-Type: text/html\r\n";
     }
@@ -106,7 +114,6 @@ std::string RequestHandler::handleRequest(Client& Client)
 	}
 
 	printf("cgiPath in the config: %s\n", _config.locations[7].cgiPath.c_str());
-	printf("loc index: %s\n", _config.locations[7].cgiPath.c_str());
 	printf("cgiPath: %s\n", loc->cgiPath.c_str()); // cgiPath est vide et donc on n'entre pas dans cette partie. doit etre fait ailleurs?
 	if (loc && !loc->cgiPath.empty() && isCgiRequest(fullPath, loc))
 	{
@@ -116,25 +123,32 @@ std::string RequestHandler::handleRequest(Client& Client)
 		if (cgi.isCgi)
 		{
 			Client.setCgiInfo(cgi); 
-			return "CGI_STARTED";
+			return buildStatusResponse(200);
 		}
 		return buildStatusResponse(500);
 	}
 
 
 
-    const std::string& method = request.getMethod();
+	const std::string& method = request.getMethod();
+	std::string result;
 
-    if (method == "GET")
-        return handleGET(request, fullPath, loc);
+	if (method == "GET")
+		result = handleGET(request, fullPath, loc);
+	else if (method == "POST")
+		result = handlePOST(request, fullPath);
+	else if (method == "DELETE")
+		result = handleDELETE(fullPath);
+	else	
+		result = buildStatusResponse(405);
 
-    if (method == "POST")
-        return handlePOST(request, fullPath);
+	if (!result.empty() && result != "CGI_STARTED")
+	{
+		int code = extractStatusCode(result);
 
-    if (method == "DELETE")
-        return handleDELETE(fullPath);
-
-
-
-    return buildStatusResponse(405);
+		if (code >= 300 || code == 0)
+			Client.setCloseStatus(true);
+		return result;
+	}
+	return result;
 }

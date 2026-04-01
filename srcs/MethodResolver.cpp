@@ -12,7 +12,7 @@ std::string RequestHandler::handleDELETE(const std::string& path)
         return buildStatusResponse(404);
 
     if (S_ISDIR(st.st_mode))
-        return buildStatusResponse(403);
+        return buildStatusResponse(405);
 
     std::string parentDir = path.substr(0, path.rfind('/'));
     if (access(parentDir.c_str(), W_OK) != 0)

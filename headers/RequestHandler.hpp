@@ -23,6 +23,7 @@ class RequestHandler
     	// - une réponse HTTP complète si la requête est complète ou en cas d'erreur,
     	// - une string vide si la requête est incomplète (caller doit attendre + données).
 		std::string handleRequest(Client& Client);
+		int extractStatusCode(const std::string& response) const;
 		static std::string buildHttpResponse(int statusCode,
 									const std::string& reason,
 									const std::string& body,
