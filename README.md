@@ -79,7 +79,7 @@ For example:
 ### TO ADD SERVER SETUP AND PARSING OF REQUEST / BUILD RESPONSE
 
 ---
-```md
+
 ## Instructions
 
 ```bash
@@ -98,6 +98,7 @@ make tests
 # Run the server with a custom configuration file
 ./webserv <path_to_config_file>
 
+```
 ---
 ## Resources
 
