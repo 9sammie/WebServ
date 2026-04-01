@@ -1,36 +1,36 @@
-*This project has been created as part of the 42 curriculum by <ctheveno>[, <maballet>[, <vakozhev>]].*
+*This project has been created as part of the 42 curriculum by ctheveno, maballet, vakozhev.*
 
 # webserv
 
 ## Description
 
-`webserv` is a custom HTTP server written in C++ Language (C++98). The purpose of this project is to understand how a web server works internally.  
+`webserv` is a custom HTTP server written in C++98. The purpose of this project is to understand how a web server works internally.  
 
-For our webserver, we took inspiration from Nginx, but we developed our own configuration file and our own implementation approch.
+For our webserver, we took inspiration from NGINX, but we developed our own configuration file and our own implementation approach.
 
-The project covers some server fonctionalities such as accepting client connections, reading HTTP requests, building and sending HTTP responses, serving static files, handling routes and managing errors.
+The project covers some server functionalities such as accepting client connections, reading HTTP requests, building and sending HTTP responses, serving static files, handling routes and managing errors.
 
 ---
 
 ### Main Features
 
-- Configuration file parsing, handling `http`, `server`, and `location` blocs and multiple ports
+- Configuration file parsing, handling `http`, `server`, and `location` blocks and multiple ports
 - Handling sockets
-- Non-blocking or event-driven connexion handling based on `poll()`mechanism
+- Non-blocking or event-driven connection handling based on `poll()` mechanism
 - Static website serving
 - Route-based configuration
 - Accurate HTTP status code handling
-- Implementation of allowed methods : DELETE, POST, GET
+- Implementation of allowed methods: `DELETE, POST, GET`
 - Providing custom error pages
 - Handling redirections
-- CGI implementation
+- CGI support
 - Upload handling
 
 ---
 
 ### Project Structure
 
-This project is organized around a few important components :
+This project is organized around a few important components:
 
 - `Configuration file` to define the server settings and behavior
 
@@ -38,16 +38,16 @@ This project is organized around a few important components :
 
 - `HTTP server setup, client connection handling` to initialize the listening sockets, to prepare the server to accept connections on the configured ports; to manage client sockets, to receive incoming data  
 
-- `HTTP request parsing, HTTP response generation, Route handling and content selection` to ensure that requests are processed without blocking indefinitely, to interprete raw date as HTTP requests by extracting the method, headers and body; to create HTTP valid response
+- `HTTP request parsing, HTTP response generation, route handling and content selection` to ensure that requests are processed without blocking indefinitely, to interpret raw data as HTTP requests by extracting the method, headers and body; to create valid HTTP response
 
 ---
 
 ### Config file parsing approach
 
-The parsing of the configuration file has been divided into two separate parts :
+The parsing of the configuration file has been divided into two separate parts:
 
 - the lexer is responsible for tokenization,
-- the parser is responsible for syntax validation and configuration building,
+- the parser is responsible for syntax validation and configuration building.
 The configuration structure is responsible for storing parsed data.
 
 #### 1. Lexical analysis
@@ -79,6 +79,7 @@ For example:
 ### TO ADD SERVER SETUP AND PARSING OF REQUEST / BUILD RESPONSE
 
 ---
+```md
 ## Instructions
 
 ```bash
@@ -120,7 +121,7 @@ make tests
 - [Using HTTP cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
 - [HTTP Cookies Explained With a Simple Diagram](https://bytebytego.com/guides/http-cookies-explained-with-a-simple-diagram/)
 
-### Poll()
+### poll()
 - [Using poll() instead of select()](https://www.ibm.com/docs/en/i/7.4.0?topic=designs-using-poll-instead-select)
 
 ### NGINX
