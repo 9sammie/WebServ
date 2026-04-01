@@ -34,12 +34,17 @@ bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig
 			if (realFullPath.size() == realRoot.size() || realFullPath[realRoot.size()] == '/')
 				return true;
 		}
+
 		return false;
 	}
 	else
 	{
 		dirPath = fullPath;
 		lastSlash = dirPath.find_last_of('/');
+
+		if (lastSlash != std::string::npos)
+			dirPath = dirPath.substr(0, lastSlash);
+
 		if (dirPath.empty())
 			dirPath = ".";
 		if (realpath(dirPath.c_str(), actualPath) != NULL)
@@ -51,6 +56,7 @@ bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig
 					return true;
 			}
 		}
+
 		return false;
 	}
 }
