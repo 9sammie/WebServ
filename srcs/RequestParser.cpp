@@ -186,13 +186,13 @@ void HttpParser::getRequestParts(const std::string& buffer, std::string& request
 {
 	size_t headerEnd = buffer.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
-		throw HttpException(203, "incomplete");
+		throw HttpException(400, "bad request");
     std::string headerPart = buffer.substr(0, headerEnd);
     bodyPart = buffer.substr(headerEnd + 4);
 
     size_t lineEnd = headerPart.find("\r\n");
     if (lineEnd == std::string::npos)
-		throw HttpException(203, "incomplete");
+		throw HttpException(400, "bad request");
 
     requestLine = headerPart.substr(0, lineEnd);
     headerLines = headerPart.substr(lineEnd + 2);
