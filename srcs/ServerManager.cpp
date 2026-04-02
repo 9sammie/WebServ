@@ -16,6 +16,7 @@
 #include <sstream>
 #include "RequestHandler.hpp"
 #include <arpa/inet.h>
+#include "CgiResponseProcessor.hpp"
 
 ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpConfig){
     std::set<int> ports;
@@ -379,6 +380,7 @@ void    ServerManager::readCgiResponse(size_t& idx){
     else if (bytesRead == 0){//CGI complete
         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
         // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
+        _clients[clientFd].store(cgiResponseProcessor(_clients[clientFd].getBuffer(Client::RESPONSE), getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
         setPollout(clientFd);// Set to POLLOUT to then send response
