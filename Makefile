@@ -6,7 +6,7 @@
 #    By: ctheveno <ctheveno@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/04/02 11:38:53 by vakozhev         ###   ########lyon.fr    #
+#    Updated: 2026/04/02 13:11:55 by ctheveno         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,7 +51,8 @@ SRC = \
 	srcs/Signal.cpp \
 	srcs/TcpListener.cpp \
 	srcs/UriResolver.cpp \
-	srcs/fillCgiData.cpp
+	srcs/fillCgiData.cpp \
+	srcs/CgiResponseProcessor.cpp
 
 # **************************************************************************** #
 #                              PROJECT OBJECTS                                 #
