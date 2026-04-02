@@ -66,8 +66,6 @@ std::string UriResolver::applyRootOrAlias(const std::string& path, const Locatio
 	std::string fullPath;
 	std::string base;
 
-	printf("prefix: %s\n", loc->prefix.c_str());
-
 	if (loc && !loc->alias.empty())
 	{
 		std::string prefix = loc->prefix;

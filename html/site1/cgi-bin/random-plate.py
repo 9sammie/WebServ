@@ -9,7 +9,6 @@ DISHES_DIR = "./html/site1/dishes/"
 def get_random_dish():
     try:
         # We take ALL .html files in the 'dishes' folder
-        # No need to exclude home/menu anymore!
         files = [f for f in os.listdir(DISHES_DIR) if f.endswith('.html')]
         
         if not files:

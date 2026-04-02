@@ -1,8 +1,4 @@
-#include <string>
-#include <map>
-#include <sstream>
-#include <ctime>
-#include "Config.hpp"
+#include "CgiResponseProcessor.hpp"
 
 std::string trim(std::string& str, const char* charset){
     size_t start = str.find_first_not_of(charset);
@@ -75,7 +71,7 @@ std::string getBodySizeStr(std::string body){
     return ss.str();
 }
 
-void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std::string& body, ServerConfig& server){
+void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std::string& body, ServerConfig const & server){
     // DATE, SERVER, CONNECTION, STATUS, CONTENTLENGTH
     headersMap.erase("status");
     headersMap["server"] = "Rats_du_port_80";
@@ -87,7 +83,7 @@ void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std:
         headersMap["connection"] = "close";
 }
 
-std::string cgiResultHandler(std::string result, ServerConfig& server){
+std::string cgiResponseProcessor(std::string result, ServerConfig const & server){
     std::string cgiResponse;
     std::string headers = getRawHeaders(result);
     if (headers.empty())

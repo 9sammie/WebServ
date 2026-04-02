@@ -6,7 +6,7 @@
 #    By: ctheveno <ctheveno@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/04/01 10:35:30 by ctheveno         ###   ########.fr        #
+#    Updated: 2026/04/02 13:06:54 by ctheveno         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,7 +38,8 @@ SRC = \
 	srcs/Signal.cpp \
 	srcs/TcpListener.cpp \
 	srcs/UriResolver.cpp \
-	srcs/fillCgiData.cpp
+	srcs/fillCgiData.cpp \
+	srcs/CgiResponseProcessor.cpp
 
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEP = $(OBJ:.o=.d)
