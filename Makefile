@@ -6,7 +6,7 @@
 #    By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/03/25 17:25:21 by vakozhev         ###   ########lyon.fr    #
+#    Updated: 2026/04/02 11:38:53 by vakozhev         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
@@ -40,17 +40,17 @@ SRC = \
 	srcs/Parser.cpp \
 	srcs/Token.cpp \
 	srcs/Config.cpp 
-	#srcs/CgiHandler.cpp \
-	#srcs/Client.cpp \
-	#srcs/HttpException.cpp \
-	#srcs/HttpRequest.cpp \
-	#srcs/MethodResolver.cpp \
-	#srcs/RequestHandler.cpp \
-	#srcs/RequestParser.cpp \
-	#srcs/ServerManager.cpp \
-	#srcs/Signal.cpp \
-	#srcs/TcpListener.cpp \
-	#srcs/UriResolver.cpp
+	srcs/CgiHandler.cpp \
+	srcs/Client.cpp \
+	srcs/HttpException.cpp \
+	srcs/HttpRequest.cpp \
+	srcs/MethodResolver.cpp \
+	srcs/RequestHandler.cpp \
+	srcs/RequestParser.cpp \
+	srcs/ServerManager.cpp \
+	srcs/Signal.cpp \
+	srcs/TcpListener.cpp \
+	srcs/UriResolver.cpp
 
 # **************************************************************************** #
 #                              PROJECT OBJECTS                                 #
