@@ -6,7 +6,7 @@
 #    By: ctheveno <ctheveno@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/04/02 11:38:53 by vakozhev         ###   ########lyon.fr    #
+#    Updated: 2026/04/02 13:26:29 by vakozhev         ###   ########lyon.fr    #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,7 +21,7 @@ TEST_NAME = test
 # **************************************************************************** #
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror --std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 DEPFLAGS = -MMD -MP #creer un fichier de dep
 
 # **************************************************************************** #
@@ -35,11 +35,11 @@ TEST_DIR = tests
 #                              PROJECT SOURCES                                 #
 # **************************************************************************** #
 SRC = \
-	srcs/main2.cpp \
+	srcs/main.cpp \
 	srcs/Lexer.cpp \
 	srcs/Parser.cpp \
 	srcs/Token.cpp \
-	srcs/Config.cpp 
+	srcs/Config.cpp \
 	srcs/CgiHandler.cpp \
 	srcs/Client.cpp \
 	srcs/HttpException.cpp \
