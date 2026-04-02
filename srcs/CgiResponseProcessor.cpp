@@ -82,9 +82,10 @@ void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std:
     else
         headersMap["connection"] = "close";
 }
-
+#include <iostream>
 std::string cgiResponseProcessor(std::string result, ServerConfig const & server){
     std::string cgiResponse;
+    std::cout << "Inside cgiResponseProcessor, result: " << result << std::endl;
     std::string headers = getRawHeaders(result);
     if (headers.empty())
         return "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n";
