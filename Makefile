@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+         #
+#    By: ctheveno <ctheveno@student.42lyon.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/03/13 17:16:36 by vakozhev          #+#    #+#              #
-#    Updated: 2026/03/31 17:20:38 by maballet         ###   ########lyon.fr    #
+#    Updated: 2026/04/01 10:35:30 by ctheveno         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ NAME = webserv
 TEST_NAME = testLexer
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS = -Wall -Wextra -Werror --std=c++98
 DEPFLAGS = -MMD -MP #creer un fichier de dep
 
 SRC_DIR = srcs
