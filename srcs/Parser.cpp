@@ -6,7 +6,7 @@
 /*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/04/01 11:55:38 by maballet         ###   ########lyon.fr   */
+/*   Updated: 2026/03/25 16:36:59 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -348,6 +348,15 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 			throwInvalidArgs(nameTok);
 		loc.maxBodySize = parseSizeT(nameTok, args[0]);
 		loc.hasMaxBodySize = true;
+		return;
+	}
+	if (name == "keepalive_timeout")
+	{
+		std::vector<std::string> args = readDirectiveArgs(nameTok);
+		if (args.size() != 1)
+			throwInvalidArgs(nameTok);
+		loc.keepaliveTimeoutSec = parsePositiveInt(nameTok, args[0]);
+		loc.hasKeepalive = true;
 		return;
 	}
 	if (name == "cgi_ext")
