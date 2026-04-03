@@ -4,9 +4,17 @@
 #include <sstream>
 #include <fstream>
 #include <dirent.h>
+#include <iostream>
+#include <algorithm>
 
-std::string RequestHandler::handleDELETE(const std::string& path)
+std::string RequestHandler::handleDELETE(const std::string& path, const LocationConfig* loc)
 {
+	std::string toFind = "DELETE";
+	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
+
+	if (it == loc->methods.end())
+		return buildStatusResponse(405);
+
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
         return buildStatusResponse(404);
@@ -24,8 +32,15 @@ std::string RequestHandler::handleDELETE(const std::string& path)
     return buildStatusResponse(204);
 }
 
-std::string RequestHandler::handlePOST(const HttpRequest& request, const std::string& path)
+std::string RequestHandler::handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
 {
+	std::string toFind = "POST";
+	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
+
+	if (it == loc->methods.end())
+		return buildStatusResponse(405);
+
+	std::cout << "path: " << path << std::endl;
 	std::string parentDir = path.substr(0, path.rfind('/'));
 	struct stat st;
 	if (stat(parentDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
@@ -142,6 +157,12 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 
 std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
 {
+	std::string toFind = "GET";
+	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
+
+	if (it == loc->methods.end())
+		return buildStatusResponse(405);
+	
 	std::string resolvedPath;
 	std::string earlyResponse;
 

@@ -114,7 +114,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 	}
 
 	printf("cgiPath in the config: %s\n", _config.locations[7].cgiPath.c_str());
-	printf("cgiPath: %s\n", loc->cgiPath.c_str()); // cgiPath est vide et donc on n'entre pas dans cette partie. doit etre fait ailleurs?
+	printf("cgiPath: %s\n", loc->cgiPath.c_str());
 	if (loc && !loc->cgiPath.empty() && isCgiRequest(fullPath, loc))
 	{
 		DataCgi data = fillCgiData(request, fullPath, loc, Client);
@@ -136,10 +136,10 @@ std::string RequestHandler::handleRequest(Client& Client)
 	if (method == "GET")
 		result = handleGET(request, fullPath, loc);
 	else if (method == "POST")
-		result = handlePOST(request, fullPath);
+		result = handlePOST(request, fullPath, loc);
 	else if (method == "DELETE")
-		result = handleDELETE(fullPath);
-	else	
+		result = handleDELETE(fullPath, loc);
+	else
 		result = buildStatusResponse(405);
 
 	if (!result.empty() && result != "CGI_STARTED")

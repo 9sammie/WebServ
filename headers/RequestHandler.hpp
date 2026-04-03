@@ -41,8 +41,8 @@ class RequestHandler
 									std::string& outPath, std::string& outResponse);
 	DataCgi		fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client);
 	bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
-	std::string handlePOST(const HttpRequest& request, const std::string& path);
-	std::string handleDELETE(const std::string& path);
+	std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+	std::string handleDELETE(const std::string& path, const LocationConfig* loc);
 	std::string buildStatusResponse(int code) const;
 };
 
