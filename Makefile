@@ -40,6 +40,8 @@ SRC = \
 	srcs/TcpListener.cpp \
 	srcs/UriResolver.cpp \
 	srcs/fillCgiData.cpp \
+	srcs/validateRequest.cpp \
+	srcs/buildResponse.cpp \
 	srcs/CgiResponseProcessor.cpp
 
 # **************************************************************************** #

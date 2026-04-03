@@ -12,6 +12,9 @@
 #include <string>
 #include <map>
 
+class RequestHandler;
+typedef std::string (RequestHandler::*MethodHandler)(const HttpRequest&, const std::string&, const LocationConfig*);
+
 class RequestHandler
 {
 	public:
@@ -32,17 +35,22 @@ class RequestHandler
 									= std::map<std::string, std::string>());
 	
 	private:
+		std::map<std::string, MethodHandler> _methodHandlers;
 		const ServerConfig& _config;
 		HttpParser			_parser;
 		bool _closeConnection;
 
+	void initMethodHandlers();
 	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+	std::string validateParsing(Client& Client, HttpRequest& request);
+	std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
+	std::string	handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath);
 	bool		resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc,
 									std::string& outPath, std::string& outResponse);
 	DataCgi		fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client);
 	bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
 	std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-	std::string handleDELETE(const std::string& path, const LocationConfig* loc);
+	std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string buildStatusResponse(int code) const;
 };
 

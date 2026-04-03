@@ -1,14 +1,13 @@
 #include "RequestHandler.hpp"
 #include <sys/stat.h>
 #include <unistd.h>
-#include <sstream>
 #include <fstream>
 #include <dirent.h>
-#include <iostream>
-#include <algorithm>
 
-std::string RequestHandler::handleDELETE(const std::string& path, const LocationConfig* loc)
+std::string RequestHandler::handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
 {
+	(void)request;
+
 	std::string toFind = "DELETE";
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
@@ -40,7 +39,6 @@ std::string RequestHandler::handlePOST(const HttpRequest& request, const std::st
 	if (it == loc->methods.end())
 		return buildStatusResponse(405);
 
-	std::cout << "path: " << path << std::endl;
 	std::string parentDir = path.substr(0, path.rfind('/'));
 	struct stat st;
 	if (stat(parentDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
@@ -158,34 +156,28 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
 {
 	std::string toFind = "GET";
+	std::string resolvedPath;
+	struct stat st;
+	std::ostringstream buffer;
+	std::map<std::string, std::string>	headers;
+	std::string	body;
+	std::string earlyResponse;
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
 	if (it == loc->methods.end())
 		return buildStatusResponse(405);
-	
-	std::string resolvedPath;
-	std::string earlyResponse;
-
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
 		return earlyResponse;
-
-	struct stat st;
 	if (stat(resolvedPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
 		return buildStatusResponse(403);
-
 	if (access(resolvedPath.c_str(), R_OK) != 0)
 		return buildStatusResponse(403);
 
 	std::ifstream file(resolvedPath.c_str(), std::ios::binary);
 	if (!file)
 		return buildStatusResponse(500);	
-	
-	std::ostringstream buffer;
 	buffer << file.rdbuf();
-
-	std::map<std::string, std::string>	headers;
-	std::string							body = buffer.str();
-
+	body = buffer.str();
 	headers["Content-Type"] = getMimeType(resolvedPath);
 	return buildHttpResponse(200, "OK", body, false, headers);
 }

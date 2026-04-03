@@ -1,8 +1,4 @@
 #include "RequestHandler.hpp"
-#include <algorithm>
-#include <sstream>
-#include <fstream>
-#include <cctype>
 
 RequestHandler::RequestHandler(const ServerConfig& config)
     : _config(config), _parser(), _closeConnection(false) {}
@@ -12,113 +8,24 @@ RequestHandler::RequestHandler(const RequestHandler& other)
 
 RequestHandler::~RequestHandler() {}
 
-int RequestHandler::extractStatusCode(const std::string& response) const
-{
-	if (response.size() < 12) 
-		return 0;
 
-	std::string codeStr = response.substr(9, 3);
-	return std::atoi(codeStr.c_str());
+
+void RequestHandler::initMethodHandlers()
+{
+    _methodHandlers["GET"] = &RequestHandler::handleGET;
+    _methodHandlers["POST"] = &RequestHandler::handlePOST;
+    _methodHandlers["DELETE"] = &RequestHandler::handleDELETE;
 }
 
-static std::string getReasonPhrase(int code)
+std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)
 {
-	if (code == 200) return "OK";
-	if (code == 201) return "Created";
-	if (code == 204) return "No Content";
-	if (code == 400) return "Bad Request";
-	if (code == 403) return "Forbidden";
-	if (code == 404) return "Not Found";
-	if (code == 405) return "Method Not Allowed";
-	if (code == 500) return "Internal Server Error";
-	return "Internal Server Error";
-}
-
-std::string RequestHandler::buildStatusResponse(int code) const
-{
-	if (code >= 200 && code < 300)
-		return buildHttpResponse(code, "No Content", "", false);
-	std::string reason = getReasonPhrase(code);
-	std::ostringstream oss;
-	oss << "<html><body><h1>" << code << " " << reason << "</h1></body></html>";
-	return buildHttpResponse(code, reason, oss.str(), true);
-}
-
-std::string RequestHandler::buildHttpResponse(int statusCode,
-                                               const std::string& reason,
-                                               const std::string& body,
-											   const bool closeConnection,
-                                               const std::map<std::string, std::string>& extraHeaders)
-{
-	std::ostringstream oss;
-	oss << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
-	if (closeConnection == true)
-		oss << "Connection: close\r\n";
-
-	oss << "Content-Length: " << body.size() << "\r\n";
-
-    if (!body.empty())
-    {
-        if (extraHeaders.find("Content-Type") == extraHeaders.end())
-            oss << "Content-Type: text/html\r\n";
-    }
-
-	for (std::map<std::string,std::string>::const_iterator it = extraHeaders.begin();
-		it != extraHeaders.end(); ++it)
-	{
-		oss << it->first << ": " << it->second << "\r\n";
-	}
-
-	oss << "\r\n";
-	oss << body;
-	return oss.str();
-}
-
-std::string RequestHandler::handleRequest(Client& Client)
-{
-    HttpRequest request;
-    std::string fullPath;
-	const LocationConfig* loc = NULL;
 	DataCgi data;
+	Client::CgiInfo cgi;
 
-    try
-    {
-        _parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);
-    }
-    catch (const HttpException& he)
-    {
-        int code = he.getStatusCode();
-        if (code == 203)
-            return "";
-		Client.setCloseStatus(true);
-		return buildStatusResponse(code);
-    }
-
-    try
-    {
-        UriResolver locateRessource(_config);
-        fullPath = locateRessource.resolve(request, loc, Client);
-    }
-    catch (const HttpException& he)
-    {
-        int code = he.getStatusCode();
-		if (code < 400)
-			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
-		Client.setCloseStatus(true);
-		return buildStatusResponse(code);
-    }
-
-    if (fullPath.empty())
-	{
-        return buildStatusResponse(404);
-	}
-
-	// printf("cgiPath in the config: %s\n", _config.locations[7].cgiPath.c_str());
-	// printf("cgiPath: %s\n", loc->cgiPath.c_str()); // cgiPath est vide et donc on n'entre pas dans cette partie. doit etre fait ailleurs?
 	if (loc && !loc->cgiPath.empty() && isCgiRequest(fullPath, loc))
 	{
-		DataCgi data = fillCgiData(request, fullPath, loc, Client);
-		Client::CgiInfo cgi = CgiHandler(data);
+		data = fillCgiData(request, fullPath, loc, Client);
+		cgi = CgiHandler(data);
 
 		if (cgi.isCgi)
 		{
@@ -127,28 +34,40 @@ std::string RequestHandler::handleRequest(Client& Client)
 		}
 		return buildStatusResponse(500);
 	}
+	return "";
+}
+
+// here we get the complete request, parse it, execute it, then return an
+// appropriate response to the serverManager.
+//
+// The complex part here is the iteration "it" of the map<string methods
+// functions>, wich will find the right method string so we can use the
+// function assiociated with this string (it->second).
+std::string RequestHandler::handleRequest(Client& Client)
+{
+    HttpRequest request;
+    std::string fullPath;
+	std::string response;
+	const LocationConfig* loc = NULL;
+	std::map<std::string, MethodHandler>::const_iterator it;
 
 
+	if (!(response = validateParsing(Client, request)).empty())
+		return response;
+	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
+		return response;
+	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
+		return response;
 
-	const std::string& method = request.getMethod();
-	std::string result;
+	it = _methodHandlers.find(request.getMethod());
+	if (it == _methodHandlers.end())
+		return buildStatusResponse(405);
 
-	if (method == "GET")
-		result = handleGET(request, fullPath, loc);
-	else if (method == "POST")
-		result = handlePOST(request, fullPath, loc);
-	else if (method == "DELETE")
-		result = handleDELETE(fullPath, loc);
-	else
-		result = buildStatusResponse(405);
-
-	if (!result.empty() && result != "CGI_STARTED")
+    response = (this->*(it->second))(request, fullPath, loc);
+    if (!response.empty())
 	{
-		int code = extractStatusCode(result);
-
-		if (code >= 300 || code == 0)
-			Client.setCloseStatus(true);
-		return result;
-	}
-	return result;
+        int code = extractStatusCode(response);
+        if (code >= 300 || code == 0) Client.setCloseStatus(true);
+    }
+    return response;
 }
