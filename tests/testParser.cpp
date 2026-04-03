@@ -6,7 +6,7 @@
 /*   By: vakozhev <vakozhev@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/25 16:24:00 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/04/02 11:34:31 by vakozhev         ###   ########lyon.fr   */
+/*   Updated: 2026/04/02 15:25:42 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -639,44 +639,40 @@ static void parserRejectsUnknownDirectiveInLocation()
     tokens.push_back(makeToken(RBRACE, "}", 6));
     tokens.push_back(makeToken(RBRACE, "}", 7));
     tokens.push_back(makeToken(RBRACE, "}", 8));
-
-    Parser parser(tokens);
-
-    bool exceptionCatched = false;
-    try
-    {
-        parser.parseConfig();
-    }
-    catch (const std::exception&)
-    {
-        exceptionCatched = true;
-    }
-
-    assertTrue(exceptionCatched, "parser should reject unknown directive in location");
-    printTestOK("parser rejects unknown directive in location");
+	Parser parser(tokens);
+	bool exceptionCatched = false;
+	try
+	{
+		parser.parseConfig();
+	}
+	catch (const std::exception&)
+	{
+		exceptionCatched = true;
+	}
+	assertTrue(exceptionCatched, "parser should reject unknown directive in location");
+	printTestOK("parser rejects unknown directive in location");
 }
 
-void runParserTests()
+void	runParserTests()
 {
-    parserAcceptsMinimalHttpServer();
-    parserRejectsEmptyTokenList();
-    parserRejectsUnknownTopLevelDirective();
-    parserRejectsServerAtTopLevel();
-    parserRejectsHttpWithoutOpeningBrace();
-    parserRejectsServerWithoutListen();
-    parserRejectsInvalidListenPort();
-    parserAcceptsHttpKeepaliveTimeout();
-    parserAcceptsHttpClientMaxBodySize();
-
-    parserAcceptsServerName();
-    parserAcceptsLocationRoot();
-    parserAcceptsMethodsGetPost();
-    parserRejectsDuplicateMethods();
-    parserRejectsInvalidMethod();
-    parserAcceptsReturn301();
-    parserAcceptsHttpErrorPage404();
-    parserAcceptsServerErrorPage404();
-    parserAppliesInheritanceHttpToServerToLocation();
-    parserRejectsUnknownDirectiveInServer();
-    parserRejectsUnknownDirectiveInLocation();
+	parserAcceptsMinimalHttpServer();
+	parserRejectsEmptyTokenList();
+	parserRejectsUnknownTopLevelDirective();
+	parserRejectsServerAtTopLevel();
+	parserRejectsHttpWithoutOpeningBrace();
+	parserRejectsServerWithoutListen();
+	parserRejectsInvalidListenPort();
+	parserAcceptsHttpKeepaliveTimeout();
+	parserAcceptsHttpClientMaxBodySize();
+	parserAcceptsServerName();
+	parserAcceptsLocationRoot();
+	parserAcceptsMethodsGetPost();
+	parserRejectsDuplicateMethods();
+	parserRejectsInvalidMethod();
+	parserAcceptsReturn301();
+	parserAcceptsHttpErrorPage404();
+	parserAcceptsServerErrorPage404();
+	parserAppliesInheritanceHttpToServerToLocation();
+	parserRejectsUnknownDirectiveInServer();
+	parserRejectsUnknownDirectiveInLocation();
 }

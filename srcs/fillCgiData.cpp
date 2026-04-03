@@ -1,5 +1,6 @@
 #include "RequestHandler.hpp"
 #include "Client.hpp"
+#include <stdio.h>
 
 
 DataCgi RequestHandler::fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client)

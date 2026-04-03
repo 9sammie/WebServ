@@ -11,8 +11,8 @@
 #include <sys/types.h>
 
 #define MAX_CLIENTS    1000
-#define CLIENT_TIMEOUT 60
-#define CGI_TIMEOUT    60
+#define CLIENT_TIMEOUT 5
+#define CGI_TIMEOUT    5
 class ServerManager{
 
     public :

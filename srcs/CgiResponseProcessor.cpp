@@ -1,4 +1,5 @@
 #include "CgiResponseProcessor.hpp"
+#include <iostream>
 
 std::string trim(std::string& str, const char* charset){
     size_t start = str.find_first_not_of(charset);
@@ -16,25 +17,32 @@ std::string strToLower(std::string& str){
 }
 
 std::string getRawHeaders(std::string& str){
+    // Try to find \r\n\r\n first (HTTP strict)
     size_t emptyLine = str.find("\r\n\r\n");
-    if (emptyLine == std::string ::npos)
-        return "";
-    return str.substr(0, emptyLine);
+    if (emptyLine != std::string::npos)
+        return str.substr(0, emptyLine +2);
+    
+    // Try to find \n\n (more permissive for python script that only has \n for end of lines)
+    emptyLine = str.find("\n\n");
+    if (emptyLine != std::string::npos)
+        return str.substr(0, emptyLine +1);
+    
+    return "";
 }
-
 std::string getBody(std::string& str){
     size_t emptyLine = str.find("\r\n\r\n");
-    if (emptyLine == std::string ::npos)
-        return "";
-    return str.substr(emptyLine + 4, str.size());
+    if (emptyLine != std::string ::npos)
+        return str.substr(emptyLine + 4, str.size());
+    emptyLine = str.find("\n\n");
+        return str.substr(emptyLine + 2, str.size());
+    return "";
 }
 
 std::map<std::string, std::string> getHeadersMaps(std::string& headers){
     std::map<std::string, std::string> mapHeaders;
     size_t start = 0;
     size_t end;
-
-    while ((end = headers.find("\r\n", start)) != std::string::npos){
+    while ((end = headers.find("\n", start)) != std::string::npos){
         std::string currentLine = headers.substr(start, (end - start + 2));
         size_t currentStart = currentLine.find(":");
         if (currentStart == std::string::npos)
@@ -82,7 +90,6 @@ void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std:
     else
         headersMap["connection"] = "close";
 }
-
 std::string cgiResponseProcessor(std::string result, ServerConfig const & server){
     std::string cgiResponse;
     std::string headers = getRawHeaders(result);
