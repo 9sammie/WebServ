@@ -36,7 +36,7 @@ class ServerManager{
         const ServerConfig& getServer(int port)const;
 
         //Functions to pas the good server infos to requestHandler
-        std::string getServerName(const std::string& body)const;
+        // std::string getServerName(const std::string& body)const;
 
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
@@ -54,6 +54,8 @@ class ServerManager{
         std::map<int, int>          _cgiWriteFds;
         std::vector<struct pollfd>  _pollFds;
         int                         _portsQuantity;
+        size_t                      _timeOutCGI;
+        size_t                      _timeOutClient;
 
         // UNUSED Canonical form
         ServerManager();
