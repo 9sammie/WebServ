@@ -1,1 +1,4 @@
 Check timeout/ specifically CGI
+
+Le timeout est code en brut avec un define pour le moment. Penser a recuperer les infos serverus pour cela
+

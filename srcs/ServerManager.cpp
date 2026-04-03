@@ -178,9 +178,10 @@ int    ServerManager::getListenerPort(int fd){
 void   ServerManager::checkCgiTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
         if (it->second.getCgiInfo().isCgi == true){
-            if (time(NULL) - it->second.getCgiInfo().start_time > 60){
+            if (time(NULL) - it->second.getCgiInfo().start_time > CGI_TIMEOUT){
                 kill(it->second.getCgiInfo().pid, SIGKILL);
                 waitpid(it->second.getCgiInfo().pid, NULL, WNOHANG);
+                std::cout << "Inside checkCgiTimeOuts call removeReadPipe on pipe: " << it->second.getCgiInfo().pipeRead << std::endl;
                 removeReadPipe(it->second.getCgiInfo().pipeRead);
                 if (it->second.getCgiInfo().pipeWrite != -1)
                     removeWritePipe(it->second.getCgiInfo().pipeWrite);
@@ -224,11 +225,11 @@ bool    ServerManager::receivedRequest(int idx){
 		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
-            std::cout << "New cgi launched" << std::endl;
-            std::cout << "pid: " << _clients[fd].getCgiInfo().pid << std::endl;
-            std::cout << "pipeRead: " << _clients[fd].getCgiInfo().pipeRead << std::endl;
-            std::cout << "pipeWrite: " << _clients[fd].getCgiInfo().pipeWrite << std::endl;
-            std::cout << "bodyWrittenBytes: " << _clients[fd].getCgiInfo().bodyWrittenBytes << std::endl;
+            // std::cout << "New cgi launched" << std::endl;
+            // std::cout << "pid: " << _clients[fd].getCgiInfo().pid << std::endl;
+            // std::cout << "pipeRead: " << _clients[fd].getCgiInfo().pipeRead << std::endl;
+            // std::cout << "pipeWrite: " << _clients[fd].getCgiInfo().pipeWrite << std::endl;
+            // std::cout << "bodyWrittenBytes: " << _clients[fd].getCgiInfo().bodyWrittenBytes << std::endl;
 
 
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
@@ -319,6 +320,10 @@ size_t    ServerManager::removeWritePipe(int pipeWrite){
 }
 
 size_t    ServerManager::removeReadPipe(int pipeRead){
+    //     if (_cgiReadFds.count(pipeRead) == 0) {
+    //     std::cout << "WARNING: Trying to close fd " << pipeRead << " but not in _cgiReadFds!" << std::endl;
+    //     return _pollFds.size();
+    // }
     if (close(pipeRead) == -1)
         std::cerr << RED << "Error: close(" << pipeRead <<") failed: " << strerror(errno) << RESET << std::endl;
     _cgiReadFds.erase(pipeRead);
@@ -377,21 +382,17 @@ void    ServerManager::setPollout(int clientFd){
 }
 
 // void    ServerManager::readCgiResponse(size_t& idx){
-//     std::cout << "Read cgi response call" << std::endl; 
 //     int pipeRead = _pollFds[idx].fd;
 //     int clientFd = _cgiReadFds[pipeRead];
 //     char buffer[4096];
 //     ssize_t bytesRead = read(pipeRead, buffer, 4096);
-//     std::cout << "bytesRead: " << bytesRead << std::endl;
 //     if (bytesRead > 0)//CGI still working
 //     {
 //         _clients[clientFd].store(std::string(buffer, bytesRead),Client::RESPONSE);
-//         std::cout << "Store response: " << std::string(buffer, bytesRead) << std::endl;
 //     }
 //     else if (bytesRead == 0){//CGI complete
 //         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
 //         // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
-//         std::cout << "CGI complete, call cgiResponseProcessor" << std::endl;
 //         _clients[clientFd].store(cgiResponseProcessor(_clients[clientFd].getBuffer(Client::RESPONSE), getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
 //         if (removeReadPipe(pipeRead) <= idx)
 //                 --idx;
@@ -423,40 +424,41 @@ const ServerConfig& ServerManager::getServer(int port) const {
 
 
 void    ServerManager::readCgiResponse(size_t& idx){
-    std::cout << "Read cgi response call" << std::endl; 
     int pipeRead = _pollFds[idx].fd;
     int clientFd = _cgiReadFds[pipeRead];
     char buffer[4096];
     ssize_t bytesRead = read(pipeRead, buffer, 4096);
-    std::cout << "bytesRead: " << bytesRead << std::endl;
     if (bytesRead > 0)//CGI still working
     {
+        // std::cout << "Buffer response: [" << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << std::endl;
         _clients[clientFd].store(std::string(buffer, bytesRead),Client::RESPONSE);
-        std::cout << "Store response: " << std::string(buffer, bytesRead) << std::endl;
         // Try to read again to detect EOF immediately if script finished
         ssize_t bytesReadAgain = read(pipeRead, buffer, 4096);
-        std::cout << "bytesReadAgain: " << bytesReadAgain << std::endl;
-        if (bytesReadAgain == 0) {
+        if (bytesReadAgain == 0) {//CGI complete
             // Script finished, process response now
-            std::cout << "CGI complete (detected after first read), call cgiResponseProcessor" << std::endl;
+            std::string result = _clients[clientFd].getBuffer(Client::RESPONSE);
+            _clients[clientFd].clean(Client::RESPONSE);
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-            _clients[clientFd].store(cgiResponseProcessor(_clients[clientFd].getBuffer(Client::RESPONSE), getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
-            if (removeReadPipe(pipeRead) <= idx)
-                    --idx;
+            _clients[clientFd].store(cgiResponseProcessor(result, getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
+            if (removeReadPipe(pipeRead) <= idx){
+                std::cout << "Inside readCgiResponse call removeReadPipe on pipe: " << pipeRead << std::endl;
+                --idx;
+            }
+            _clients[clientFd].resetCgiInfos();
             setPollout(clientFd);
         } else if (bytesReadAgain > 0) {
-            // More data available, append it
             _clients[clientFd].store(std::string(buffer, bytesReadAgain), Client::RESPONSE);
-            std::cout << "More data: " << std::string(buffer, bytesReadAgain) << std::endl;
         }
     }
-    else if (bytesRead == 0){//CGI complete
+    else if (bytesRead == 0){
+        std::string result = _clients[clientFd].getBuffer(Client::RESPONSE);
+        _clients[clientFd].clean(Client::RESPONSE);
         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
         // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
-        std::cout << "CGI complete, call cgiResponseProcessor" << std::endl;
-        _clients[clientFd].store(cgiResponseProcessor(_clients[clientFd].getBuffer(Client::RESPONSE), getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
+        _clients[clientFd].store(cgiResponseProcessor(result, getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
+        _clients[clientFd].resetCgiInfos();
         setPollout(clientFd);// Set to POLLOUT to then send response
     }
     else if (bytesRead == -1 && errno != EINTR){//Error: clean and send 500

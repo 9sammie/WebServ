@@ -61,7 +61,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         close(pipeIn[1]);
         return failedCgiHandler();
     }
-    std::cout << "Start of CgiHandler" << std::endl;
     //Initialize envp
     std::vector<std::string> envpData = buildEnvpData(data);
     //envpData was used for maintaining strings
@@ -93,7 +92,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         close(pipeOut[0]);
         close(pipeOut[1]);
         execve(data.interpreter.c_str(), argv, &envp[0]);
-        std::cout << "CgiHandler failed to exec" << std::endl;
         exit(1);
     }
     else{        
@@ -112,7 +110,6 @@ Client::CgiInfo CgiHandler(DataCgi data){
         cgiInfos.start_time = time(NULL);
         close(pipeIn[0]);
         close(pipeOut[1]);
-        std::cout << "End of CgiHandler" << std::endl;
         return cgiInfos;
     }
     return failedCgiHandler();

@@ -18,9 +18,6 @@ DataCgi RequestHandler::fillCgiData(const HttpRequest& req, const std::string& f
 		data.queryString = data.requestURI.substr(qPos + 1);
 
 	data.scriptPath = fullPath;
-	printf("Inside fillCgiData, scriptPath: %s\n", fullPath.c_str());
-	//Bug ici full path devient : /home/ctheveno/Documents/Projects/milestone_5/WebServ_Rats_port_80/html/site1/random-plate.py 
-	// il manque le /cgi-bin/ avant le random-plate.py
 	data.interpreter = loc->cgiPath;
 	data.serverName = _config.serverName;
 	data.documentRoot = loc->root.empty() ? _config.root : loc->root;
