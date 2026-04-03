@@ -35,7 +35,7 @@ LocationConfig::LocationConfig()
 	, hasKeepalive(false)
 	, keepaliveTimeoutSec(0)
 {
-	methods.push_back("GET"); //GET si rien n est precise, a reflechir si pertinent, gestion doublon...
+	methods.push_back("GET");
 }
 
 ServerConfig::ServerConfig()
