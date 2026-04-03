@@ -38,6 +38,8 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
             tempStructPollFd.events = POLLIN;
             tempStructPollFd.revents = 0;
             _pollFds.push_back(tempStructPollFd);
+            _timeOutCGI = getTimeoutCgi();
+            _timeOutClient = _httpConfig.keepaliveTimeoutSec;
         }
         catch (std::exception& e){
             delete tmp;
