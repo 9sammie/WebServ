@@ -49,7 +49,7 @@ std::vector<std::string> buildEnvpData(DataCgi data){
     envpData.push_back("REDIRECT_STATUS=" + data.redirectStatus);
     return envpData;
 }
-
+#include <iostream>
 Client::CgiInfo CgiHandler(DataCgi data){
     //Initialize pipes
     int     pipeIn[2];
