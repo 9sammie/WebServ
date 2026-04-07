@@ -6,7 +6,7 @@
 /*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/18 10:08:33 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/27 16:06:03 by maballet         ###   ########lyon.fr   */
+/*   Updated: 2026/04/07 14:58:35 by vakozhev         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,9 @@ LocationConfig::LocationConfig()
 	, redirectTarget("")
 	, hasMaxBodySize(false)
 	, maxBodySize(0)
-	, hasKeepalive(false)
-	, keepaliveTimeoutSec(0)
+	, hasCgiTimeout(false)
+	, cgiTimeoutSec(0)
+	//, cgiTimeoutLine(0)
 {
 	methods.push_back("GET");
 }
