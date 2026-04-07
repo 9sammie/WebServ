@@ -41,7 +41,6 @@ class RequestHandler
 		HttpParser			_parser;
 		bool _closeConnection;
 
-	void		initMethodHandlers();
 	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string validateParsing(Client& Client, HttpRequest& request);
 	std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
@@ -53,6 +52,7 @@ class RequestHandler
 	std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string buildStatusResponse(int code) const;
+	std::string updateCloseStatus(Client& client, const std::string& response);
 };
 
 #endif

@@ -10,11 +10,23 @@ RequestHandler::RequestHandler(const ServerConfig& config)
 }
 
 RequestHandler::RequestHandler(const RequestHandler& other)
-	: _config(other._config), _parser(), _closeConnection(false), _methodHandlers(other._methodHandlers) {}
+	: _methodHandlers(other._methodHandlers), _config(other._config), _parser(), _closeConnection(false) {}
 
 RequestHandler::~RequestHandler() {}
 
 
+
+std::string RequestHandler::updateCloseStatus(Client& client, const std::string& response)
+{
+	if (!response.empty())
+	{
+        int code = extractStatusCode(response);
+
+        if (code >= 300 || code == 0)
+			client.setCloseStatus(true);
+    }
+    return response;
+}
 
 std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)
 {
@@ -29,8 +41,9 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 		if (cgi.isCgi)
 		{
 			Client.setCgiInfo(cgi);
-			return "CGI_STARTED";
+			return "CGI-STARTED";
 		}
+		Client.setCloseStatus(true);
 		return buildStatusResponse(500);
 	}
 	return "";
@@ -50,7 +63,6 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	std::map<std::string, MethodHandler>::const_iterator it;
 
-	printf("buffer: %s\n", Client.getBuffer(Client::REQUEST).c_str());
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 
@@ -58,17 +70,12 @@ std::string RequestHandler::handleRequest(Client& Client)
 		return response;
 
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
-		return "";
+		return (response == "CGI-STARTED" ? "" : response);
 
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())
 		return buildStatusResponse(405);
 
     response = (this->*(it->second))(request, fullPath, loc);
-    if (!response.empty())
-	{
-        int code = extractStatusCode(response);
-        if (code >= 300 || code == 0) Client.setCloseStatus(true);
-    }
-    return response;
+	return updateCloseStatus(Client, response);
 }

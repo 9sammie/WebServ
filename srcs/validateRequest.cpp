@@ -9,8 +9,6 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	catch (const HttpException& he)
 	{
 		int code = he.getStatusCode();
-		if (code == 203)
-			return "";
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code);
 	}

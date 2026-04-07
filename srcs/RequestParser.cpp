@@ -19,7 +19,6 @@ HttpParser::~HttpParser() {}
 
 
 
-
 // If there is a body, then retrieve and check out his size conformity.
 void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
 {
@@ -54,7 +53,7 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 		throw HttpException(413, "request entity too large");
 
 	if (bodyPart.size() < len)
-		throw HttpException(203, "incomplete body");
+		throw HttpException(400, "incomplete body");
 
 	if (bodyPart.size() > len)
 		throw HttpException(400, "bad request: body size mismatch");
@@ -211,7 +210,7 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	const LocationConfig* loc = NULL;
 
 	getRequestParts(buffer, requestLine, headerLines, bodyPart);
-	// printf("HEY\n");
+
 	parseRequestLine(requestLine, tempRequest);
 
 	parseHeaders(headerLines, tempRequest);
