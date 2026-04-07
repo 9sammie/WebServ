@@ -11,6 +11,7 @@
 
 #include <string>
 #include <map>
+#include <fstream>
 
 class RequestHandler;
 typedef std::string (RequestHandler::*MethodHandler)(const HttpRequest&, const std::string&, const LocationConfig*);
@@ -40,7 +41,7 @@ class RequestHandler
 		HttpParser			_parser;
 		bool _closeConnection;
 
-	void initMethodHandlers();
+	void		initMethodHandlers();
 	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string validateParsing(Client& Client, HttpRequest& request);
 	std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
