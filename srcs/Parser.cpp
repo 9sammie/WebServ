@@ -146,6 +146,11 @@ const Token& Parser::consumeWord(const std::string& expected)
 	return consume(WORD);
 }
 
+static bool isCgiLocation(const LocationConfig& loc)
+{
+	return (!loc.cgiExt.empty() && !loc.cgiPath.empty());
+}
+
 /*void Parser::skipBlock()
 {
 	consume(LBRACE);
@@ -350,13 +355,14 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		loc.hasMaxBodySize = true;
 		return;
 	}
-	if (name == "keepalive_timeout")
+	if (name == "cgiTimeout")
 	{
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
-		loc.keepaliveTimeoutSec = parsePositiveInt(nameTok, args[0]);
-		loc.hasKeepalive = true;
+		loc.cgiTimeoutSec = parsePositiveInt(nameTok, args[0]);
+		loc.hasCgiTimeout = true;
+		//loc.cgiTimeoutLine = nameTok.line;
 		return;
 	}
 	if (name == "cgi_ext")
@@ -577,7 +583,64 @@ ServerConfig Parser::parseServerBlock(const Token& serverTok)
 }
 
 /////////////////////////////////func will be modified///////////////
-void Parser::applyEffectifData(HttpConfig& http)
+static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConfig& srv)
+{
+	if (srv.hasKeepalive)
+		return srv.keepaliveTimeoutSec;
+	return http.keepaliveTimeoutSec;
+}
+
+static int defaultCgiTimeoutSec(int keepaliveSec)
+{
+	if (keepaliveSec <= 1)
+		return 1; //a voir avec Corentin si throw ? 
+	if (keepaliveSec > 5)
+		return keepaliveSec - 5;
+	return keepaliveSec - 1;
+}
+
+void Parser::applyEffectiveData(HttpConfig& http)
+{
+	for (std::size_t i = 0; i < http.servers.size(); ++i)
+	{
+		ServerConfig& srv = http.servers[i];
+		if (!srv.hasKeepalive && http.hasKeepalive)
+		{
+			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
+			srv.hasKeepalive = true;
+		}
+		if (!srv.hasMaxBodySize && http.hasMaxBodySize)
+		{
+			srv.maxBodySize = http.maxBodySize;
+			srv.hasMaxBodySize = true;
+		}
+		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		for (std::size_t j = 0; j < srv.locations.size(); ++j)
+		{
+			LocationConfig& loc = srv.locations[j];
+			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
+			{
+				loc.maxBodySize = srv.maxBodySize;
+				loc.hasMaxBodySize = true;
+			}
+			bool cgiLoc = isCgiLocation(loc);
+			if (loc.hasCgiTimeout && !cgiLoc)
+				throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" is only allowed in CGI locations");
+			if (cgiLoc)
+			{
+				if (!loc.hasCgiTimeout)
+				{
+					loc.cgiTimeoutSec = defaultCgiTimeoutSec(srvKeepalive);
+					loc.hasCgiTimeout = true;
+				}
+				if (loc.cgiTimeoutSec >= srvKeepalive)
+					throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" must be strictly shorter than effective \"keepalive_timeout\"");
+			}
+		}
+	}
+}
+
+/*void Parser::applyEffectifData(HttpConfig& http)
 {
     for (size_t si = 0; si < http.servers.size(); ++si)
     {
@@ -612,7 +675,8 @@ void Parser::applyEffectifData(HttpConfig& http)
             }
         }
     }
-}
+}*/
+
 /*LocationConfig Parser::parseFirstLocationInFile()
 {
 	// cherche "location"
@@ -662,6 +726,6 @@ HttpConfig Parser::parseConfig()
 	http = parseHttpBlock(topTok);
 	if (isNotEnd())
 		throwUnexpectedToken(currentToken());
-	applyEffectifData(http);
+	applyEffectiveData(http);
 	return http;
 }
