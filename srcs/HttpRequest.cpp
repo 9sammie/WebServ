@@ -80,6 +80,22 @@ size_t HttpRequest::getContentLength() const
 	return _contentLength;
 }
 
+std::string HttpRequest::getCookie(const std::string& name) const
+{
+    std::string header = this->getHeader("Cookie"); // copy for exemple "mouse_type=fork; user=toto"
+    if (header.empty())
+		return "";
+
+    std::string toFind = name + "=";
+    size_t start = header.find(toFind);
+    if (start == std::string::npos)
+		return "";
+
+    start += toFind.length();
+    size_t end = header.find(';', start);
+    return header.substr(start, end - start);
+}
+
 
 
 /*############################### SETTERS #############################*/

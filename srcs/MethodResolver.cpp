@@ -164,14 +164,15 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 	std::string earlyResponse;
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
-	printf("HEY\n");
 	if (it == loc->methods.end())
 		return buildStatusResponse(405);
-	printf("HEY\n");
+
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
 		return earlyResponse;
+
 	if (stat(resolvedPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
 		return buildStatusResponse(403);
+
 	if (access(resolvedPath.c_str(), R_OK) != 0)
 		return buildStatusResponse(403);
 
@@ -180,6 +181,8 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		return buildStatusResponse(500);	
 	buffer << file.rdbuf();
 	body = buffer.str();
+
 	headers["Content-Type"] = getMimeType(resolvedPath);
 	return buildHttpResponse(200, "OK", body, false, headers);
 }
+// ?v=CFGLoQIhmow&list=RDCFGLoQIhmow&start_radio=1
