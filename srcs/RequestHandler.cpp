@@ -51,13 +51,22 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	std::map<std::string, MethodHandler>::const_iterator it;
 
+	printf("buffer: %s\n", Client.getBuffer(Client::REQUEST).c_str());
 
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
+
+	printf("HEY\n");
+
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
+
+	printf("HEY\n");
+
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
 		return response;
+
+	printf("HEY\n");
 
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())

@@ -1,11 +1,5 @@
 A faire:
 
--implementer le 0 pour le content length = body size illimité ✅
-
--gerer le 0 pour timeout = renvoyer closeconnection ✅
-
--gerer le cgi
-
 -GET	test: curl -v "http://localhost:8080/cgi-bin/hello.py?name=Etudiant&status=coding"
 
 -POST	test: curl -v -X POST -d "Ceci est le contenu de mon fichier" http://localhost:8080/uploads/test.txt

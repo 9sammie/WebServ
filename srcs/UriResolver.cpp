@@ -214,6 +214,7 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	path = urlDecode(path);
 	path = normalize(path);
 
+
 	loc = findMatchingLocation(path);
 	if (!loc)
 		throw HttpException(400, "invalid path");

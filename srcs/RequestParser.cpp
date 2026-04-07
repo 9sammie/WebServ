@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <climits>
+#include <fstream>
 
 HttpParser::HttpParser() {}
 
@@ -208,7 +209,6 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	std::string bodyPart;
 	UriResolver locateRessource(_config);
 	const LocationConfig* loc = NULL;
-
 
 	getRequestParts(buffer, requestLine, headerLines, bodyPart);
 

@@ -11,6 +11,7 @@
 
 #include <string>
 #include <map>
+#include <fstream>
 
 class RequestHandler;
 typedef std::string (RequestHandler::*MethodHandler)(const HttpRequest&, const std::string&, const LocationConfig*);
