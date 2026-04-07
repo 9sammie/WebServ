@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avis Clients - Chez Gusteau</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c2c2c;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #e67e22;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Formulaire d'ajout d'avis */
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .form-section h2 {
+            color: #e67e22;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c2c2c;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Georgia', serif;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #e67e22;
+            background-color: #fffaf0;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background-color: #e67e22;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #d35400;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+        }
+
+        .btn-reset {
+            background-color: #bdc3c7;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background-color: #95a5a6;
+        }
+
+        /* Section des avis */
+        .reviews-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .reviews-section h2 {
+            color: #e67e22;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: linear-gradient(135deg, #fffaf0 0%, #fff5e6 100%);
+            padding: 20px;
+            border-left: 5px solid #e67e22;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .review-content {
+            flex: 1;
+        }
+
+        .review-name {
+            font-weight: bold;
+            color: #e67e22;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .review-text {
+            color: #2c2c2c;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-delete:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-delete:active {
+            transform: translateY(0);
+        }
+
+        .no-reviews {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .error-message {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background-color: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/" class="back-link">← Retour à l'accueil</a>
+
+        <header>
+            <h1>📝 Avis Clients</h1>
+            <p>Partagez votre expérience chez Gusteau</p>
+        </header>
+
+        <!-- Messages d'erreur/succès -->
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Formulaire d'ajout d'avis -->
+        <div class="form-section">
+            <h2>Poster un Avis</h2>
+            <form id="reviewForm">
+                <div class="form-group">
+                    <label for="clientName">Votre Nom :</label>
+                    <input type="text" id="clientName" name="client_name" placeholder="Ex: Marie Dupont" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewText">Votre Avis :</label>
+                    <textarea id="reviewText" name="review_text" placeholder="Dites-nous ce que vous avez pensé de votre expérience..." required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">📤 Soumettre l'Avis</button>
+                    <button type="reset" class="btn-reset">🔄 Effacer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Section des avis existants -->
+        <div class="reviews-section">
+            <h2>Tous les Avis</h2>
+            <div id="reviewsList" class="reviews-list">
+                <div class="loading">Chargement des avis...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_UPLOAD = '/uploads';
+        const API_FILES = '/files';
+        const errorEl = document.getElementById('errorMessage');
+        const successEl = document.getElementById('successMessage');
+        const reviewForm = document.getElementById('reviewForm');
+        const reviewsList = document.getElementById('reviewsList');
+
+        // Afficher un message temporaire
+        function showMessage(message, type) {
+            const el = type === 'error' ? errorEl : successEl;
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 4000);
+        }
+
+        // Générer un nom de fichier unique basé sur le timestamp
+        function generateFileName(name) {
+            const timestamp = Date.now();
+            const sanitized = name.toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_]/g, '')
+                .substring(0, 20);
+            return `review_${sanitized}_${timestamp}.txt`;
+        }
+
+        // Soumettre un nouvel avis
+        reviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const clientName = document.getElementById('clientName').value;
+            const reviewText = document.getElementById('reviewText').value;
+
+            if (!clientName.trim() || !reviewText.trim()) {
+                showMessage('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            try {
+                const fileName = generateFileName(clientName);
+                const content = `Nom: ${clientName}\n\n${reviewText}`;
+
+                // Créer un FormData pour POST
+                const formData = new FormData();
+                formData.append('review', new Blob([content], { type: 'text/plain' }), fileName);
+
+                const response = await fetch(API_UPLOAD, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('✅ Avis posté avec succès!', 'success');
+                    reviewForm.reset();
+                    loadReviews(); // Recharger la liste
+                } else {
+                    showMessage('❌ Erreur lors de la soumission', 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Erreur réseau: ' + error.message, 'error');
+            }
+        });
+
+        // Charger et afficher les avis
+        async function loadReviews() {
+            try {
+                const response = await fetch(API_FILES);
+                const html = await response.text();
+
+                // Parser les noms de fichiers depuis le HTML autoindex
+                const fileNames = extractFileNamesFromHTML(html);
+
+                if (fileNames.length === 0) {
+                    reviewsList.innerHTML = '<div class="no-reviews">Aucun avis pour le moment. Soyez le premier à en poster un!</div>';
+                    return;
+                }
+
+                // Charger le contenu de chaque avis
+                const reviews = [];
+                for (const fileName of fileNames) {
+                    try {
+                        const fileResponse = await fetch(`${API_FILES}/${fileName}`);
+                        const content = await fileResponse.text();
+                        reviews.push({ fileName, content });
+                    } catch (e) {
+                        console.error('Erreur chargement fichier:', fileName, e);
+                    }
+                }
+
+                // Afficher les avis
+                if (reviews.length === 0) {
+                    reviewsList.innerHTML = '<div class="no-reviews">Aucun avis à afficher</div>';
+                } else {
+                    reviewsList.innerHTML = reviews.map(review => createReviewCard(review)).join('');
+
+                    // Ajouter les event listeners pour les boutons DELETE
+                    document.querySelectorAll('.btn-delete').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const fileName = btn.dataset.file;
+                            await deleteReview(fileName);
+                        });
+                    });
+                }
+            } catch (error) {
+                reviewsList.innerHTML = '<div class="no-reviews">Erreur lors du chargement des avis</div>';
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Extraire les noms de fichiers du HTML autoindex
+        function extractFileNamesFromHTML(html) {
+            const fileNames = [];
+            const linkRegex = /href="([^"]+\.txt)"/g;
+            let match;
+
+            while ((match = linkRegex.exec(html)) !== null) {
+                fileNames.push(match[1]);
+            }
+
+            return fileNames;
+        }
+
+        // Créer une carte d'avis
+        function createReviewCard(review) {
+            const lines = review.content.split('\n');
+            const nameLine = lines[0].replace('Nom: ', '');
+            const reviewText = lines.slice(2).join('\n').trim();
+
+            return `
+                <div class="review-card">
+                    <div class="review-content">
+                        <div class="review-name">👤 ${escapeHtml(nameLine)}</div>
+                        <div class="review-text">${escapeHtml(reviewText)}</div>
+                    </div>
+                    <div class="review-actions">
+                        <button class="btn-delete" data-file="${review.fileName}">🗑️ Supprimer</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Échapper le HTML pour éviter les injections
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Supprimer un avis
+        async function deleteReview(fileName) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_FILES}/${fileName}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showMessage('✅ Avis supprimé avec succès!', 'success');
+                    loadReviews(); // Recharger la liste
+                } else {
+                    showMessage('❌ Erreur lors de la suppression', 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Erreur réseau: ' + error.message, 'error');
+            }
+        }
+
+        // Charger les avis au démarrage
+        loadReviews();
+    </script>
+
+</body>
+</html>

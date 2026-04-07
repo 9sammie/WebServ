@@ -44,6 +44,8 @@ class Client{
         int         getPort(PortType type)const;
         std::string getRemoteAddr()const;
         const std::string& getBuffer(BufferType type);
+        int         getKeepaliveTimeout()const;
+        void        setKeepaliveTimeout(int timeout);
 
         void        resetCgiInfos();
         size_t&     getResponseOffsetSent();
@@ -71,6 +73,7 @@ class Client{
         size_t      _requestSize;
         ssize_t     _chunkSize;
         bool        _transferEncoding;
+        int        _keepaliveTimeout;
 };
 
 #endif

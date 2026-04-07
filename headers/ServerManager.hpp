@@ -10,9 +10,9 @@
 #include "Config.hpp"
 #include <sys/types.h>
 
-#define MAX_CLIENTS    1000
-#define CLIENT_TIMEOUT 5
-#define CGI_TIMEOUT    5
+#define MAX_CLIENTS    255
+#define DEFAULT_TIMEOUT 60
+
 class ServerManager{
 
     public :
@@ -41,6 +41,7 @@ class ServerManager{
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
 /*******************************************************************************/
+        int getTimeout(int port)const;
         void   checkCgiTimeOuts();
         void   checkClientTimeOuts();
 
@@ -54,8 +55,8 @@ class ServerManager{
         std::map<int, int>          _cgiWriteFds;
         std::vector<struct pollfd>  _pollFds;
         int                         _portsQuantity;
-        size_t                      _timeOutCGI;
-        size_t                      _timeOutClient;
+        // size_t                      _timeOutCGI;
+        // size_t                      _timeOutClient;
 
         // UNUSED Canonical form
         ServerManager();

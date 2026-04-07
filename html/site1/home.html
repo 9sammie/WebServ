@@ -89,6 +89,34 @@
             background-color: #d35400;
             transform: scale(1.1); /* Petit effet de zoom au survol */
         }
+
+        /* Conteneur des boutons */
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* Bouton avis */
+        .btn-reviews {
+            display: inline-block;
+            padding: 15px 40px;
+            background-color: #3498db; /* Bleu */
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            border: 3px solid white;
+        }
+
+        .btn-reviews:hover {
+            background-color: #2980b9;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -102,7 +130,10 @@
             
             <br>
             
-            <a href="/menu.html" class="btn-menu">ENTRER ET VOIR LE MENU</a>
+            <div class="buttons-container">
+                <a href="/menu.html" class="btn-menu">ENTRER ET VOIR LE MENU</a>
+                <a href="/reviews.html" class="btn-reviews">📝 LIRE LES AVIS</a>
+            </div>
         </div>
     </section>
 
