@@ -56,18 +56,13 @@ std::string RequestHandler::handleRequest(Client& Client)
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 
-	printf("HEY\n");
-
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
 
-	printf("HEY\n");
-
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
 		return response;
-
-	printf("HEY\n");
-
+		
+	initMethodHandlers();
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())
 		return buildStatusResponse(405);

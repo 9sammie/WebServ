@@ -211,7 +211,7 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	const LocationConfig* loc = NULL;
 
 	getRequestParts(buffer, requestLine, headerLines, bodyPart);
-
+	// printf("HEY\n");
 	parseRequestLine(requestLine, tempRequest);
 
 	parseHeaders(headerLines, tempRequest);
