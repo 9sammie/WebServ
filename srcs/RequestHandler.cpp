@@ -2,21 +2,19 @@
 #include <fstream>
 
 RequestHandler::RequestHandler(const ServerConfig& config)
-    : _config(config), _parser(), _closeConnection(false) {}
-
-RequestHandler::RequestHandler(const RequestHandler& other)
-	: _config(other._config), _parser(), _closeConnection(false) {}
-
-RequestHandler::~RequestHandler() {}
-
-
-
-void RequestHandler::initMethodHandlers()
+    : _config(config), _parser(),_closeConnection(false)
 {
     _methodHandlers["GET"] = &RequestHandler::handleGET;
     _methodHandlers["POST"] = &RequestHandler::handlePOST;
     _methodHandlers["DELETE"] = &RequestHandler::handleDELETE;
 }
+
+RequestHandler::RequestHandler(const RequestHandler& other)
+	: _config(other._config), _parser(), _closeConnection(false), _methodHandlers(other._methodHandlers) {}
+
+RequestHandler::~RequestHandler() {}
+
+
 
 std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)
 {
@@ -61,8 +59,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
 		return "";
-		
-	initMethodHandlers();
+
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())
 		return buildStatusResponse(405);
