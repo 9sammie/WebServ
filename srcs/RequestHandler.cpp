@@ -30,8 +30,8 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 
 		if (cgi.isCgi)
 		{
-			Client.setCgiInfo(cgi); 
-			return "";
+			Client.setCgiInfo(cgi);
+			return "CGI_STARTED";
 		}
 		return buildStatusResponse(500);
 	}
@@ -60,7 +60,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 		return response;
 
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
-		return response;
+		return "";
 		
 	initMethodHandlers();
 	it = _methodHandlers.find(request.getMethod());
