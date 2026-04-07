@@ -5,3 +5,5 @@ A faire:
 -POST	test: curl -v -X POST -d "Ceci est le contenu de mon fichier" http://localhost:8080/uploads/test.txt
 
 -DELETE	test: curl -v -X DELETE http://localhost:8080/files/test.txt
+
+DELETE http://localhost:8080/../Makefile/test.txt
