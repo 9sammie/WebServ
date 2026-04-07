@@ -38,6 +38,10 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
             tempStructPollFd.events = POLLIN;
             tempStructPollFd.revents = 0;
             _pollFds.push_back(tempStructPollFd);
+            // _timeOutCGI = getTimeoutCgi();
+            // _timeOutClient = _httpConfig.keepaliveTimeoutSec;
+            // if (_timeOutClient == 0)
+            //     _timeOutClient = _timeOutCGI + 5;
         }
         catch (std::exception& e){
             delete tmp;
@@ -80,6 +84,8 @@ void ServerManager::acceptNewConnection(int serverFd){
     _pollFds.push_back(newSPollFd);
     std::string remoteAddr = inet_ntoa(address.sin_addr);
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
+    _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
+    _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
     //Debug
     std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
@@ -164,6 +170,31 @@ int    ServerManager::getListenerPort(int fd){
     return -1;
 }
 
+int ServerManager::getTimeout(int port)const{
+    for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
+        for (size_t i = 0; i < it->listens.size(); ++i) {
+            if (it->listens[i].port == port) {
+                return it->keepaliveTimeoutSec;
+            }
+		}
+    }
+    return 1;
+}
+
+int ServerManager::getCgiTimeout(int port)const{
+    for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
+        for (size_t i = 0; i < it->listens.size(); ++i) {
+            if (it->listens[i].port == port) {
+                for (std::vector<LocationConfig>::const_iterator itL = it->locations.begin(); itL != it->locations.end(); ++itL){
+                    if (itL->prefix.find("/cgi") != std::string::npos)
+                        return 5;
+                        // return itL->cgiTimeoutSec;
+                }
+            }
+		}
+    }
+    return 1;
+}
 
 /************************************************************************************************************ */
 /*                                                                                                            */
@@ -178,7 +209,9 @@ int    ServerManager::getListenerPort(int fd){
 void   ServerManager::checkCgiTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
         if (it->second.getCgiInfo().isCgi == true){
-            if (time(NULL) - it->second.getCgiInfo().start_time > CGI_TIMEOUT){
+            int timeoutCgiVal = 5;//it->second.getCgiTimeout();
+            if (timeoutCgiVal < 0)
+            if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
                 kill(it->second.getCgiInfo().pid, SIGKILL);
                 waitpid(it->second.getCgiInfo().pid, NULL, WNOHANG);
                 std::cout << "Inside checkCgiTimeOuts call removeReadPipe on pipe: " << it->second.getCgiInfo().pipeRead << std::endl;
@@ -197,8 +230,14 @@ void   ServerManager::checkCgiTimeOuts(){
 
 void   ServerManager::checkClientTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ){
-        if (it->second.timeSinceLastActivity() > CLIENT_TIMEOUT){
-            // Debug, could be added to logFile
+        int timeoutVal = it->second.getKeepaliveTimeout();
+        if (timeoutVal > 0 &&  it->second.timeSinceLastActivity() > timeoutVal){
+            int fd = it->second.getFd();
+            std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
+            ++it;
+            closeConnection(fd);
+        }
+        else if (timeoutVal == 0 && it->second.timeSinceLastActivity() > 60){
             int fd = it->second.getFd();
             std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
             ++it;
@@ -259,7 +298,7 @@ bool    ServerManager::receivedRequest(int idx){
     return true;
 }
 
-// -1 has been changed to 1000 to allow servermanager to clean innactive clients It allows him to 
+// In poll() -1 has been changed to 1000 to allow servermanager to clean innactive clients
 void    ServerManager::run(){
     while(true){
         checkCgiTimeOuts();
@@ -320,10 +359,6 @@ size_t    ServerManager::removeWritePipe(int pipeWrite){
 }
 
 size_t    ServerManager::removeReadPipe(int pipeRead){
-    //     if (_cgiReadFds.count(pipeRead) == 0) {
-    //     std::cout << "WARNING: Trying to close fd " << pipeRead << " but not in _cgiReadFds!" << std::endl;
-    //     return _pollFds.size();
-    // }
     if (close(pipeRead) == -1)
         std::cerr << RED << "Error: close(" << pipeRead <<") failed: " << strerror(errno) << RESET << std::endl;
     _cgiReadFds.erase(pipeRead);
@@ -381,34 +416,6 @@ void    ServerManager::setPollout(int clientFd){
     }
 }
 
-// void    ServerManager::readCgiResponse(size_t& idx){
-//     int pipeRead = _pollFds[idx].fd;
-//     int clientFd = _cgiReadFds[pipeRead];
-//     char buffer[4096];
-//     ssize_t bytesRead = read(pipeRead, buffer, 4096);
-//     if (bytesRead > 0)//CGI still working
-//     {
-//         _clients[clientFd].store(std::string(buffer, bytesRead),Client::RESPONSE);
-//     }
-//     else if (bytesRead == 0){//CGI complete
-//         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-//         // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
-//         _clients[clientFd].store(cgiResponseProcessor(_clients[clientFd].getBuffer(Client::RESPONSE), getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
-//         if (removeReadPipe(pipeRead) <= idx)
-//                 --idx;
-//         setPollout(clientFd);// Set to POLLOUT to then send response
-//     }
-//     else if (bytesRead == -1 && errno != EINTR){//Error: clean and send 500
-//         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-//         if (removeReadPipe(pipeRead) <= idx)
-//                 --idx;
-//             _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
-//                 "<html><body><h1>500 Internal Server Error</h1></body></html>", true), Client::RESPONSE);
-//             setPollout(clientFd);
-//     }
-//     return ;
-// }
-
 const ServerConfig& ServerManager::getServer(int port) const {
     for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
         for (size_t i = 0; i < it->listens.size(); ++i) {
@@ -454,7 +461,6 @@ void    ServerManager::readCgiResponse(size_t& idx){
         std::string result = _clients[clientFd].getBuffer(Client::RESPONSE);
         _clients[clientFd].clean(Client::RESPONSE);
         waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
-        // CookCgi call here IMPORTANT TO CODE it will cook the response inside _responseBuffer;
         _clients[clientFd].store(cgiResponseProcessor(result, getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;

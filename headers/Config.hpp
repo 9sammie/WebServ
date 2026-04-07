@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: ctheveno <ctheveno@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/17 10:13:49 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/19 15:38:51 by maballet         ###   ########lyon.fr   */
+/*   Updated: 2026/04/07 14:51:42 by ctheveno         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

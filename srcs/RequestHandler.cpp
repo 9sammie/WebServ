@@ -42,6 +42,7 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 // The complex part here is the iteration "it" of the map<string methods
 // functions>, wich will find the right method string so we can use the
 // function assiociated with this string (it->second).
+#include <stdio.h>
 std::string RequestHandler::handleRequest(Client& Client)
 {
     HttpRequest request;
