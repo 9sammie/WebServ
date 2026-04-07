@@ -295,8 +295,8 @@
     </div>
 
     <script>
-        const API_UPLOAD = '/uploads';
-        const API_FILES = '/files';
+        const API_UPLOAD = '/uploads/site1';
+        const API_FILES = '/files/site1';
         const errorEl = document.getElementById('errorMessage');
         const successEl = document.getElementById('successMessage');
         const reviewForm = document.getElementById('reviewForm');
@@ -338,21 +338,21 @@
                 const fileName = generateFileName(clientName);
                 const content = `Nom: ${clientName}\n\n${reviewText}`;
 
-                // Créer un FormData pour POST
-                const formData = new FormData();
-                formData.append('review', new Blob([content], { type: 'text/plain' }), fileName);
-
-                const response = await fetch(API_UPLOAD, {
+                // Envoyer en texte brut au lieu de FormData multipart
+                const response = await fetch(`${API_UPLOAD}/${fileName}`, {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: content
                 });
 
-                if (response.ok) {
+                if (response.ok || response.status === 201) {
                     showMessage('✅ Avis posté avec succès!', 'success');
                     reviewForm.reset();
                     loadReviews(); // Recharger la liste
                 } else {
-                    showMessage('❌ Erreur lors de la soumission', 'error');
+                    showMessage(`❌ Erreur lors de la soumission (${response.status})`, 'error');
                 }
             } catch (error) {
                 showMessage('❌ Erreur réseau: ' + error.message, 'error');
@@ -412,7 +412,12 @@
             let match;
 
             while ((match = linkRegex.exec(html)) !== null) {
-                fileNames.push(match[1]);
+                let filePath = match[1];
+                // Extraire SEULEMENT le nom du fichier (dernière partie après le /)
+                const fileName = filePath.split('/').pop();
+                if (fileName && !filePath.endsWith('/')) {  // Exclut les répertoires
+                    fileNames.push(fileName);
+                }
             }
 
             return fileNames;

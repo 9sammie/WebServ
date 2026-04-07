@@ -187,7 +187,8 @@ int ServerManager::getCgiTimeout(int port)const{
             if (it->listens[i].port == port) {
                 for (std::vector<LocationConfig>::const_iterator itL = it->locations.begin(); itL != it->locations.end(); ++itL){
                     if (itL->prefix.find("/cgi") != std::string::npos)
-                        return itL->cgiTimeoutSec;
+                        return 5;
+                        // return itL->cgiTimeoutSec;
                 }
             }
 		}
@@ -208,7 +209,7 @@ int ServerManager::getCgiTimeout(int port)const{
 void   ServerManager::checkCgiTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
         if (it->second.getCgiInfo().isCgi == true){
-            int timeoutCgiVal = it->second.getCgiTimeout();
+            int timeoutCgiVal = 5;//it->second.getCgiTimeout();
             if (timeoutCgiVal < 0)
             if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
                 kill(it->second.getCgiInfo().pid, SIGKILL);
