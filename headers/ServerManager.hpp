@@ -41,7 +41,8 @@ class ServerManager{
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
 /*******************************************************************************/
-        int getTimeout(int port)const;
+        int     getTimeout(int port)const;
+        int     getCgiTimeout(int port)const;
         void   checkCgiTimeOuts();
         void   checkClientTimeOuts();
 

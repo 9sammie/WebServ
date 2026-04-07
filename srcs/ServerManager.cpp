@@ -85,6 +85,7 @@ void ServerManager::acceptNewConnection(int serverFd){
     std::string remoteAddr = inet_ntoa(address.sin_addr);
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
+    _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
     //Debug
     std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
@@ -177,7 +178,21 @@ int ServerManager::getTimeout(int port)const{
             }
 		}
     }
-    return -1;
+    return 1;
+}
+
+int ServerManager::getCgiTimeout(int port)const{
+    for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it) {
+        for (size_t i = 0; i < it->listens.size(); ++i) {
+            if (it->listens[i].port == port) {
+                for (std::vector<LocationConfig>::const_iterator itL = it->locations.begin(); itL != it->locations.end(); ++itL){
+                    if (itL->prefix.find("/cgi") != std::string::npos)
+                        return itL->cgiTimeoutSec;
+                }
+            }
+		}
+    }
+    return 1;
 }
 
 /************************************************************************************************************ */
@@ -193,7 +208,7 @@ int ServerManager::getTimeout(int port)const{
 void   ServerManager::checkCgiTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
         if (it->second.getCgiInfo().isCgi == true){
-            int timeoutCgiVal = it->second.getKeepaliveTimeout() -5;
+            int timeoutCgiVal = it->second.getCgiTimeout();
             if (timeoutCgiVal < 0)
             if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
                 kill(it->second.getCgiInfo().pid, SIGKILL);
