@@ -1,4 +1,5 @@
 #include "RequestHandler.hpp"
+#include <fstream>
 
 RequestHandler::RequestHandler(const ServerConfig& config)
     : _config(config), _parser(), _closeConnection(false) {}
@@ -51,7 +52,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	std::map<std::string, MethodHandler>::const_iterator it;
 
-
+	printf("buffer: %s\n", Client.getBuffer(Client::REQUEST).c_str());
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
