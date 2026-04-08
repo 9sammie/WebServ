@@ -192,6 +192,7 @@ bool Client::isRequestComplete(){
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
+                std::cout << "test1" << std::endl;
                 return true;
             }
         }
@@ -202,10 +203,12 @@ bool Client::isRequestComplete(){
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
+                std::cout << "test2" << std::endl;
                 return true;
             }
         } else {
             if (finalChunkReceived()) {
+                std::cout << "finalChunkReceived" << std::endl;
                 _transferEncoding = false;
                 return true;
             }
@@ -354,7 +357,7 @@ ssize_t     Client::updateChunkSize(){
 
 ssize_t     Client::getChunkData(){
     size_t strSize = _rawBuffer.find("\r\n");
-    if (strSize == std::string::npos)
+    if (strSize == std::string::npos) 
         return 0;
     if (static_cast<ssize_t>(strSize) != _chunkSize)
         return -1;

@@ -182,7 +182,6 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 
 	if (it == loc->methods.end())
 		return buildStatusResponse(405);
-
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
 		return earlyResponse;
 

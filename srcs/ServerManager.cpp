@@ -38,10 +38,6 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
             tempStructPollFd.events = POLLIN;
             tempStructPollFd.revents = 0;
             _pollFds.push_back(tempStructPollFd);
-            // _timeOutCGI = getTimeoutCgi();
-            // _timeOutClient = _httpConfig.keepaliveTimeoutSec;
-            // if (_timeOutClient == 0)
-            //     _timeOutClient = _timeOutCGI + 5;
         }
         catch (std::exception& e){
             delete tmp;
@@ -187,8 +183,7 @@ int ServerManager::getCgiTimeout(int port)const{
             if (it->listens[i].port == port) {
                 for (std::vector<LocationConfig>::const_iterator itL = it->locations.begin(); itL != it->locations.end(); ++itL){
                     if (itL->prefix.find("/cgi") != std::string::npos)
-                        return 5;
-                        // return itL->cgiTimeoutSec;
+                    return itL->cgiTimeoutSec;
                 }
             }
 		}
@@ -214,13 +209,13 @@ void   ServerManager::checkCgiTimeOuts(){
             if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
                 kill(it->second.getCgiInfo().pid, SIGKILL);
                 waitpid(it->second.getCgiInfo().pid, NULL, WNOHANG);
-                std::cout << "Inside checkCgiTimeOuts call removeReadPipe on pipe: " << it->second.getCgiInfo().pipeRead << std::endl;
                 removeReadPipe(it->second.getCgiInfo().pipeRead);
                 if (it->second.getCgiInfo().pipeWrite != -1)
                     removeWritePipe(it->second.getCgiInfo().pipeWrite);
                 it->second.resetCgiInfos();
                 //Hardcoded REPSONSE for NOW
-                const std::string response = /*CALL cooker response error ? */"HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n";
+                const std::string response = RequestHandler::buildHttpResponse(504, "Gateway Timeout",
+                "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
                 it->second.store(response, Client::RESPONSE);
                 setPollout(it->second.getFd());
             }
@@ -256,6 +251,8 @@ bool    ServerManager::receivedRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
+        std::cout  << "REQUEST: " << _clients[fd].getBuffer(Client::REQUEST) << std::endl;
+
         _clients[fd].extractRequest();
         // COOKER call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort(Client::SERVER));
