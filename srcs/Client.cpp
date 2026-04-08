@@ -192,6 +192,7 @@ bool Client::isRequestComplete(){
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
+                std::cout << "test1" << std::endl;
                 return true;
             }
         }
@@ -202,10 +203,12 @@ bool Client::isRequestComplete(){
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
+                std::cout << "test2" << std::endl;
                 return true;
             }
         } else {
             if (finalChunkReceived()) {
+                std::cout << "finalChunkReceived" << std::endl;
                 _transferEncoding = false;
                 return true;
             }
