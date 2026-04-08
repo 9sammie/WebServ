@@ -161,6 +161,7 @@ ssize_t      Client::getContentLenthSize()const{
 // }
 
 bool Client::isRequestComplete(){
+    std::cout << "Start isRequestComplete, rawBuffer: " << _rawBuffer << std::endl;
     if (_transferEncoding == false){
         if (!hasHeadersSeparator())
             return false;
@@ -187,12 +188,13 @@ bool Client::isRequestComplete(){
         }
     }
     while (_transferEncoding == true) {
+    std::cout << MAGENTA << "Inside isRequestComplete, inside LOOP, rawBuffer: " << RESET << _rawBuffer << std::endl;
         if (_chunkSize == -1) {
             ssize_t ret = updateChunkSize();
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
-                std::cout << "test1" << std::endl;
+                std::cout << "chunksize -1 && ret<0" << std::endl;
                 return true;
             }
         }
@@ -203,7 +205,7 @@ bool Client::isRequestComplete(){
             if (ret < 0) {
                 _transferEncoding = false;
                 _closeAfterResponse = true;
-                std::cout << "test2" << std::endl;
+                std::cout << "chunksize > 0 && ret < 0" << std::endl;
                 return true;
             }
         } else {
@@ -350,22 +352,23 @@ ssize_t     Client::updateChunkSize(){
         endptr++;
     if (endptr != chunkStr.c_str() + chunkStr.size() || val < 0)
         return -1;
-    _rawBuffer.erase(0, strSize +2);
+    if (val != 0)
+        _rawBuffer.erase(0, strSize +2);
     _chunkSize = static_cast<ssize_t>(val);
     return static_cast<ssize_t>(val);
 }
 
-ssize_t     Client::getChunkData(){
-    size_t strSize = _rawBuffer.find("\r\n");
-    if (strSize == std::string::npos) 
-        return 0;
-    if (static_cast<ssize_t>(strSize) != _chunkSize)
-        return -1;
-    std::string chunkStr = _rawBuffer.substr(0, strSize);
-    store(chunkStr, REQUEST);
-    _rawBuffer.erase(0, strSize +2);
-    _chunkSize = -1;
-    return 1;
+ssize_t Client::getChunkData(){
+    if (_rawBuffer.size() < static_cast<size_t>(_chunkSize + 2))
+        return 0;  // Not enough Data
+    if (_rawBuffer[_chunkSize] == '\r' && _rawBuffer[_chunkSize + 1] == '\n'){
+        std::string chunkStr = _rawBuffer.substr(0, _chunkSize);
+        store(chunkStr, REQUEST);
+        _rawBuffer.erase(0, _chunkSize + 2);
+        _chunkSize = -1;
+        return 1;
+    }
+    return -1; 
 }
 
 bool     Client::finalChunkReceived(){
@@ -376,22 +379,6 @@ bool     Client::finalChunkReceived(){
     _chunkSize = -1;
     return true;
 }
-
-// bool     Client::finalChunkReceived(){
-//     size_t pos = 0;
-//     while (true) {
-//         size_t next = _rawBuffer.find("\r\n", pos);
-//         if (next == std::string::npos)
-//             return false;
-//         if (next == pos) {
-//             _rawBuffer.erase(0, next + 2);
-//             _chunkSize = -1;
-//             _transferEncoding = false;
-//             return true;
-//         }
-//         pos = next + 2;
-//     }
-// }
 
 int Client::getKeepaliveTimeout()const{
     return _keepaliveTimeout;
