@@ -1,0 +1,51 @@
+=== TESTS WEBSERV - CTHEVENO ===
+
+## SECTION 1: TESTS GET SIMPLES (Locations existantes)
+
+### Test 1.1: GET / (home site1) - CURL
+Commande: curl -v http://localhost:8080/
+Attendu: 200 OK + home.html
+Résultat: [ Validated ]
+
+### Test 1.2: GET / (home site2) - CURL
+Commande: curl -v http://localhost:8081/
+Attendu: 200 OK + home.html
+Résultat: [ Validated ]
+
+### Test 1.5: GET / (home site1) - NC
+Commande: echo -ne "GET / HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Attendu: 200 OK + home.html
+Résultat: [ Failed] Connection-closed absent in response
+
+### Test 1.6: GET /menu.html (site1) - NC
+Commande: echo -ne "GET /menu.html HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Attendu: 200 OK + menu.html
+Résultat: [ Failed ] Connection-closed absent in response
+
+---
+
+## SECTION 2: TESTS 404 NOT FOUND
+
+### Test 2.1: GET /nonexistent - CURL
+Commande: curl -v http://localhost:8080/nonexistent
+Attendu: 404 Not Found
+Résultat: [ Validated ]
+
+### Test 2.2: GET /fake.html - CURL
+Commande: curl -v http://localhost:8080/fake.html
+Attendu: 404 Not Found
+Résultat: [ Validated ]
+
+### Test 2.3: GET /nonexistent - NC
+Commande: echo -ne "GET /nonexistent HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Attendu: 404 Not Found
+Résultat: [ Failed ] Connection-closed absent in response
+
+---
+
+## NOTES
+- Serveur doit être lancé: ./webserv webserv2.config
+- Site1 sur port 8080, Site2 sur port 8081
+- Utiliser curl -v pour voir tous les headers
+- Utiliser nc pour tester bas niveau
+
