@@ -43,7 +43,7 @@ class Parser
 		void parseServerDirective(ServerConfig& srv, const Token& nameTok);
 		void parseHttpDirective(HttpConfig& http, const Token& nameTok);
 		void applyMethods(LocationConfig& loc, const Token& directiveTok, const std::vector<std::string>& args);
-		void applyEffectifData(HttpConfig& http);
+		void applyEffectiveData(HttpConfig& http);
 
 		const Token& currentToken() const;
 		const Token& previousToken() const;
