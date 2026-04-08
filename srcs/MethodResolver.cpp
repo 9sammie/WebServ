@@ -167,16 +167,17 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 
 
 	// COOKIE
-	// if (request.getUri().find("/set-cursor") != std::string::npos) 
-	// {
-	// 	std::string type = request.getQueryParam("type");
-	// 	std::map<std::string, std::string> headers;
+	printf("uri: %s\n", request.getUri().c_str());
+	if (request.getUri().find("/set-cursor") != std::string::npos) 
+	{
+		std::string type = request.getQueryParam("type");
+		std::map<std::string, std::string> headers;
 
-	// 	headers["Set-Cookie"] = "mouse_type=" + type + "; Path=/; Max-Age=3600";
-	// 	headers["Location"] = "/home.html"; 
+		headers["Set-Cookie"] = "mouse_type=" + type + "; Path=/; Max-Age=3600";
+		headers["Location"] = "/home.html"; 
 
-	// 	return buildHttpResponse(302, "Found", "", false, headers);
-	// }
+		return buildHttpResponse(302, "Found", "", false, headers);
+	}
 
 
 
@@ -200,19 +201,21 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 
 
 	// COOKIE
-	// if (getMimeType(resolvedPath) == "text/html") 
-	// {
-	// 	std::string cookieVal = request.getCookie("mouse_type");
-	// 	if (!cookieVal.empty()) 
-	// 	{
-	// 		size_t pos = body.find("<body");
-	// 		if (pos != std::string::npos) 
-	// 		{
-	// 			std::string newTag = "<body class=\"cursor-" + cookieVal + "\"";
-	// 			body.replace(pos, 5, newTag);
-	// 		}
-	// 	}
-	// }	
+	printf("resolvedPath: %s\n", resolvedPath.c_str());
+	if (getMimeType(resolvedPath) == "text/html") 
+	{
+		std::string cookieVal = request.getCookie("mouse_type");
+		if (!cookieVal.empty()) 
+		{
+			size_t pos = body.find("<body");
+			if (pos != std::string::npos) 
+			{
+				std::string newTag = "<body class=\"cursor-" + cookieVal + "\"";
+				body.replace(pos, 5, newTag);
+			}
+		}
+	}
+	printf("body: %s\n", body.c_str());
 
 
 

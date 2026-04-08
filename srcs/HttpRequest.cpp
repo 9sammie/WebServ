@@ -96,6 +96,32 @@ std::string HttpRequest::getCookie(const std::string& name) const
     return header.substr(start, end - start);
 }
 
+std::string HttpRequest::getQueryParam(const std::string& key) const 
+{
+	std::string uri = this->getUri();
+	size_t queryStart = uri.find('?');
+
+	if (queryStart == std::string::npos)
+		return "";
+
+	std::string queryString = uri.substr(queryStart + 1);
+	std::string toFind = key + "=";
+	size_t pos = queryString.find(toFind);
+
+	while (pos != std::string::npos)
+	{
+		if (pos == 0 || queryString[pos - 1] == '&')
+		{
+			size_t valueStart = pos + toFind.length();
+			size_t valueEnd = queryString.find('&', valueStart);
+
+			return queryString.substr(valueStart, valueEnd - valueStart);
+		}
+		pos = queryString.find(toFind, pos + 1);
+	}
+	return "";
+}
+
 
 
 /*############################### SETTERS #############################*/

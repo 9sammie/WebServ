@@ -29,6 +29,7 @@ class HttpRequest
     	const std::string&	getBody() const;
 		size_t				getContentLength() const;
 		std::string			getCookie(const std::string& name) const;
+		std::string			getQueryParam(const std::string& key) const;
     	const std::map<std::string, std::string>& getHeaders() const;
 
 	    void setMethod(const std::string& method);
