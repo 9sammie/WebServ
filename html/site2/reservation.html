@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réserver une Table - Chez Gusteau</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #f4ece4;
+            color: #4a332d;
+            text-align: center;
+            padding: 50px;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #d4af37;
+        }
+        input, select {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #d4af37;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Réserver une table chez Gusteau</h1>
+    <div class="form-container">
+        <form action="/cgi-bin/reservation.php" method="POST">
+            <input type="text" name="client_name" placeholder="Votre nom" required><br>
+            <input type="number" name="guests" placeholder="Nombre de personnes" min="1" max="10" required><br>
+            <input type="time" name="res_time" required><br>
+            <button type="submit">Vérifier la disponibilité</button>
+        </form>
+    </div>
+    <br><br>
+    <a href="/">Retour à l'accueil</a>
+</body>
+</html>

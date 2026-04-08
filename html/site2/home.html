@@ -2,9 +2,60 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>site2 home</title>
+    <title>Chez Gusteau - Accueil</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background-color: #f4ece4;
+            color: #4a332d;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 3em;
+            color: #d4af37;
+            margin-bottom: 30px;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        a {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #d4af37;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        a:hover {
+            background-color: #b8941f;
+        }
+        p {
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>HOME SITE 2</h1>
+    <div class="container">
+        <h1>Chez Gusteau</h1>
+        <p>Bienvenue dans notre restaurant gastronomique</p>
+        
+        <div class="nav-buttons">
+            <a href="/reservation.html">Réserver une Table</a>
+            <a href="http://localhost:8080/">Retour au Site 1</a>
+        </div>
+    </div>
 </body>
 </html>

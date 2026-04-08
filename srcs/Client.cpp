@@ -354,7 +354,7 @@ ssize_t     Client::updateChunkSize(){
 
 ssize_t     Client::getChunkData(){
     size_t strSize = _rawBuffer.find("\r\n");
-    if (strSize == std::string::npos)
+    if (strSize == std::string::npos) 
         return 0;
     if (static_cast<ssize_t>(strSize) != _chunkSize)
         return -1;
