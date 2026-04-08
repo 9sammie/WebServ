@@ -20,7 +20,7 @@ private:
 	UriResolver(const ServerConfig& config);
 	~UriResolver();
 	
-	std::string				resolve(const HttpRequest& request, const LocationConfig*& loc, Client& client);
+	std::string				resolve(const HttpRequest& request, const LocationConfig*& loc, Client& client, const ServerConfig& config);
 	const LocationConfig*	findMatchingLocation(const std::string& path);
 };
 

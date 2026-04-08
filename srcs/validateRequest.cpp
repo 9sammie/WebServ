@@ -21,7 +21,7 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 	try
 	{
 		UriResolver locateRessource(_config);
-		fullPath = locateRessource.resolve(request, loc, Client);
+		fullPath = locateRessource.resolve(request, loc, Client, _config);
 	}
 	catch (const HttpException& he)
 	{
