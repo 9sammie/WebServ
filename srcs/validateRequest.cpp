@@ -9,8 +9,6 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	catch (const HttpException& he)
 	{
 		int code = he.getStatusCode();
-		if (code == 203)
-			return "";
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code);
 	}
@@ -23,7 +21,7 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 	try
 	{
 		UriResolver locateRessource(_config);
-		fullPath = locateRessource.resolve(request, loc, Client);
+		fullPath = locateRessource.resolve(request, loc, Client, _config);
 	}
 	catch (const HttpException& he)
 	{

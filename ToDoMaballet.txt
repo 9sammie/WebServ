@@ -7,3 +7,7 @@ A faire:
 -DELETE	test: curl -v -X DELETE http://localhost:8080/files/test.txt
 
 DELETE http://localhost:8080/../Makefile/test.txt
+
+cookies:
+
+ok donc, creer l'ID de session, c'est du cote server manager, pour ce qui est du reste

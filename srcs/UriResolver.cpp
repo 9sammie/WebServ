@@ -205,7 +205,7 @@ std::string UriResolver::extractPath(const std::string& uri)
 	return path;
 }
 
-std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc, Client& Client)
+std::string UriResolver::resolve(const HttpRequest& request, const LocationConfig*& loc, Client& Client, const ServerConfig& config)
 {
 	std::string path;
 	std::string fullPath;
@@ -218,7 +218,7 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	loc = findMatchingLocation(path);
 	if (!loc)
 		throw HttpException(400, "invalid path");
-	if (loc->keepaliveTimeoutSec == 0)
+	if (config.keepaliveTimeoutSec == 0)
 		Client.setCloseStatus(true);
 
 	fullPath = applyRootOrAlias(path, loc);
