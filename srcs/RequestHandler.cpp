@@ -16,15 +16,6 @@ RequestHandler::~RequestHandler() {}
 
 
 
-std::string RequestHandler::connectionCloseBadRequestCheck(Client& Client, HttpRequest& request)
-{
-	if(request.hasHeader("connection-closed"))
-		Client.setRequestStatus(true);
-	if (Client.getRequestStatus() == true)
-		return buildStatusResponse(400);
-	return "";
-}
-
 std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)
 {
 	DataCgi data;
@@ -61,11 +52,16 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	std::map<std::string, MethodHandler>::const_iterator it;
 
+	if (Client.getRequestStatus() == true)
+		return buildStatusResponse(400);
+	
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 
-	if (!(response = connectionCloseBadRequestCheck(Client, request)).empty())
-		return response;
+	if(request.hasHeader("connection")){
+		printf("connection close : %d", Client.getRequestStatus());	
+		Client.setRequestStatus(true);
+	}
 
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
