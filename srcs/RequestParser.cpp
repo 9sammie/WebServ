@@ -65,6 +65,7 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	size_t limit = (loc && loc->hasMaxBodySize) ? loc->maxBodySize : _config.maxBodySize;
 	if (tempRequest.hasHeader("transfer-encoding"))
 	{
+		printf("HHHHHHHH BodyPart HHHHHH: %s\n", bodyPart.c_str());
 		if (limit != 0 && bodyPart.size() > limit)
 			throw HttpException(413, "Request Entity Too Large (Chunked)");
 		tempRequest.setBody(bodyPart);
