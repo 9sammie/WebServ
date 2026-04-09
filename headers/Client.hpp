@@ -31,6 +31,8 @@ class Client{
         bool        hasTransferEncodingHeader()const;
         bool        getRequestStatus()const;
         void        setRequestStatus(bool value);
+        bool        getCloseStatus()const;
+        void        setCloseStatus(bool value);
         ssize_t     getContentLenthSize()const;
         size_t      availableDataAfterHeaders();
         void        store(const std::string& content, BufferType type);
@@ -71,6 +73,7 @@ class Client{
         int         _clientPort;
         std::string _remoteAddr;
         bool        _badRequest;
+        bool        _closeStatus;
         size_t      _responseOffsetSent;
         size_t      _requestSize;
         ssize_t     _chunkSize;
