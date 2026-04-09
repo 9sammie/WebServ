@@ -1,6 +1,7 @@
 #include "RequestHandler.hpp"
 
-void RequestHandler::applyHtmlTemplates(std::string& body, const HttpRequest& request) {
+void RequestHandler::applyHtmlTemplates(std::string& body, const HttpRequest& request)
+{
 	std::string cookieVal = request.getCookie("mouse_type");
 	if (cookieVal.empty() || cookieVal == "default")
 		return;

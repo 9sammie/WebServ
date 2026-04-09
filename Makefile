@@ -42,6 +42,7 @@ SRC = \
 	srcs/fillCgiData.cpp \
 	srcs/validateRequest.cpp \
 	srcs/buildResponse.cpp \
+	srcs/CookieHandler.cpp \
 	srcs/CgiResponseProcessor.cpp
 
 # **************************************************************************** #
