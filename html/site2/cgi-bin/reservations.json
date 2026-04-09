@@ -70,5 +70,23 @@
         "client_name": "ctheve",
         "guests": 5,
         "res_time": "22:10"
+    },
+    {
+        "timestamp": "2026-04-08 15:09:30",
+        "client_name": "\r\nc\r\nTest",
+        "guests": 0,
+        "res_time": "18:00\r\n0\r\n\r\n"
+    },
+    {
+        "timestamp": "2026-04-08 15:09:46",
+        "client_name": "Chunked",
+        "guests": 3,
+        "res_time": "20:00"
+    },
+    {
+        "timestamp": "2026-04-08 15:31:33",
+        "client_name": "\r\nc\r\nTest",
+        "guests": 0,
+        "res_time": "18:00\r\n0\r\n\r\n"
     }
 ]

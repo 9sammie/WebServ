@@ -52,6 +52,7 @@ class RequestHandler
 	std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string buildStatusResponse(int code) const;
+	void		applyHtmlTemplates(std::string& body, const HttpRequest& request);
 	std::string updateCloseStatus(Client& client, const std::string& response);
 };
 

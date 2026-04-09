@@ -67,6 +67,9 @@ std::string RequestHandler::handleRequest(Client& Client)
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 
+	if(request.hasHeader("connection-close"))
+		Client.setCloseStatus(true);
+
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
 

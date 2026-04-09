@@ -19,47 +19,6 @@ HttpParser::~HttpParser() {}
 
 
 
-// we read each chunked passed individualy, until we have the last one of size 0;
-void HttpParser::parseChunkedBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
-{
-    std::string decodedBody;
-    size_t      pos = 0;
-    size_t      limit = (loc && loc->hasMaxBodySize) ? loc->maxBodySize : _config.maxBodySize;
-
-    while (pos < bodyPart.size())
-    {
-        size_t endSizeLine = bodyPart.find("\r\n", pos);
-        if (endSizeLine == std::string::npos)
-            throw HttpException(400, "bad request: invalid chunk format");
-
-        std::string sizeHex = bodyPart.substr(pos, endSizeLine - pos);
-        char* end;
-        unsigned long chunkSize = std::strtoul(sizeHex.c_str(), &end, 16);
-
-        if (*end != '\0' && !std::isspace(*end))
-             throw HttpException(400, "bad request: invalid chunk size");
-        pos = endSizeLine + 2;
-
-        if (chunkSize == 0)
-            break;
-
-        if (pos + chunkSize > bodyPart.size())
-            throw HttpException(400, "bad request: chunk data incomplete");
-
-        decodedBody.append(bodyPart.substr(pos, chunkSize));
-        if (limit != 0 && decodedBody.size() > limit)
-            throw HttpException(413, "request entity too large (chunked)");
-
-        pos += chunkSize;
-        if (bodyPart.compare(pos, 2, "\r\n") != 0)
-            throw HttpException(400, "bad request: missing CRLF after chunk data");
-        
-        pos += 2;
-    }
-    tempRequest.setBody(decodedBody);
-    tempRequest.setContentLength(decodedBody.size());
-}
-
 void HttpParser::parseRegularBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
 {
 	unsigned long	len;
@@ -92,7 +51,7 @@ void HttpParser::parseRegularBody(const std::string& bodyPart, HttpRequest& temp
 // If there is a body, then retrieve and check out his size conformity.
 void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
 {
-	printf("bodyPart: %s\n", bodyPart.c_str());
+	printf("bodyPart received in parseBody: %s\n", bodyPart.c_str());
 	if (!tempRequest.hasHeader("content-length") && !tempRequest.hasHeader("transfer-encoding"))
 	{
 		if (!bodyPart.empty())
@@ -103,17 +62,17 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 		return;
 	}
 
+	size_t limit = (loc && loc->hasMaxBodySize) ? loc->maxBodySize : _config.maxBodySize;
 	if (tempRequest.hasHeader("transfer-encoding"))
 	{
-		parseChunkedBody(bodyPart, tempRequest, _config, loc);
-		return;
+		if (limit != 0 && bodyPart.size() > limit)
+			throw HttpException(413, "Request Entity Too Large (Chunked)");
+		tempRequest.setBody(bodyPart);
+		tempRequest.setContentLength(bodyPart.size());
 	}
 
 	if (tempRequest.hasHeader("content-length"))
-	{
 		parseRegularBody(bodyPart, tempRequest, _config, loc);
-		return;
-	}
 }
 
 void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& tempRequest)

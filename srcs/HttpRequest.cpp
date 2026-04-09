@@ -79,10 +79,10 @@ size_t HttpRequest::getContentLength() const
 {
 	return _contentLength;
 }
-
+#include <fstream>
 std::string HttpRequest::getCookie(const std::string& name) const
 {
-    std::string header = this->getHeader("Cookie"); // copy for exemple "mouse_type=fork; user=toto"
+    std::string header = this->getHeader("cookie");
     if (header.empty())
 		return "";
 
