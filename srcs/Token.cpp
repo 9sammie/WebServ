@@ -12,9 +12,9 @@
 
 #include "Token.hpp"
 
-Token::Token() : type(WORD), wordText(""), line(1) // je cree un token vide p ex Token t;
+Token::Token() : type(WORD), wordText(""), line(1)
 {}
 
-Token::Token(TokenType t, const std::string& str, int l) // liste d initialisation
-	: type(t), wordText(str), line(l) //je cree un token rempli, p ex Token t(WORD, "server", 12)
+Token::Token(TokenType t, const std::string& str, int l)
+	: type(t), wordText(str), line(l)
 {}

@@ -569,8 +569,7 @@ static void parserAppliesInheritanceHttpToServerToLocation()
     assertTrue(srv.hasKeepalive, "server should inherit keepalive");
     assertEqualInt(15, srv.keepaliveTimeoutSec, "wrong server keepalive");
 
-    assertTrue(loc.hasKeepalive, "location should inherit keepalive");
-    assertEqualInt(15, loc.keepaliveTimeoutSec, "wrong location keepalive");
+    assertTrue(!loc.hasCgiTimeout, "non-cgi location should not have cgi timeout");
 
     assertTrue(http.hasMaxBodySize, "http should have max body size");
     assertTrue(http.maxBodySize == 1048576u, "wrong http max body size");
@@ -582,6 +581,72 @@ static void parserAppliesInheritanceHttpToServerToLocation()
     assertTrue(loc.maxBodySize == 1048576u, "wrong location max body size");
 
     printTestOK("parser applies inheritance http to server to location");
+}
+
+static void parserAppliesInheritanceHttpToServerToCgiLocation()
+{
+    printTestHeader("parser applies inheritance http to server to cgi location");
+
+    std::vector<Token> tokens;
+    tokens.push_back(makeToken(WORD, "http", 1));
+    tokens.push_back(makeToken(LBRACE, "{", 1));
+
+    tokens.push_back(makeToken(WORD, "keepalive_timeout", 2));
+    tokens.push_back(makeToken(WORD, "15", 2));
+    tokens.push_back(makeToken(SEMICOLON, ";", 2));
+
+    tokens.push_back(makeToken(WORD, "client_max_body_size", 3));
+    tokens.push_back(makeToken(WORD, "1048576", 3));
+    tokens.push_back(makeToken(SEMICOLON, ";", 3));
+
+    tokens.push_back(makeToken(WORD, "server", 4));
+    tokens.push_back(makeToken(LBRACE, "{", 4));
+
+    tokens.push_back(makeToken(WORD, "listen", 5));
+    tokens.push_back(makeToken(WORD, "8080", 5));
+    tokens.push_back(makeToken(SEMICOLON, ";", 5));
+
+    tokens.push_back(makeToken(WORD, "location", 6));
+    tokens.push_back(makeToken(WORD, "/cgi-bin", 6));
+    tokens.push_back(makeToken(LBRACE, "{", 6));
+
+    tokens.push_back(makeToken(WORD, "cgi_ext", 7));
+    tokens.push_back(makeToken(WORD, ".py", 7));
+    tokens.push_back(makeToken(SEMICOLON, ";", 7));
+
+    tokens.push_back(makeToken(WORD, "cgi_path", 8));
+    tokens.push_back(makeToken(WORD, "/usr/bin/python3", 8));
+    tokens.push_back(makeToken(SEMICOLON, ";", 8));
+
+    tokens.push_back(makeToken(RBRACE, "}", 9));
+    tokens.push_back(makeToken(RBRACE, "}", 10));
+    tokens.push_back(makeToken(RBRACE, "}", 11));
+
+    Parser parser(tokens);
+    HttpConfig http = parser.parseConfig();
+
+    ServerConfig& srv = http.servers[0];
+    LocationConfig& loc = srv.locations[0];
+
+    assertTrue(http.hasKeepalive, "http should have keepalive");
+    assertEqualInt(15, http.keepaliveTimeoutSec, "wrong http keepalive");
+
+    assertTrue(srv.hasKeepalive, "server should inherit keepalive");
+    assertEqualInt(15, srv.keepaliveTimeoutSec, "wrong server keepalive");
+
+    assertTrue(loc.hasCgiTimeout, "cgi location should have an effective cgi timeout");
+    assertEqualInt(10, loc.cgiTimeoutSec, "wrong location cgi timeout");
+
+    assertTrue(http.hasMaxBodySize, "http should have max body size");
+    assertTrue(http.maxBodySize == 1048576u, "wrong http max body size");
+
+    assertTrue(srv.hasMaxBodySize, "server should inherit max body size");
+    assertTrue(srv.maxBodySize == 1048576u, "wrong server max body size");
+
+    assertTrue(loc.hasMaxBodySize, "location should inherit max body size");
+    assertTrue(loc.maxBodySize == 1048576u, "wrong location max body size");
+
+    printTestOK("parser applies inheritance http to server to cgi location");
 }
 
 static void parserRejectsUnknownDirectiveInServer()
@@ -673,6 +738,7 @@ void	runParserTests()
 	parserAcceptsHttpErrorPage404();
 	parserAcceptsServerErrorPage404();
 	parserAppliesInheritanceHttpToServerToLocation();
+    parserAppliesInheritanceHttpToServerToCgiLocation();
 	parserRejectsUnknownDirectiveInServer();
 	parserRejectsUnknownDirectiveInLocation();
 }

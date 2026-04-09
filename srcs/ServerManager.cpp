@@ -126,7 +126,7 @@ void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
     // std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
     // std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
-    // std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+    std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;
@@ -251,9 +251,9 @@ bool    ServerManager::receivedRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
-        std::cout  << "REQUEST: " << _clients[fd].getBuffer(Client::REQUEST) << std::endl;
-
+        
         _clients[fd].extractRequest();
+        std::cout  << "REQUEST: " << _clients[fd].getBuffer(Client::REQUEST) << std::endl;
         // COOKER call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort(Client::SERVER));
 		RequestHandler RH(serverToSend);

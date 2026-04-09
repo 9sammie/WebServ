@@ -29,13 +29,16 @@ static void lexerValidMinimalConf()
 	printTestHeader("lexer valid minimal config");
 	Lexer lexer;
 	std::vector<Token> tokens = lexer.lexFile("tests/configs/valid.conf");
-	assertEqualInt(6, tokens.size(), "valid.conf should contain 6 tokens");
-	assertToken(tokens[0], WORD, "server", 1);
+	assertEqualInt(9, tokens.size(), "valid.conf should contain 9 tokens");
+	assertToken(tokens[0], WORD, "http", 1);
 	assertToken(tokens[1], LBRACE, "{", 1);
-	assertToken(tokens[2], WORD, "listen", 2);
-	assertToken(tokens[3], WORD, "8080", 2);
-	assertToken(tokens[4], SEMICOLON, ";", 2);
-	assertToken(tokens[5], RBRACE, "}", 3);
+	assertToken(tokens[2], WORD, "server", 2);
+	assertToken(tokens[3], LBRACE, "{", 2);
+	assertToken(tokens[4], WORD, "listen", 3);
+	assertToken(tokens[5], WORD, "8080", 3);
+	assertToken(tokens[6], SEMICOLON, ";", 3);
+	assertToken(tokens[7], RBRACE, "}", 4);
+	assertToken(tokens[8], RBRACE, "}", 5);
 	printTestOK("lexer valid minimal conf");
 }
 

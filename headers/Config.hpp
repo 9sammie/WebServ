@@ -44,7 +44,6 @@ struct LocationConfig
 	std::size_t maxBodySize;
 	bool hasCgiTimeout;
 	int cgiTimeoutSec;
-	//int cgiTimeoutLine;
 };
 
 struct ServerConfig
