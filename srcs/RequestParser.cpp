@@ -51,7 +51,6 @@ void HttpParser::parseRegularBody(const std::string& bodyPart, HttpRequest& temp
 // If there is a body, then retrieve and check out his size conformity.
 void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc)
 {
-	printf("bodyPart received in parseBody: %s\n", bodyPart.c_str());
 	if (!tempRequest.hasHeader("content-length") && !tempRequest.hasHeader("transfer-encoding"))
 	{
 		if (!bodyPart.empty())
@@ -65,15 +64,17 @@ void HttpParser::parseBody(const std::string& bodyPart, HttpRequest& tempRequest
 	size_t limit = (loc && loc->hasMaxBodySize) ? loc->maxBodySize : _config.maxBodySize;
 	if (tempRequest.hasHeader("transfer-encoding"))
 	{
-		printf("HHHHHHHH BodyPart HHHHHH: %s\n", bodyPart.c_str());
 		if (limit != 0 && bodyPart.size() > limit)
 			throw HttpException(413, "Request Entity Too Large (Chunked)");
 		tempRequest.setBody(bodyPart);
 		tempRequest.setContentLength(bodyPart.size());
 	}
 
-	if (tempRequest.hasHeader("content-length"))
+	else if (tempRequest.hasHeader("content-length"))
 		parseRegularBody(bodyPart, tempRequest, _config, loc);
+
+	else if (!bodyPart.empty())
+        throw HttpException(411, "Length Required");
 }
 
 void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& tempRequest)
@@ -113,6 +114,11 @@ void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& temp
 			throw HttpException(400, "bad request: invalid header key");
 
 		tempRequest.setHeader(key, value);
+
+		if (!tempRequest.hasHeader("host"))
+			throw HttpException(400, "bad request: missing host header");
+		if (tempRequest.getHeader("host").empty())
+			throw HttpException(400, "bad request: host header is empty");
 	}
 }
 

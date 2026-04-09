@@ -40,5 +40,11 @@
         "client_name": "Chunked",
         "guests": 3,
         "res_time": "20:00"
+    },
+    {
+        "timestamp": "2026-04-09 13:46:07",
+        "client_name": "Client mystère",
+        "guests": 0,
+        "res_time": "non précisée"
     }
 ]
