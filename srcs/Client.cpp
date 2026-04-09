@@ -220,11 +220,11 @@ bool Client::isRequestComplete(){
     return false;
 }
 
-bool Client::getCloseStatus()const{
+bool Client::getRequestStatus()const{
     return _badRequest;
 }
 
-void Client::setCloseStatus(bool value){
+void Client::setRequestStatus(bool value){
 	_badRequest = value;
 }
 
