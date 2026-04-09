@@ -4,7 +4,7 @@
 #include <cerrno>
 #include <cstdlib>
 
-Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _closeAfterResponse(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1){
+Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _badRequest(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
@@ -15,7 +15,7 @@ Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _closeAfterRespons
 }
 
 Client::Client(int fd, int serverPort, int clientPort, std::string remoteAddr): _fd(fd),_serverPort(serverPort),
-_clientPort(clientPort), _remoteAddr(remoteAddr), _closeAfterResponse(false), _responseOffsetSent(0), _requestSize(0),
+_clientPort(clientPort), _remoteAddr(remoteAddr), _badRequest(false), _responseOffsetSent(0), _requestSize(0),
 _chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
@@ -114,7 +114,7 @@ ssize_t      Client::getContentLenthSize()const{
 //             return true;
 //         }
 //         if (hasContentLengthHeader() && hasTransferEncodingHeader()){
-//             _closeAfterResponse = true;
+//             _badRequest = true;
 //             return true;
 //         }
 //         if (hasTransferEncodingHeader()){
@@ -129,7 +129,7 @@ ssize_t      Client::getContentLenthSize()const{
 //         if (hasContentLengthHeader()){
 //             ssize_t bodySize = getContentLenthSize();
 //             if (bodySize < 0){
-//                 _closeAfterResponse = true;
+//                 _badRequest = true;
 //                 return true;
 //             }
 //             return availableDataAfterHeaders() >= (size_t)bodySize;
@@ -139,14 +139,14 @@ ssize_t      Client::getContentLenthSize()const{
 //         std::cout << YELLOW << "Debug chunk, requestBuffer : " << _requestBuffer << RESET << std::endl;
 //         if (_chunkSize == -1){
 //             if (updateChunkSize()){
-//                 _closeAfterResponse = true;
+//                 _badRequest = true;
 //                 return true;
 //             }//return ssize_t, on -1 error 400, _closeAfterConnection, return true;
 //             // update _chunkSize inside function
 //         }
 //         else if (_chunkSize > 0){
 //             if (getChunkData() < 0){
-//                 _closeAfterResponse = true;
+//                 _badRequest = true;
 //                 return true;
 //             }//return ssize_t, on -1 error 400, _closeAfterConnection, return true;
 //             // update chunksize to -1 if ssize_t != -1
@@ -169,7 +169,7 @@ bool Client::isRequestComplete(){
             return true;
         }
         if (hasContentLengthHeader() && hasTransferEncodingHeader()){
-            _closeAfterResponse = true;
+            _badRequest = true;
             return true;
         }
         if (hasTransferEncodingHeader()){
@@ -181,7 +181,7 @@ bool Client::isRequestComplete(){
         if (hasContentLengthHeader()){
             ssize_t bodySize = getContentLenthSize();
             if (bodySize < 0){
-                _closeAfterResponse = true;
+                _badRequest = true;
                 return true;
             }
             return availableDataAfterHeaders() >= (size_t)bodySize;
@@ -193,7 +193,7 @@ bool Client::isRequestComplete(){
             ssize_t ret = updateChunkSize();
             if (ret < 0) {
                 _transferEncoding = false;
-                _closeAfterResponse = true;
+                _badRequest = true;
                 std::cout << "chunksize -1 && ret<0" << std::endl;
                 return true;
             }
@@ -204,7 +204,7 @@ bool Client::isRequestComplete(){
                 break;
             if (ret < 0) {
                 _transferEncoding = false;
-                _closeAfterResponse = true;
+                _badRequest = true;
                 std::cout << "chunksize > 0 && ret < 0" << std::endl;
                 return true;
             }
@@ -221,11 +221,11 @@ bool Client::isRequestComplete(){
 }
 
 bool Client::getCloseStatus()const{
-    return _closeAfterResponse;
+    return _badRequest;
 }
 
 void Client::setCloseStatus(bool value){
-	_closeAfterResponse = value;
+	_badRequest = value;
 }
 
 int Client::getFd() const{
@@ -280,7 +280,7 @@ Client::~Client(){}
 
 Client::Client(const Client& src) : _rawBuffer(src._rawBuffer), _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
 _lastActivity(src._lastActivity), _fd(src._fd), _serverPort(src._serverPort), _clientPort(src._clientPort), _remoteAddr(src._remoteAddr), 
-_closeAfterResponse(src._closeAfterResponse), _responseOffsetSent(src._responseOffsetSent), _chunkSize(src._chunkSize),
+_badRequest(src._badRequest), _responseOffsetSent(src._responseOffsetSent), _chunkSize(src._chunkSize),
 _transferEncoding(src._transferEncoding), _keepaliveTimeout(-1), _cgiTimeout(-1){
    _cgiInfo = src._cgiInfo;
 }
@@ -294,7 +294,7 @@ Client& Client::operator=(const Client& rhs){
         _rawBuffer = rhs._rawBuffer;
         _requestBuffer = rhs._requestBuffer;
         _responseBuffer = rhs._responseBuffer;
-        _closeAfterResponse = rhs._closeAfterResponse;
+        _badRequest = rhs._badRequest;
         _cgiInfo = rhs._cgiInfo;
         _responseOffsetSent = rhs._responseOffsetSent;
         _chunkSize = rhs._chunkSize;
