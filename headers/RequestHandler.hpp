@@ -34,6 +34,7 @@ class RequestHandler
 									const bool closeConnection,
 									const std::map<std::string, std::string>& extraHeaders
 									= std::map<std::string, std::string>());
+		std::string mimeType;
 	
 	private:
 		std::map<std::string, MethodHandler> _methodHandlers;
@@ -41,20 +42,20 @@ class RequestHandler
 		HttpParser			_parser;
 		bool _closeConnection;
 
-	std::string connectionCloseBadRequestCheck(Client& Client, HttpRequest& request);
-	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-	std::string validateParsing(Client& Client, HttpRequest& request);
-	std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
-	std::string	handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath);
-	bool		resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc,
-									std::string& outPath, std::string& outResponse);
-	DataCgi		fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client);
-	bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
-	std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-	std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-	std::string buildStatusResponse(int code) const;
-	void		applyHtmlTemplates(std::string& body, const HttpRequest& request);
-	std::string updateCloseStatus(Client& client, const std::string& response);
+		std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+		std::string getMimeType(const std::string& path);
+		std::string validateParsing(Client& Client, HttpRequest& request);
+		std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
+		std::string	handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath);
+		bool		resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc,
+										std::string& outPath, std::string& outResponse);
+		DataCgi		fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client);
+		bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
+		std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+		std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+		std::string buildStatusResponse(int code) const;
+		void		applyHtmlTemplates(std::string& body, const HttpRequest& request);
+		std::string updateCloseStatus(Client& client, const std::string& response);
 };
 
 #endif

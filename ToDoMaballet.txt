@@ -8,6 +8,7 @@ A faire:
 
 DELETE http://localhost:8080/../Makefile/test.txt
 
-cookies:
 
-ok donc, creer l'ID de session, c'est du cote server manager, pour ce qui est du reste
+pour post, check si on a un nom de fichier.
+
+trouver pb de chunked.
