@@ -1,5 +1,19 @@
 #include "RequestHandler.hpp"
 
+
+
+std::string RequestHandler::updateCloseStatus(Client& client, const std::string& response)
+{
+	if (!response.empty())
+	{
+        int code = extractStatusCode(response);
+
+        if (code >= 300 || code == 0)
+			client.setCloseStatus(true);
+    }
+    return response;
+}
+
 int RequestHandler::extractStatusCode(const std::string& response) const
 {
 	if (response.size() < 12) 

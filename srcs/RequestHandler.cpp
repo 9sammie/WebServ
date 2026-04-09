@@ -16,16 +16,10 @@ RequestHandler::~RequestHandler() {}
 
 
 
-std::string RequestHandler::updateCloseStatus(Client& client, const std::string& response)
+std::string connectionCloseBadRequestCheck(Client& Client, HttpRequest& request)
 {
-	if (!response.empty())
-	{
-        int code = extractStatusCode(response);
-
-        if (code >= 300 || code == 0)
-			client.setCloseStatus(true);
-    }
-    return response;
+	if(request.hasHeader("connection-closed"))
+		Client.setCloseStatus(true);
 }
 
 std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)
@@ -67,11 +61,8 @@ std::string RequestHandler::handleRequest(Client& Client)
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 
-	if(request.hasHeader("connection-close"))
-	{
-		Client.setCloseStatus(true);
-		return buildStatusResponse(400);
-	}
+	if (!(response = connectionCloseBadRequestCheck(Client, request)).empty())
+		return response;
 
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
@@ -81,7 +72,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())
-		return buildStatusResponse(405);
+		return updateCloseStatus(Client, buildStatusResponse(405));
 
     response = (this->*(it->second))(request, fullPath, loc);
 	return updateCloseStatus(Client, response);

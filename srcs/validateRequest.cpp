@@ -31,7 +31,6 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code);
 	}
-
     if (fullPath.empty())
 	{
         return buildStatusResponse(404);
