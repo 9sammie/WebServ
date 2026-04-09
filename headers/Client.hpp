@@ -70,7 +70,7 @@ class Client{
         int         _serverPort;
         int         _clientPort;
         std::string _remoteAddr;
-        bool        _closeAfterResponse;
+        bool        _badRequest;
         size_t      _responseOffsetSent;
         size_t      _requestSize;
         ssize_t     _chunkSize;
