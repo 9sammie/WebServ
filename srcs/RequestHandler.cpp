@@ -16,10 +16,13 @@ RequestHandler::~RequestHandler() {}
 
 
 
-std::string connectionCloseBadRequestCheck(Client& Client, HttpRequest& request)
+std::string RequestHandler::connectionCloseBadRequestCheck(Client& Client, HttpRequest& request)
 {
 	if(request.hasHeader("connection-closed"))
 		Client.setCloseStatus(true);
+	if (Client.getRequestStatus() == true)
+		return buildStatusResponse(400);
+	return "";
 }
 
 std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath)

@@ -41,6 +41,7 @@ class RequestHandler
 		HttpParser			_parser;
 		bool _closeConnection;
 
+	std::string connectionCloseBadRequestCheck(Client& Client, HttpRequest& request);
 	std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 	std::string validateParsing(Client& Client, HttpRequest& request);
 	std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
