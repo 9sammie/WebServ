@@ -136,6 +136,8 @@ void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     if (sent >= 0){
         offset += sent;
         if (offset >= response.size()){
+            if (_clients[clientFd].getCloseStatus())
+                closeConnection(clientFd);
             _clients[clientFd].clean(Client::REQUEST);
             _clients[clientFd].clean(Client::RESPONSE);
             _clients[clientFd].resetResponseOffsetSent();
