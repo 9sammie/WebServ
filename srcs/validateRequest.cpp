@@ -9,7 +9,7 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	catch (const HttpException& he)
 	{
 		int code = he.getStatusCode();
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 		return buildStatusResponse(code);
 	}
 	return "";
@@ -28,7 +28,7 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 		int code = he.getStatusCode();
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 		return buildStatusResponse(code);
 	}
     if (fullPath.empty())
@@ -39,7 +39,7 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 	{
 		std::map<std::string, std::string> headers;
 		headers["location"] = loc->redirectTarget;
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 		return buildHttpResponse(301, "moved permanently", "", true, headers);
 	}
 	return "";

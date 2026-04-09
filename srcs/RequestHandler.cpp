@@ -19,7 +19,7 @@ RequestHandler::~RequestHandler() {}
 std::string RequestHandler::connectionCloseBadRequestCheck(Client& Client, HttpRequest& request)
 {
 	if(request.hasHeader("connection-closed"))
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 	if (Client.getRequestStatus() == true)
 		return buildStatusResponse(400);
 	return "";
@@ -40,7 +40,7 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 			Client.setCgiInfo(cgi);
 			return "CGI-STARTED";
 		}
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 		return buildStatusResponse(500);
 	}
 	return "";

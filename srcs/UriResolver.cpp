@@ -219,7 +219,7 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	if (!loc)
 		throw HttpException(400, "invalid path");
 	if (config.keepaliveTimeoutSec == 0)
-		Client.setCloseStatus(true);
+		Client.setRequestStatus(true);
 
 	fullPath = applyRootOrAlias(path, loc);
 
