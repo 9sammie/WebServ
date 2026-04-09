@@ -64,5 +64,11 @@
         "client_name": "l",
         "guests": 4,
         "res_time": "22:10"
+    },
+    {
+        "timestamp": "2026-04-09 14:47:25",
+        "client_name": "Client mystère",
+        "guests": 0,
+        "res_time": "non précisée"
     }
 ]

@@ -1,3 +1,0 @@
-Ceci est un fichier de test pour l'upload via POST.
-Ligne 2 : vérification du contenu.
-Ligne 3 : fin du test.

@@ -192,6 +192,9 @@ bool Client::isRequestComplete(){
     while (_transferEncoding == true) {
     std::cout << MAGENTA << "Inside isRequestComplete, inside LOOP, rawBuffer: " << RESET << _rawBuffer << std::endl;
         if (_chunkSize == -1) {
+            if (_rawBuffer.find("\r\n") == std::string::npos) {
+                break;  // Waiting for the data
+            }
             ssize_t ret = updateChunkSize();
             if (ret < 0) {
                 _transferEncoding = false;

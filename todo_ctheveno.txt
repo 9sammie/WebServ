@@ -1,7 +1,0 @@
-Check timeout/ specifically CGI
-
-Le timeout est code en brut avec un define pour le moment. Penser a recuperer les infos serverus pour cela
-Pour le timeout, il est sense etre lie a un server, peut on en mettre un general ?
-
-Question, pourquoi pas de methods DELETE dans uploads ? 
-penser a ajouter le sous dossier files pour tester delete
