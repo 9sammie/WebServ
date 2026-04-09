@@ -52,13 +52,13 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 	std::map<std::string, MethodHandler>::const_iterator it;
 
-	// if (Client.getRequestStatus() == true)
-	// 	return buildStatusResponse(400);
+	if (Client.getRequestStatus() == true)
+		return buildStatusResponse(400);
 	
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 	if(request.hasHeader("connection"))
-		Client.setRequestStatus(true);
+		Client.setCloseStatus(true);
 
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;

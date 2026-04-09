@@ -9,7 +9,7 @@ std::string RequestHandler::updateCloseStatus(Client& client, const std::string&
         int code = extractStatusCode(response);
 
         if (code >= 300 || code == 0)
-			client.setRequestStatus(true);
+			client.setCloseStatus(true);
     }
     return response;
 }
