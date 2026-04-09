@@ -164,7 +164,6 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 	std::string earlyResponse;
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
-	printf("uri: %s\n", request.getUri().c_str());
 	if (request.getUri().find("/set-cursor") != std::string::npos) 
 	{
 		std::string type = request.getQueryParam("type");

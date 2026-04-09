@@ -68,7 +68,10 @@ std::string RequestHandler::handleRequest(Client& Client)
 		return response;
 
 	if(request.hasHeader("connection-close"))
+	{
 		Client.setCloseStatus(true);
+		return buildStatusResponse(400);
+	}
 
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
