@@ -251,7 +251,7 @@ bool    ServerManager::receivedRequest(int idx){
         return false;
     if (_clients[fd].isRequestComplete()){
         std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
-        std::cout  << "REQUEST: " << _clients[fd].getBuffer(Client::REQUEST) << std::endl;
+        std::cout  << "REQUEST: [" << _clients[fd].getBuffer(Client::REQUEST) << "]" << std::endl;
 
         _clients[fd].extractRequest();
         // COOKER call will call CgiHandler() if it's a CGI

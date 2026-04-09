@@ -16,8 +16,8 @@ echo "=== Test 1: Transfer-Encoding chunked avec reservation.php ==="
     echo -ne "Connection: close\r\n"
     echo -ne "\r\n"
     
-    # Chunk 1 : "client_name="  (11 octets)
-    # echo -ne "b\r\n"
+    # Chunk 1 : "client_name="  (12 octets)
+    echo -ne "c\r\n"
     echo -ne "client_name="
     # echo -ne "\r\n"
     
@@ -26,8 +26,8 @@ echo "=== Test 1: Transfer-Encoding chunked avec reservation.php ==="
     echo -ne "Test&guests="
     # echo -ne "\r\n"
     
-    # Chunk 3 : "2&res_time=18:00" (15 octets)
-    # echo -ne "f\r\n"
+    # Chunk 3 : "2&res_time=18:00" (16 octets)
+    echo -ne "10\r\n"
     echo -ne "2&res_time=18:00"
     # echo -ne "\r\n"
     
