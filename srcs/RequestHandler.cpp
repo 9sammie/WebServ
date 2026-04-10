@@ -1,5 +1,6 @@
 #include "RequestHandler.hpp"
 #include <fstream>
+#include <unistd.h>
 
 RequestHandler::RequestHandler(const ServerConfig& config)
     : _config(config), _parser(),_closeConnection(false)
@@ -37,6 +38,19 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 	return "";
 }
 
+std::string RequestHandler::executeMethodHandler(Client& Client, const HttpRequest& request, const std::string& fullPath, const LocationConfig* loc)
+{
+	(void)Client;
+	std::map<std::string, MethodHandler>::const_iterator it;
+
+	it = _methodHandlers.find(request.getMethod());
+
+	if (it == _methodHandlers.end())
+		return buildStatusResponse(405);
+
+	return (this->*(it->second))(request, fullPath, loc);
+}
+
 // here we get the complete request, parse it, execute it, then return an
 // appropriate response to the serverManager.
 //
@@ -50,15 +64,12 @@ std::string RequestHandler::handleRequest(Client& Client)
     std::string fullPath;
 	std::string response;
 	const LocationConfig* loc = NULL;
-	std::map<std::string, MethodHandler>::const_iterator it;
 
 	if (Client.getRequestStatus() == true)
 		return buildStatusResponse(400);
 	
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
-	if(request.hasHeader("connection"))
-		Client.setCloseStatus(true);
 
 	if (!(response = validateLocation(Client, request, loc, fullPath)).empty())
 		return response;
@@ -66,11 +77,7 @@ std::string RequestHandler::handleRequest(Client& Client)
 	if (!(response = handleCgiExecution(Client, request, loc, fullPath)).empty())
 		return (response == "CGI-STARTED" ? "" : response);
 
-	it = _methodHandlers.find(request.getMethod());
-	if (it == _methodHandlers.end())
-		return updateCloseStatus(Client, buildStatusResponse(405));
-
-    response = (this->*(it->second))(request, fullPath, loc);
+    response = executeMethodHandler(Client, request, fullPath, loc);
 
 	return updateCloseStatus(Client, response);
 }

@@ -178,6 +178,8 @@ void HttpParser::tockeniseRequestLine(const std::string& requestLine,
 
 // Tockenise and only accept "method" "path" "version" before checking
 // their content. 
+//
+// 8192 is the historical convention for uri length.
 void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& tempRequest)
 {
 	std::string method;
@@ -187,7 +189,10 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 	tockeniseRequestLine(requestLine, method, path, version);
 
 	if (method != "GET" && method != "POST" && method != "DELETE" && method != "dataCgi")
-		throw HttpException(405, "method not allowed");
+		throw HttpException(400, "bad request: invalid method");
+
+	if (path.size() > 8192)
+		throw HttpException(414, "URI Too Long");
 
 	if (checkPath(path))
 		throw HttpException(400, "bad request: invalid uri");
@@ -238,4 +243,5 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	parseBody(bodyPart, tempRequest, _config, loc);
 
 	request = tempRequest;
+
 }

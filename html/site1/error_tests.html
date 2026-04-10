@@ -123,6 +123,12 @@
             <a href="/page_inconnue.html" class="btn-test">Tester le 404</a>
         </div>
 
+		<div class="test-group">
+			<h2>Test 403 - Forbidden (File Permissions)</h2>
+			<p>Tente d'accéder à un fichier existant mais sans droits de lecture (chmod 000).</p>
+			<a href="/chmod000.html" class="btn-test">Tester le 403 (Accès direct)</a>
+		</div>
+
         <div class="test-group">
             <h2>Test 405 - Method Not Allowed</h2>
             <p>Exécute une requête avec une méthode non autorisée. (POST sur menu.html)</p>

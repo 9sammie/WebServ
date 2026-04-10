@@ -5,6 +5,7 @@
 #include <climits>
 #include <cstdlib>
 #include <fstream>
+#include <unistd.h>
 
 // Uniform Ressource Identifier
 UriResolver::UriResolver(const ServerConfig& config): _config(config) {}
@@ -33,19 +34,18 @@ bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig
 			if (realFullPath.size() == realRoot.size() || realFullPath[realRoot.size()] == '/')
 				return true;
 		}
-
 		return false;
 	}
 	else
 	{
 		dirPath = fullPath;
 		lastSlash = dirPath.find_last_of('/');
-
 		if (lastSlash != std::string::npos)
 			dirPath = dirPath.substr(0, lastSlash);
 
 		if (dirPath.empty())
 			dirPath = ".";
+
 		if (realpath(dirPath.c_str(), actualPath) != NULL)
 		{
 			realDir = actualPath;
@@ -55,9 +55,8 @@ bool UriResolver::isPathSecure(const std::string& fullPath, const LocationConfig
 					return true;
 			}
 		}
-
-		return false;
 	}
+	return false;
 }
 
 std::string UriResolver::applyRootOrAlias(const std::string& path, const LocationConfig* loc)
@@ -218,12 +217,18 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	loc = findMatchingLocation(path);
 	if (!loc)
 		throw HttpException(400, "invalid path");
+
 	if (config.keepaliveTimeoutSec == 0)
 		Client.setCloseStatus(true);
 	fullPath = applyRootOrAlias(path, loc);
 
 	if (!isPathSecure(fullPath, loc))
-		throw HttpException(400, "invalid path");
+	{
+		if (access(fullPath.c_str(), F_OK) != 0)
+			throw HttpException(404, "not found");
+		else
+			throw HttpException(403, "Forbidden: path traversal");
+	}
 
 	return fullPath;
 }

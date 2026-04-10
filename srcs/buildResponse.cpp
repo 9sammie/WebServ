@@ -37,7 +37,6 @@ static std::string getStatusMessage(int code)
 	if (code == 413) return "Body Too Large";
 	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
-	if (code == 501) return "Method Not Implemented";
 	if (code == 502) return "Cgi Problem";
 	if (code == 505) return "Wrong HTTP Version";
 	return "Internal Server Error";
@@ -80,7 +79,7 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
 	std::ostringstream response;
 	response << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
 
-	response << "Server: Webserv/1.0\r\n";
+	response << "Server: Rats_du_port_80\r\n";
 	response << "Date: " << getRfc7231Date() << "\r\n";
 
 	if (closeConnection == true)
