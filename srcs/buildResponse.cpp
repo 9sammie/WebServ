@@ -33,6 +33,7 @@ static std::string getStatusMessage(int code)
 	if (code == 404) return "Ressource Not Found";
 	if (code == 405) return "Method Not Allowed On This Location";
 	if (code == 408) return "Client Too Slow";
+	if (code == 411) return "Body Without Content Length";
 	if (code == 413) return "Body Too Large";
 	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
