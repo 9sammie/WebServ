@@ -4,6 +4,7 @@
 #include <sstream>
 #include <climits>
 #include <cstdlib>
+#include <fstream>
 
 // Uniform Ressource Identifier
 UriResolver::UriResolver(const ServerConfig& config): _config(config) {}
@@ -214,13 +215,11 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 	path = urlDecode(path);
 	path = normalize(path);
 
-
 	loc = findMatchingLocation(path);
 	if (!loc)
 		throw HttpException(400, "invalid path");
 	if (config.keepaliveTimeoutSec == 0)
 		Client.setCloseStatus(true);
-
 	fullPath = applyRootOrAlias(path, loc);
 
 	if (!isPathSecure(fullPath, loc))

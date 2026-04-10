@@ -41,8 +41,12 @@ std::string RequestHandler::handlePOST(const HttpRequest& request, const std::st
 
 	std::string parentDir = path.substr(0, path.rfind('/'));
 	struct stat st;
+
+	if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
+		return buildStatusResponse(409);
+
 	if (stat(parentDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
-		return buildStatusResponse(404);
+		return buildStatusResponse(403);
 
 	if (access(parentDir.c_str(), W_OK) != 0)
 		return buildStatusResponse(403);
@@ -60,7 +64,7 @@ std::string RequestHandler::handlePOST(const HttpRequest& request, const std::st
 	return buildStatusResponse(fileExisted ? 200 : 201);
 }
 
-static std::string getMimeType(const std::string& path)
+std::string RequestHandler::getMimeType(const std::string& path)
 {
     size_t dot = path.rfind('.');
     if (dot == std::string::npos)
@@ -192,10 +196,10 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 	buffer << file.rdbuf();
 	body = buffer.str();
 
-	if (getMimeType(resolvedPath) == "text/html") 
+	mimeType = getMimeType(resolvedPath);
+	if (mimeType == "text/html") 
 		applyHtmlTemplates(body, request);
 
-	headers["Content-Type"] = getMimeType(resolvedPath);
+	headers["Content-Type"] = mimeType;
 	return buildHttpResponse(200, "OK", body, false, headers);
 }
-// ?v=CFGLoQIhmow&list=RDCFGLoQIhmow&start_radio=1

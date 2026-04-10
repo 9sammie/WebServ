@@ -19,7 +19,6 @@ class HttpParser
 		void parseHeaders(const std::string& headerBlock, HttpRequest& tempRequest);
 		void parseBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc);
 		void parseRegularBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc);
-		void parseChunkedBody(const std::string& bodyPart, HttpRequest& tempRequest, const ServerConfig& _config, const LocationConfig* loc);
 
 		private:
 		HttpParser(const HttpParser& other);

@@ -69,6 +69,8 @@ std::string RequestHandler::handleRequest(Client& Client)
 	it = _methodHandlers.find(request.getMethod());
 	if (it == _methodHandlers.end())
 		return updateCloseStatus(Client, buildStatusResponse(405));
+
     response = (this->*(it->second))(request, fullPath, loc);
+
 	return updateCloseStatus(Client, response);
 }
