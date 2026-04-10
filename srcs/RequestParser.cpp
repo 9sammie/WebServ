@@ -91,12 +91,13 @@ void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& temp
 		if (!line.empty() && line[line.size() - 1] == '\r')
 		    line.erase(line.size() - 1);
 
-		if (line.empty())
+		if (line.empty() || line.find_first_not_of(" \t\r\n") == std::string::npos)
 			continue;
 
 		colon = line.find(':');
 		if (colon == std::string::npos)
-			throw HttpException(400, "bad request: invalid header format");
+			continue;
+			// throw HttpException(400, "bad request: invalid header format");
 
 		key = line.substr(0, colon);
 		value = line.substr(colon + 1);
@@ -114,12 +115,9 @@ void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& temp
 			throw HttpException(400, "bad request: invalid header key");
 
 		tempRequest.setHeader(key, value);
-
-		if (!tempRequest.hasHeader("host"))
-			throw HttpException(400, "bad request: missing host header");
-		if (tempRequest.getHeader("host").empty())
-			throw HttpException(400, "bad request: host header is empty");
 	}
+	if (!tempRequest.hasHeader("host") || tempRequest.getHeader("host").empty())
+		throw HttpException(400, "bad request: missing or empty host header");
 }
 
 bool	checkPath(std::string path)
@@ -238,7 +236,6 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	loc = locateRessource.findMatchingLocation(tempRequest.getUri());
 
 	parseBody(bodyPart, tempRequest, _config, loc);
-
 
 	request = tempRequest;
 }
