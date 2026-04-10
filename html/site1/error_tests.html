@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests d'Erreurs HTTP</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #e74c3c;
+            text-align: center;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 10px;
+            margin-bottom: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            background: #34495e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            width: 100%;
+        }
+
+        .test-group {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #2c3e50;
+            border-left: 5px solid #f39c12;
+            border-radius: 5px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #f39c12;
+            font-size: 1.4rem;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #bdc3c7;
+        }
+
+        .btn-test {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn-test:hover {
+            background-color: #c0392b;
+            transform: scale(1.05);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Laboratoire de Tests d'Erreurs 🐛</h1>
+        
+        <div class="test-group">
+            <h2>Test 404 - Not Found</h2>
+            <p>Tente d'accéder à une page qui n'existe pas sur le serveur.</p>
+            <a href="/page_inconnue.html" class="btn-test">Tester le 404</a>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 405 - Method Not Allowed</h2>
+            <p>Exécute une requête avec une méthode non autorisée (POST sur un fichier statique classique sans configuration, par exemple). Vous pouvez injecter ceci via un formulaire masqué.</p>
+            <form action="/menu.html" method="POST">
+                <button type="submit" class="btn-test">Tester le 405 (POST sur menu.html)</button>
+            </form>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 500 - CGI Error</h2>
+            <p>Simulation d'une erreur interne du serveur avec un script CGI défaillant (si configuré).</p>
+            <a href="/cgi-bin/error_sim.py" class="btn-test">Tester le 500 CGI</a>
+        </div>
+        
+        <!-- Ajoutez ici d'autres tests -->
+
+        <div style="text-align: center;">
+            <a href="/" class="back-link">← Retour à Chez Gusteau</a>
+        </div>
+    </div>
+
+</body>
+</html>
