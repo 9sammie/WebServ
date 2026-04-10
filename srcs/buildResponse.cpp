@@ -29,10 +29,16 @@ static std::string getStatusMessage(int code)
 	if (code == 201) return "Created";
 	if (code == 204) return "No Content";
 	if (code == 400) return "Bad Request";
-	if (code == 403) return "Forbidden";
-	if (code == 404) return "Not Found";
-	if (code == 405) return "Method Not Allowed";
+	if (code == 403) return "Ressource Access Forbidden";
+	if (code == 404) return "Ressource Not Found";
+	if (code == 405) return "Method Not Allowed On This Location";
+	if (code == 408) return "Client Too Slow";
+	if (code == 413) return "Body Too Large";
+	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
+	if (code == 501) return "Method Not Implemented";
+	if (code == 502) return "Cgi Problem";
+	if (code == 505) return "Wrong HTTP Version";
 	return "Internal Server Error";
 }
 
@@ -46,7 +52,11 @@ std::string RequestHandler::buildStatusResponse(int code) const
 	body << "<html><body><h1>" << code << " " << message << "</h1></body></html>";
 	
 	std::map<std::string, std::string> headers;
-	headers["Content-Type"] = mimeType;
+	if (!mimeType.empty())
+		headers["Content-Type"] = mimeType;
+	else
+		headers["Content-Type"] = "text/html";
+
 
 	return buildHttpResponse(code, message, body.str(), true, headers);
 }
@@ -75,24 +85,25 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
 	if (closeConnection == true)
 		response << "Connection: close\r\n";
 	else
-		response << "Connection: keep alive\r\n";
+		response << "Connection: keep-alive\r\n";
 
 	response << "Content-Length: " << body.size() << "\r\n";
 
-if (!body.empty())
-{
-    std::map<std::string, std::string>::const_iterator it = extraHeaders.find("Content-Type");
-    
-    if (it != extraHeaders.end())
-        response << "Content-Type: " << it->second << "\r\n";
-    else
-        response << "Content-Type: text/plain\r\n";
-}
+	if (!body.empty())
+	{
+		std::map<std::string, std::string>::const_iterator it = extraHeaders.find("Content-Type");
+
+		if (it != extraHeaders.end())
+			response << "Content-Type: " << it->second << "\r\n";
+		else
+			response << "Content-Type: text/plain\r\n";
+	}
 
 	for (std::map<std::string,std::string>::const_iterator it = extraHeaders.begin();
 		it != extraHeaders.end(); ++it)
 	{
-		response << it->first << ": " << it->second << "\r\n";
+		if (it->first != "Content-Type")
+			response << it->first << ": " << it->second << "\r\n";
 	}
 
 	response << "\r\n";
