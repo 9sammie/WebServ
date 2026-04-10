@@ -43,7 +43,7 @@ std::string RequestHandler::handlePOST(const HttpRequest& request, const std::st
 	struct stat st;
 
 	if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
-		return buildStatusResponse(409);
+		return buildStatusResponse(404);
 
 	if (stat(parentDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
 		return buildStatusResponse(403);
@@ -179,12 +179,21 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		return buildHttpResponse(302, "Found", "", false, headers);
 	}
 
+	if (request.getMethod() == "GET")
+	{
+		if (access(path.c_str(), R_OK) != 0)
+			return buildStatusResponse(403);
+	}
+
 	if (it == loc->methods.end())
 		return buildStatusResponse(405);
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
 		return earlyResponse;
 
-	if (stat(resolvedPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
+	if (stat(resolvedPath.c_str(), &st) != 0)
+		return buildStatusResponse(404);
+
+	if (!S_ISREG(st.st_mode))
 		return buildStatusResponse(403);
 
 	if (access(resolvedPath.c_str(), R_OK) != 0)

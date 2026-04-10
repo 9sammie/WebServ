@@ -42,6 +42,7 @@ class RequestHandler
 		HttpParser			_parser;
 		bool _closeConnection;
 
+		std::string executeMethodHandler(Client& Client, const HttpRequest& request, const std::string& fullPath, const LocationConfig* loc);
 		std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
 		std::string getMimeType(const std::string& path);
 		std::string validateParsing(Client& Client, HttpRequest& request);

@@ -5,6 +5,8 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	try
 	{
 		_parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);
+		if(request.hasHeader("connection"))
+			Client.setCloseStatus(true);
 	}
 	catch (const HttpException& he)
 	{
