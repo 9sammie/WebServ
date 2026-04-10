@@ -20,7 +20,7 @@
 #include <climits>
 
 /* ************************************************************************** */
-/*                          canonical form + helpers - local funcs                        */
+/*                          canonical form + helpers + local funcs                        */
 /* ************************************************************************** */
 
 Parser::Parser(const std::vector<Token>& toks) : _toks(toks), _pos(0)
@@ -32,6 +32,11 @@ Parser::~Parser()
 static bool isCgiLocation(const LocationConfig& loc)
 {
 	return (!loc.cgiExt.empty() && !loc.cgiPath.empty());
+}
+
+static bool hasIncompleteCgiConfig(const LocationConfig& loc)
+{
+	return (loc.cgiExt.empty() && !loc.cgiPath.empty()) || (!loc.cgiExt.empty() && loc.cgiPath.empty());
 }
 
 static bool isHttpMethod(const std::string& m)
@@ -59,7 +64,7 @@ static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConf
 static int defaultCgiTimeoutSec(int keepaliveSec)
 {
 	if (keepaliveSec <= 1)
-		return 1; //a voir avec Corentin si throw ? 
+		return 1;
 	if (keepaliveSec > 5)
 		return keepaliveSec - 5;
 	return keepaliveSec - 1;
@@ -220,13 +225,13 @@ int Parser::parsePositiveInt(const Token& directiveTok, const std::string& s) co
 		throwInvalidValue(directiveTok, s);
 	char* end = NULL;
 	errno = 0;
-	long res = std::strtol(s.c_str(), &end, 10);//&end = l adresse de end pour ecrire dedans la valeur
-	if (errno != 0 || end == s.c_str() || *end != '\0') //owerflow/underflow, ou aucun chiffre, ou il reste des car 12a p ex
+	long res = std::strtol(s.c_str(), &end, 10);
+	if (errno != 0 || end == s.c_str() || *end != '\0')
 		throwInvalidValue(directiveTok, s);
 	if (res < 0)
-		throwInvalidValue(directiveTok, s); //positifs
+		throwInvalidValue(directiveTok, s);
 	if (res > std::numeric_limits<int>::max())
-		throwInvalidValue(directiveTok, s); //doit rentrer dans int, on peut changer pour des valeurs plus raisonnables :)
+		throwInvalidValue(directiveTok, s);
 	return static_cast<int>(res);
 }	
 
@@ -241,7 +246,7 @@ std::size_t Parser::parseSizeT(const Token& directiveTok, const std::string& s) 
 	unsigned long long res = std::strtoull(s.c_str(), &end, 10);
 	if (errno != 0 || end == s.c_str() || *end != '\0')
 		throwInvalidValue(directiveTok, s);
-	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) //on peux changer aussi pour le temps raisonnable
+	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max()))
 		throwInvalidValue(directiveTok, s);
 	return static_cast<size_t>(res);
 } 
@@ -338,16 +343,6 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 		loc.root = args[0];
-
-		//char absPath[PATH_MAX];
-        //if (realpath(args[0].c_str(), absPath) != NULL)
-		//{
-         //   loc.root = std::string(absPath);
-        //}
-		//else
-		//{
-          //  loc.root = args[0];
-        //}
 		return;
 	}
 	if (name == "index")
@@ -399,7 +394,6 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 			throwInvalidArgs(nameTok);
 		loc.cgiTimeoutSec = parsePositiveInt(nameTok, args[0]);
 		loc.hasCgiTimeout = true;
-		//loc.cgiTimeoutLine = nameTok.line;
 		return;
 	}
 	if (name == "cgi_ext")
@@ -494,7 +488,7 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 	if (name == "error_page")
 	{
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
-		parseErrorPage(srv.errors, nameTok, args);//d ou vient ceci ???
+		parseErrorPage(srv.errors, nameTok, args);
 		return;
 	}
 	throwUnknownDirective(nameTok);
@@ -612,6 +606,7 @@ void Parser::applyEffectiveData(HttpConfig& http)
 	for (std::size_t i = 0; i < http.servers.size(); ++i)
 	{
 		ServerConfig& srv = http.servers[i];
+
 		if (!srv.hasKeepalive && http.hasKeepalive)
 		{
 			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
@@ -622,16 +617,28 @@ void Parser::applyEffectiveData(HttpConfig& http)
 			srv.maxBodySize = http.maxBodySize;
 			srv.hasMaxBodySize = true;
 		}
+
 		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		std::size_t cgiLocationCount = 0;
+
 		for (std::size_t j = 0; j < srv.locations.size(); ++j)
 		{
 			LocationConfig& loc = srv.locations[j];
+
+			if (hasIncompleteCgiConfig(loc))
+				throw std::invalid_argument("webserv: [emerg] CGI location requires both \"cgi_ext\" and \"cgi_path\"");
 			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
 			{
 				loc.maxBodySize = srv.maxBodySize;
 				loc.hasMaxBodySize = true;
 			}
 			bool cgiLoc = isCgiLocation(loc);
+			if (cgiLoc)
+			{
+				++cgiLocationCount;
+				if (cgiLocationCount > 1)
+					throw std::invalid_argument("webserv: [emerg] only one CGI location is allowed per server");
+			}
 			if (loc.hasCgiTimeout && !cgiLoc)
 				throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" is only allowed in CGI locations");
 			if (cgiLoc)
