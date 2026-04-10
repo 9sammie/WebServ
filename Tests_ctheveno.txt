@@ -49,3 +49,9 @@ Résultat: [ Failed ] Connection-closed absent in response
 - Utiliser curl -v pour voir tous les headers
 - Utiliser nc pour tester bas niveau
 
+
+
+
+Error 408 client too slow
+
+(printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 100\r\n\r\nCoucou..."; sleep 100; printf " Fin\r\n") | nc 127.0.0.1 8080

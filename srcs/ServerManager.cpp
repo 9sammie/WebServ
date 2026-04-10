@@ -133,20 +133,23 @@ int ServerManager::readClientData(int clientFd){
 void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     
     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
-    // std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
-    // std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
-    // std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;
     size_t sizeToSend = response.size() - offset;
+    //To keep for debugging
+    std::cout << BLUE << "Request: [" << _clients[clientFd].getBuffer(Client::REQUEST) << "]" <<RESET<< std::endl;
+    std::cout << GREEN << "Response: [" << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+
     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
 
     if (sent >= 0){
         offset += sent;
         if (offset >= response.size()){
-            if (_clients[clientFd].getCloseStatus())
+            if (_clients[clientFd].getCloseStatus()) {
                 closeConnection(clientFd);
+                return ;
+            }
             _clients[clientFd].clean(Client::REQUEST);
             _clients[clientFd].clean(Client::RESPONSE);
             _clients[clientFd].resetResponseOffsetSent();
@@ -239,14 +242,26 @@ void   ServerManager::checkClientTimeOuts(){
         if (timeoutVal > 0 &&  it->second.timeSinceLastActivity() > timeoutVal){
             int fd = it->second.getFd();
             std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
+            it->second.clean(Client::REQUEST);
+            it->second.clean(Client::RESPONSE);
+            const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
+            "<html><body><h1>408 Request Timeout</h1></body></html>", true);
+            it->second.store(response, Client::RESPONSE);
+            it->second.setCloseStatus(true);
+            setPollout(fd);
             ++it;
-            closeConnection(fd);
         }
         else if (timeoutVal == 0 && it->second.timeSinceLastActivity() > 60){
             int fd = it->second.getFd();
             std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
+            it->second.clean(Client::REQUEST);
+            it->second.clean(Client::RESPONSE);
+            const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
+            "<html><body><h1>408 Request Timeout</h1></body></html>", true);
+            it->second.store(response, Client::RESPONSE);
+            it->second.setCloseStatus(true);
+            setPollout(fd);
             ++it;
-            closeConnection(fd);
         }
         else
             ++it;
@@ -294,7 +309,7 @@ bool    ServerManager::receivedRequest(int idx){
     }
     else{
         // std::cout << BRIGHT_RED << "DEBUG: REQUEST incomplete !" << RESET << std::endl;
-        std::cout << BROWN << "Request: " << _clients[fd].getBuffer(Client::REQUEST) << RESET << std::endl;
+        // std::cout << BROWN << "Request: " << _clients[fd].getBuffer(Client::REQUEST) << RESET << std::endl;
     }
     return true;
 }
