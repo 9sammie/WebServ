@@ -58,7 +58,6 @@
             background-color: #7f8c8d;
         }
 
-        /* Formulaire d'ajout d'avis */
         .form-section {
             background: white;
             padding: 30px;
@@ -143,7 +142,6 @@
             background-color: #95a5a6;
         }
 
-        /* Section des avis */
         .reviews-section {
             background: white;
             padding: 30px;
@@ -263,11 +261,9 @@
             <p>Partagez votre expérience chez Gusteau</p>
         </header>
 
-        <!-- Messages d'erreur/succès -->
         <div id="errorMessage" class="error-message"></div>
         <div id="successMessage" class="success-message"></div>
 
-        <!-- Formulaire d'ajout d'avis -->
         <div class="form-section">
             <h2>Poster un Avis</h2>
             <form id="reviewForm">
@@ -288,7 +284,6 @@
             </form>
         </div>
 
-        <!-- Section des avis existants -->
         <div class="reviews-section">
             <h2>Tous les Avis</h2>
             <div id="reviewsList" class="reviews-list">
@@ -305,7 +300,6 @@
         const reviewForm = document.getElementById('reviewForm');
         const reviewsList = document.getElementById('reviewsList');
 
-        // Afficher un message temporaire
         function showMessage(message, type) {
             const el = type === 'error' ? errorEl : successEl;
             el.textContent = message;
@@ -315,7 +309,6 @@
             }, 4000);
         }
 
-        // Générer un nom de fichier unique basé sur le timestamp
         function generateFileName(name) {
             const timestamp = Date.now();
             const sanitized = name.toLowerCase()
@@ -325,7 +318,6 @@
             return `review_${sanitized}_${timestamp}.txt`;
         }
 
-        // Soumettre un nouvel avis
         reviewForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -341,7 +333,6 @@
                 const fileName = generateFileName(clientName);
                 const content = `Nom: ${clientName}\n\n${reviewText}`;
 
-                // Envoyer en texte brut au lieu de FormData multipart
                 const response = await fetch(`${API_UPLOAD}/${fileName}`, {
                     method: 'POST',
                     headers: {
@@ -353,7 +344,7 @@
                 if (response.ok || response.status === 201) {
                     showMessage('✅ Avis posté avec succès!', 'success');
                     reviewForm.reset();
-                    loadReviews(); // Recharger la liste
+                    loadReviews();
                 } else {
                     showMessage(`❌ Erreur lors de la soumission (${response.status})`, 'error');
                 }
@@ -362,13 +353,11 @@
             }
         });
 
-        // Charger et afficher les avis
         async function loadReviews() {
             try {
                 const response = await fetch(API_FILES);
                 const html = await response.text();
 
-                // Parser les noms de fichiers depuis le HTML autoindex
                 const fileNames = extractFileNamesFromHTML(html);
 
                 if (fileNames.length === 0) {
@@ -376,7 +365,6 @@
                     return;
                 }
 
-                // Charger le contenu de chaque avis
                 const reviews = [];
                 for (const fileName of fileNames) {
                     try {
@@ -388,13 +376,11 @@
                     }
                 }
 
-                // Afficher les avis
                 if (reviews.length === 0) {
                     reviewsList.innerHTML = '<div class="no-reviews">Aucun avis à afficher</div>';
                 } else {
                     reviewsList.innerHTML = reviews.map(review => createReviewCard(review)).join('');
 
-                    // Ajouter les event listeners pour les boutons DELETE
                     document.querySelectorAll('.btn-delete').forEach(btn => {
                         btn.addEventListener('click', async () => {
                             const fileName = btn.dataset.file;
@@ -408,7 +394,6 @@
             }
         }
 
-        // Extraire les noms de fichiers du HTML autoindex
         function extractFileNamesFromHTML(html) {
             const fileNames = [];
             const linkRegex = /href="([^"]+\.txt)"/g;
@@ -416,9 +401,8 @@
 
             while ((match = linkRegex.exec(html)) !== null) {
                 let filePath = match[1];
-                // Extraire SEULEMENT le nom du fichier (dernière partie après le /)
                 const fileName = filePath.split('/').pop();
-                if (fileName && !filePath.endsWith('/')) {  // Exclut les répertoires
+                if (fileName && !filePath.endsWith('/')) {
                     fileNames.push(fileName);
                 }
             }
@@ -426,7 +410,6 @@
             return fileNames;
         }
 
-        // Créer une carte d'avis
         function createReviewCard(review) {
             const lines = review.content.split('\n');
             const nameLine = lines[0].replace('Nom: ', '');
@@ -445,7 +428,6 @@
             `;
         }
 
-        // Échapper le HTML pour éviter les injections
         function escapeHtml(text) {
             const map = {
                 '&': '&amp;',
@@ -457,7 +439,6 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Supprimer un avis
         async function deleteReview(fileName) {
             if (!confirm('Êtes-vous sûr de vouloir supprimer cet avis?')) {
                 return;
@@ -470,7 +451,7 @@
 
                 if (response.ok) {
                     showMessage('✅ Avis supprimé avec succès!', 'success');
-                    loadReviews(); // Recharger la liste
+                    loadReviews();
                 } else {
                     showMessage('❌ Erreur lors de la suppression', 'error');
                 }
@@ -479,7 +460,6 @@
             }
         }
 
-        // Charger les avis au démarrage
         loadReviews();
     </script>
 
