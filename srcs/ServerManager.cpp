@@ -305,7 +305,7 @@ bool    ServerManager::receivedRequest(int idx){
     }
     else{
         // std::cout << BRIGHT_RED << "DEBUG: REQUEST incomplete !" << RESET << std::endl;
-        std::cout << BROWN << "Request: " << _clients[fd].getBuffer(Client::REQUEST) << RESET << std::endl;
+        // std::cout << BROWN << "Request: " << _clients[fd].getBuffer(Client::REQUEST) << RESET << std::endl;
     }
     return true;
 }
