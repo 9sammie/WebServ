@@ -8,14 +8,14 @@
         body {
             font-family: 'Arial', sans-serif;
             background-image: url('/assets/errors.png');
-            background-size: contain;
+            background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
             background-color: #1a2533;
             color: #ecf0f1;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -28,49 +28,53 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
             border-bottom: 2px solid #e74c3c;
             padding-bottom: 10px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
         }
 
         .container {
-            max-width: 800px;
-            background: rgba(44, 62, 80, 0.9);
-            padding: 30px;
+            max-width: 650px;
+            background: rgba(44, 62, 80, 0.4);
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.6);
             width: 100%;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .test-group {
-            margin-bottom: 30px;
-            padding: 15px;
-            background: #2c3e50;
-            border-left: 5px solid #f39c12;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: rgba(44, 62, 80, 0.6);
+            border-left: 4px solid #f39c12;
             border-radius: 5px;
         }
 
         h2 {
             margin-top: 0;
+            margin-bottom: 5px;
             color: #f39c12;
-            font-size: 1.4rem;
+            font-size: 1.1rem;
         }
 
         p {
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: #bdc3c7;
+            margin: 5px 0;
         }
 
         .btn-test {
             display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
+            margin-top: 5px;
+            padding: 8px 15px;
             background-color: #e74c3c;
             color: white;
             text-decoration: none;
             border-radius: 5px;
             font-weight: bold;
+            font-size: 0.9rem;
             transition: background 0.3s, transform 0.2s;
         }
 
@@ -99,6 +103,21 @@
         <h1>Cauchemar en cuisine...</h1>
         
         <div class="test-group">
+            <h2>Test 400 - Bad Request</h2>
+            <p>Envoie une requête HTTP syntaxiquement mal formée (par exemple, sans le protocole obligatoire <code>HTTP/1.1</code>).<br>
+            <em>Note : Les navigateurs standards formatent correctement leurs requêtes, utilisez le terminal :</em></p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                printf "GET / \r\n\r\nHost: localhost" | nc 127.0.0.1 8080
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 403 - Ressource Access Forbidden</h2>
+            <p>Tente d'accéder à une ressource dont les permissions de lecture ont été retirées (chmod 000).</p>
+            <a href="/forbidden.html" class="btn-test">Tester le 403</a>
+        </div>
+
+        <div class="test-group">
             <h2>Test 404 - Not Found</h2>
             <p>Tente d'accéder à une page qui n'existe pas sur le serveur (/page_inconnue.html).</p>
             <a href="/page_inconnue.html" class="btn-test">Tester le 404</a>
@@ -110,10 +129,37 @@
             <form action="/menu.html" method="POST">
                 <button type="submit" class="btn-test">Tester le 405</button>
             </form>
-        <!-- </div>
+        </div>
+
         <div class="test-group">
-            <h2>Test 409 - </h2>
-        </div> -->
+            <h2>Test 408 - Request Timeout</h2>
+            <p>Exécute une requête incomplète avec une pause de 16 secondes (fichier config client timeout = 15).<br>
+            <em>Note : Ce test simulant un client lent (Slow Loris) ne peut pas être fait via le navigateur.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                (printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 100\r\n\r\nCoucou..."; sleep 16; printf " Fin\r\n") | nc 127.0.0.1 8080
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 413 - Payload Too Large</h2>
+            <p>Envoie une requête POST avec un corps de 1 048 577 octets, dépassant la limite configurée de <code>client_max_body_size</code> (1 048 576 octets).<br>
+            <em>Note : Ce test nécessite l'utilisation de <code>curl</code> pour générer un fichier de la taille requise.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl -X POST --data-binary @<(dd if=/dev/zero bs=1048577 count=1 2>/dev/null) http://127.0.0.1:8080/uploads/large_file.tmp -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 414 - URI Too Long</h2>
+            <p>Envoie une requête avec une URI de plus de 8 Ko, dépassant la limite de buffer du serveur pour la ligne de requête.<br>
+            <em>Note : Ce test utilise une commande pour générer une URL très longue.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl "http://127.0.0.1:8080/?q=$(python -c "print('a'*8192)")" -i
+            </div>
+        </div>
 
         <div style="text-align: center;">
             <a href="/" class="back-link">← Retour à Chez Gusteau</a>

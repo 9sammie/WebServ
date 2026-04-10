@@ -137,6 +137,10 @@ void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;
     size_t sizeToSend = response.size() - offset;
+    //To keep for debugging
+    std::cout << BLUE << "Request: [" << _clients[clientFd].getBuffer(Client::REQUEST) << "]" <<RESET<< std::endl;
+    std::cout << GREEN << "Response: [" << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+
     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
 
     if (sent >= 0){
