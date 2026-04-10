@@ -161,7 +161,7 @@ ssize_t      Client::getContentLenthSize()const{
 // }
 
 bool Client::isRequestComplete(){
-    std::cout << "Start isRequestComplete, rawBuffer: " << _rawBuffer << std::endl;
+    // std::cout << "Start isRequestComplete, rawBuffer: " << _rawBuffer << std::endl;
     if (_transferEncoding == false){
         if (!hasHeadersSeparator())
             return false;
@@ -190,7 +190,7 @@ bool Client::isRequestComplete(){
         }
     }
     while (_transferEncoding == true) {
-    std::cout << MAGENTA << "Inside isRequestComplete, inside LOOP, rawBuffer: " << RESET << _rawBuffer << std::endl;
+    // std::cout << MAGENTA << "Inside isRequestComplete, inside LOOP, rawBuffer: " << RESET << _rawBuffer << std::endl;
         if (_chunkSize == -1) {
             if (_rawBuffer.find("\r\n") == std::string::npos) {
                 break;  // Waiting for the data
@@ -200,7 +200,7 @@ bool Client::isRequestComplete(){
                 _transferEncoding = false;
                 _badRequest = true;
                 _closeStatus = true;
-                std::cout << "chunksize -1 && ret<0" << std::endl;
+                // std::cout << "chunksize -1 && ret<0" << std::endl;
                 return true;
             }
         }
@@ -212,12 +212,12 @@ bool Client::isRequestComplete(){
                 _transferEncoding = false;
                 _badRequest = true;
                 _closeStatus = true;
-                std::cout << "chunksize > 0 && ret < 0" << std::endl;
+                // std::cout << "chunksize > 0 && ret < 0" << std::endl;
                 return true;
             }
         } else {
             if (finalChunkReceived()) {
-                std::cout << "finalChunkReceived" << std::endl;
+                // std::cout << "finalChunkReceived" << std::endl;
                 _transferEncoding = false;
                 return true;
             }
