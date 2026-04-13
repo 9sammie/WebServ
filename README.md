@@ -76,9 +76,22 @@ For example:
 - `server` is only valid inside `http`,
 - `location` is only valid inside `server`.
 
-### TO ADD SERVER SETUP AND PARSING OF REQUEST / BUILD RESPONSE
 
----
+### Server Setup and Running Logic
+
+The server starts by initializing TcpListener objects for each unique port specified in the configuration file. Each listener binds to its port and is ready to accept incoming client connections.
+
+## The Event Loop
+
+The core of the server's event loop is built around the poll() system call. To monitor all active file descriptors (listeners, clients, and CGI pipes), we maintain a vector of struct pollfd.
+
+poll() allows the server to handle multiple connections efficiently without blocking. It waits for events on the file descriptors it monitors. The main events we handle are:
+
+POLLIN: Indicates that data is available to be read from a file descriptor. This could be a new client connection on a listener socket, or an incoming HTTP request from a client.
+POLLOUT: Indicates that it's possible to write data to a file descriptor without blocking, which is used to send HTTP responses back to the client.
+The poll() function takes a timeout. While a value of -1 would cause it to block indefinitely, we use a 1000ms timeout. This forces the loop to wake up at least once per second, allowing us to perform periodic tasks such as checking for client or CGI timeouts.
+
+### PARSING OF REQUEST / BUILD RESPONSE
 
 ## Instructions
 
