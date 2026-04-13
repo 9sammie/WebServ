@@ -46,5 +46,11 @@
         "client_name": "Skinner",
         "guests": 8,
         "res_time": "18:45"
+    },
+    {
+        "timestamp": "2026-04-13 11:04:54",
+        "client_name": "bla",
+        "guests": 1,
+        "res_time": "11:00"
     }
 ]
