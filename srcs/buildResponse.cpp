@@ -52,14 +52,13 @@ std::string RequestHandler::buildStatusResponse(int code, Client& Client) const
 	std::string message = getStatusMessage(code);
 
 	std::ostringstream body;
-	body << "<html><body><h1>" << code << " " << message << "</h1></body></html>";
+	body << "<html>\n<head>\n<style>\nbody.cursor-fork { cursor: url('/assets/cursors/fork.png'), auto !important; }\nbody.cursor-paw { cursor: url('/assets/cursors/paw.png'), auto !important; }\n</style>\n</head>\n<body class=\"cursor-fork\"> <h1>" << code << " " << message << "</h1></body></html>";
 	
 	std::map<std::string, std::string> headers;
 	if (!mimeType.empty())
 		headers["Content-Type"] = mimeType;
 	else
 		headers["Content-Type"] = "text/html";
-
 
 	return buildHttpResponse(code, message, body.str(), true, headers);
 }
