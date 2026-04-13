@@ -48,16 +48,6 @@ void TcpListener::init(){
         close(_fd);
         throw std::runtime_error(strerror(errno));
     }
-    /*
-    BETTER OPTION BUT FORBIDDEN BY SUBJECT
-    // Here we first get the flags from our OS with flags and then we combine it with 
-    // O_NONBLOCK with the single pipe "|"
-    int flags = fcntl(_fd, F_GETFL, 0);
-    if (fcntl(_fd, F_SETFL, flags | O_NONBLOCK) < 0){
-        close(_fd);
-        throw std::runtime_error(strerror(errno));
-    }
-    */
 }
 
 int TcpListener::getFd()const{
