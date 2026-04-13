@@ -16,7 +16,6 @@ int main(int ac, char** av){
         return 1;
     }
 
-    // signal(SIGPIPE, SIG_IGN); // For MacOS only, and change sendResponse function too, uncomment
     init_signal_handler();
 
     try {

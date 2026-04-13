@@ -25,7 +25,7 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
             ports.insert(it->listens[i].port);
         }
     }
-    _listeners.reserve(ports.size()); //Avoid reallocation on iteration that would destroy firsts objects and kill sockets
+    _listeners.reserve(ports.size());
     _pollFds .reserve(MAX_CLIENTS + ports.size());
     for (std::set<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
     {
@@ -135,7 +135,7 @@ void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
     // std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
     // std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
-    std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+    // std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;
@@ -205,21 +205,10 @@ int ServerManager::getCgiTimeout(int port)const{
     return 1;
 }
 
-/************************************************************************************************************ */
-/*                                                                                                            */
-/*                                                                                                            */
-/*                                Refactoring functions                                                       */
-/*                                                                                                            */
-/*                                                                                                            */
-/*                                                                                                            */
-/************************************************************************************************************ */
-
-
 void   ServerManager::checkCgiTimeOuts(){
    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it){
         if (it->second.getCgiInfo().isCgi == true){
             int timeoutCgiVal = it->second.getCgiTimeout();
-            // if (timeoutCgiVal < 0)
             if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
                 std::cout << "timeoutCgiVal= " << timeoutCgiVal << std::endl;
                 kill(it->second.getCgiInfo().pid, SIGKILL);
@@ -228,7 +217,6 @@ void   ServerManager::checkCgiTimeOuts(){
                 if (it->second.getCgiInfo().pipeWrite != -1)
                     removeWritePipe(it->second.getCgiInfo().pipeWrite);
                 it->second.resetCgiInfos();
-                //Hardcoded REPSONSE for NOW
                 const std::string response = RequestHandler::buildHttpResponse(504, "Gateway Timeout",
                 "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
                 it->second.store(response, Client::RESPONSE);
@@ -282,7 +270,7 @@ bool    ServerManager::receivedRequest(int idx){
         
         _clients[fd].extractRequest();
         // std::cout  << "REQUEST: [" << _clients[fd].getBuffer(Client::REQUEST) << "]" << std::endl;
-        // COOKER call will call CgiHandler() if it's a CGI
+        // RequestHandler call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort(Client::SERVER));
 		RequestHandler RH(serverToSend);
 

@@ -10,13 +10,12 @@
 #include "Config.hpp"
 #include <sys/types.h>
 
-#define MAX_CLIENTS    255
-#define DEFAULT_TIMEOUT 60
+#define MAX_CLIENTS    1024
 
 class ServerManager{
 
     public :
-        ServerManager(const HttpConfig& HttpConfig/*std::list<int> ports*/);
+        ServerManager(const HttpConfig& HttpConfig);
         ~ServerManager();
 
         void    run();
@@ -30,13 +29,9 @@ class ServerManager{
         size_t  removeWritePipe(int pipeWrite);
         size_t  removeReadPipe(int pipeRead);
         void    setPollout(int clientFd);
-        // int     findPipeReadByClient(int clientFd);
         bool    isListener(int fd);
         int     getListenerPort(int fd);
         const ServerConfig& getServer(int port)const;
-
-        //Functions to pas the good server infos to requestHandler
-        // std::string getServerName(const std::string& body)const;
 
 /*******************************************************************************/
 /*                            TimeOut Functions                                */
@@ -56,8 +51,6 @@ class ServerManager{
         std::map<int, int>          _cgiWriteFds;
         std::vector<struct pollfd>  _pollFds;
         int                         _portsQuantity;
-        // size_t                      _timeOutCGI;
-        // size_t                      _timeOutClient;
 
         // UNUSED Canonical form
         ServerManager();
