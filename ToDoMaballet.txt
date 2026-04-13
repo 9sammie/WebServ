@@ -9,6 +9,6 @@ A faire:
 DELETE http://localhost:8080/../Makefile/test.txt
 
 
-pour post, check si on a un nom de fichier.
+update PATH_INFO
 
-trouver pb de chunked.
+renvoyer header "connection: close"

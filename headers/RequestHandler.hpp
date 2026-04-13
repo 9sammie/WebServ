@@ -14,7 +14,7 @@
 #include <fstream>
 
 class RequestHandler;
-typedef std::string (RequestHandler::*MethodHandler)(const HttpRequest&, const std::string&, const LocationConfig*);
+typedef std::string (RequestHandler::*MethodHandler)(const HttpRequest&, const std::string&, const LocationConfig*, Client&);
 
 class RequestHandler
 {
@@ -43,18 +43,18 @@ class RequestHandler
 		bool _closeConnection;
 
 		std::string executeMethodHandler(Client& Client, const HttpRequest& request, const std::string& fullPath, const LocationConfig* loc);
-		std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
+		std::string handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client);
 		std::string getMimeType(const std::string& path);
 		std::string validateParsing(Client& Client, HttpRequest& request);
 		std::string validateLocation(Client& Client, HttpRequest& request, const LocationConfig*& loc, std::string& fullPath);
 		std::string	handleCgiExecution(Client& Client, HttpRequest& request, const LocationConfig* loc, std::string& fullPath);
 		bool		resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc,
-										std::string& outPath, std::string& outResponse);
+										std::string& outPath, std::string& outResponse, Client& Client);
 		DataCgi		fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client);
 		bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
-		std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-		std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc);
-		std::string buildStatusResponse(int code) const;
+		std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client);
+		std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client);
+		std::string buildStatusResponse(int code, Client& Client) const;
 		void		applyHtmlTemplates(std::string& body, const HttpRequest& request);
 		std::string updateCloseStatus(Client& client, const std::string& response);
 };

@@ -12,7 +12,7 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	{
 		int code = he.getStatusCode();
 		Client.setCloseStatus(true);
-		return buildStatusResponse(code);
+		return buildStatusResponse(code, Client);
 	}
 	return "";
 }
@@ -31,11 +31,11 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 		if (code < 400)
 			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
 		Client.setCloseStatus(true);
-		return buildStatusResponse(code);
+		return buildStatusResponse(code, Client);
 	}
     if (fullPath.empty())
 	{
-        return buildStatusResponse(404);
+        return buildStatusResponse(404, Client);
 	}
 	if (loc && loc->hasRedirection)
 	{

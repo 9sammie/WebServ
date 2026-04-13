@@ -42,10 +42,13 @@ static std::string getStatusMessage(int code)
 	return "Internal Server Error";
 }
 
-std::string RequestHandler::buildStatusResponse(int code) const
+std::string RequestHandler::buildStatusResponse(int code, Client& Client) const
 {
-	if (code >= 200 && code < 300)
+	if (code >= 200 && code < 300 && Client.getCloseStatus() == false)
 		return buildHttpResponse(code, "No Content", "", false);
+	if (code >= 200 && code < 300 && Client.getCloseStatus() == true)
+		return buildHttpResponse(code, "No Content", "", true);
+
 	std::string message = getStatusMessage(code);
 
 	std::ostringstream body;

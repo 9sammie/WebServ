@@ -33,7 +33,7 @@ std::string	RequestHandler::handleCgiExecution(Client& Client, HttpRequest& requ
 			return "CGI-STARTED";
 		}
 		Client.setRequestStatus(true);
-		return buildStatusResponse(500);
+		return buildStatusResponse(500, Client);
 	}
 	return "";
 }
@@ -46,9 +46,9 @@ std::string RequestHandler::executeMethodHandler(Client& Client, const HttpReque
 	it = _methodHandlers.find(request.getMethod());
 
 	if (it == _methodHandlers.end())
-		return buildStatusResponse(405);
+		return buildStatusResponse(405, Client);
 
-	return (this->*(it->second))(request, fullPath, loc);
+	return (this->*(it->second))(request, fullPath, loc, Client);
 }
 
 // here we get the complete request, parse it, execute it, then return an
@@ -66,8 +66,8 @@ std::string RequestHandler::handleRequest(Client& Client)
 	const LocationConfig* loc = NULL;
 
 	if (Client.getRequestStatus() == true)
-		return buildStatusResponse(400);
-	
+		return buildStatusResponse(400, Client);
+
 	if (!(response = validateParsing(Client, request)).empty())
 		return response;
 

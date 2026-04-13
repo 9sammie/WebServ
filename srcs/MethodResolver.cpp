@@ -4,7 +4,7 @@
 #include <fstream>
 #include <dirent.h>
 
-std::string RequestHandler::handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
+std::string RequestHandler::handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client)
 {
 	(void)request;
 
@@ -12,56 +12,56 @@ std::string RequestHandler::handleDELETE(const HttpRequest& request, const std::
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
 	if (it == loc->methods.end())
-		return buildStatusResponse(405);
+		return buildStatusResponse(405, Client);
 
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
-        return buildStatusResponse(404);
+        return buildStatusResponse(404, Client);
 
     if (S_ISDIR(st.st_mode))
-        return buildStatusResponse(405);
+        return buildStatusResponse(405, Client);
 
     std::string parentDir = path.substr(0, path.rfind('/'));
     if (access(parentDir.c_str(), W_OK) != 0)
-        return buildStatusResponse(403);
+        return buildStatusResponse(403, Client);
 
     if (std::remove(path.c_str()) != 0)
-        return buildStatusResponse(500);
+        return buildStatusResponse(500, Client);
 
-    return buildStatusResponse(204);
+    return buildStatusResponse(204, Client);
 }
 
-std::string RequestHandler::handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
+std::string RequestHandler::handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client)
 {
 	std::string toFind = "POST";
 	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
 
 	if (it == loc->methods.end())
-		return buildStatusResponse(405);
+		return buildStatusResponse(405, Client);
 
 	std::string parentDir = path.substr(0, path.rfind('/'));
 	struct stat st;
 
 	if (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
-		return buildStatusResponse(404);
+		return buildStatusResponse(404, Client);
 
 	if (stat(parentDir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
-		return buildStatusResponse(403);
+		return buildStatusResponse(403, Client);
 
 	if (access(parentDir.c_str(), W_OK) != 0)
-		return buildStatusResponse(403);
+		return buildStatusResponse(403, Client);
 
 	bool fileExisted = (access(path.c_str(), F_OK) == 0);
 
 	std::ofstream file(path.c_str(), std::ios::binary);
 	if (!file)
-    	return buildStatusResponse(500);
+    	return buildStatusResponse(500, Client);
 
 	file << request.getBody();
 	if (file.fail())
-    	return buildStatusResponse(500);
+    	return buildStatusResponse(500, Client);
 
-	return buildStatusResponse(fileExisted ? 200 : 201);
+	return buildStatusResponse(fileExisted ? 200 : 201, Client);
 }
 
 std::string RequestHandler::getMimeType(const std::string& path)
@@ -111,12 +111,12 @@ static std::string buildDirectoryListing(const std::string& uriPath, const std::
     return html.str();
 }
 
-bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc, std::string& outPath, std::string& outResponse)
+bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc, std::string& outPath, std::string& outResponse, Client& Client)
 {
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
     {
-        outResponse = buildStatusResponse(404);
+        outResponse = buildStatusResponse(404, Client);
         return false;
     }
 
@@ -141,7 +141,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 			std::string listing = buildDirectoryListing(request.getUri(), path);
 			if (listing.empty())
 			{
-				outResponse = buildStatusResponse(500);
+				outResponse = buildStatusResponse(500, Client);
 				return false;
 			}
 			std::map<std::string, std::string> headers;
@@ -149,7 +149,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 			outResponse = buildHttpResponse(200, "OK", listing, false, headers);
 			return false;
 		}
-		outResponse = buildStatusResponse(403);
+		outResponse = buildStatusResponse(403, Client);
 		return false;
 	}
 
@@ -157,55 +157,65 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 	return true;
 }
 
-std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc)
+std::string RequestHandler::handleGET(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client)
 {
-	std::string toFind = "GET";
 	std::string resolvedPath;
 	struct stat st;
 	std::ostringstream buffer;
 	std::map<std::string, std::string>	headers;
 	std::string	body;
 	std::string earlyResponse;
-	std::vector<std::string>::const_iterator it = std::find(loc->methods.begin(), loc->methods.end(), toFind);
+
+	if (std::find(loc->methods.begin(), loc->methods.end(), "GET") == loc->methods.end())
+		return buildStatusResponse(405, Client);
 
 	if (request.getUri().find("/set-cursor") != std::string::npos) 
 	{
-		std::string type = request.getQueryParam("type");
 		std::map<std::string, std::string> headers;
-
-		headers["set-cookie"] = "mouse_type=" + type + "; Path=/; Max-Age=3600";
+		headers["set-cookie"] = "mouse_type=" + request.getQueryParam("type") + "; Path=/; Max-Age=3600";
 		headers["location"] = "/home.html"; 
-
 		return buildHttpResponse(302, "Found", "", false, headers);
 	}
 
-	if (request.getMethod() == "GET")
-	{
-		if (access(path.c_str(), R_OK) != 0)
-			return buildStatusResponse(403);
-	}
-
-	if (it == loc->methods.end())
-		return buildStatusResponse(405);
-	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse))
+	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse, Client))
 		return earlyResponse;
-
-	if (stat(resolvedPath.c_str(), &st) != 0)
-		return buildStatusResponse(404);
-
-	if (!S_ISREG(st.st_mode))
-		return buildStatusResponse(403);
+	
+	if (access(resolvedPath.c_str(), F_OK) != 0)
+		return buildStatusResponse(404, Client);
 
 	if (access(resolvedPath.c_str(), R_OK) != 0)
-		return buildStatusResponse(403);
+		return buildStatusResponse(403, Client);
+
+	if (stat(resolvedPath.c_str(), &st) != 0)
+		return buildStatusResponse(500, Client);
+
+	// if (S_ISDIR(st.st_mode))
+	// {
+	// 	if (loc->autoindex)
+	// 	{
+	// 		body = generateAutoIndex(resolvedPath, request.getUri());
+    //         if (body.empty())
+    //             return buildStatusResponse(500, Client);
+	// 		headers["content-type"] = "text/html";
+	// 		return buildHttpResponse(200, "OK", body, false, headers);
+	// 	}
+	// 	return buildStatusResponse(403, Client);
+	// }
+
+	if (!S_ISREG(st.st_mode))
+		return buildStatusResponse(403, Client);
+
+	if (access(resolvedPath.c_str(), R_OK) != 0)
+		return buildStatusResponse(403, Client);
 
 	std::ifstream file(resolvedPath.c_str(), std::ios::binary);
 	if (!file)
-		return buildStatusResponse(500);	
+		return buildStatusResponse(500, Client);
+	
 	buffer << file.rdbuf();
 	body = buffer.str();
-
 	mimeType = getMimeType(resolvedPath);
+
 	if (mimeType == "text/html") 
 		applyHtmlTemplates(body, request);
 
