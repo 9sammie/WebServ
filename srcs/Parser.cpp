@@ -63,11 +63,9 @@ static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConf
 
 static int defaultCgiTimeoutSec(int keepaliveSec)
 {
-	if (keepaliveSec <= 1)
-		return 1;
-	if (keepaliveSec > 5)
-		return keepaliveSec - 5;
-	return keepaliveSec - 1;
+	if (keepaliveSec - 5 <= 0)
+		throw std::invalid_argument("webserv: [emerg] effective \"keepalive_timeout\" must be greater than 5 to define a CGI timeout with a 5-second gap");
+	return keepaliveSec - 5;
 }
 
 /* ************************************************************************** */
@@ -601,7 +599,7 @@ ServerConfig Parser::parseServerBlock(const Token& serverTok)
 /*                                  main functions                           */
 /*************************************************************************** */
 
-void Parser::applyEffectiveData(HttpConfig& http)
+/*void Parser::applyEffectiveData(HttpConfig& http)
 {
 	for (std::size_t i = 0; i < http.servers.size(); ++i)
 	{
@@ -650,6 +648,69 @@ void Parser::applyEffectiveData(HttpConfig& http)
 				}
 				if (loc.cgiTimeoutSec >= srvKeepalive)
 					throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" must be strictly shorter than effective \"keepalive_timeout\"");
+			}
+		}
+	}
+}*/
+
+void Parser::applyEffectiveData(HttpConfig& http)
+{
+	for (std::size_t i = 0; i < http.servers.size(); ++i)
+	{
+		ServerConfig& srv = http.servers[i];
+
+		if (!srv.hasKeepalive && http.hasKeepalive)
+		{
+			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
+			srv.hasKeepalive = true;
+		}
+		if (!srv.hasMaxBodySize && http.hasMaxBodySize)
+		{
+			srv.maxBodySize = http.maxBodySize;
+			srv.hasMaxBodySize = true;
+		}
+
+		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		std::size_t cgiLocationCount = 0;
+
+		for (std::size_t j = 0; j < srv.locations.size(); ++j)
+		{
+			LocationConfig& loc = srv.locations[j];
+
+			if (hasIncompleteCgiConfig(loc))
+				throw std::invalid_argument("webserv: [emerg] CGI location requires both \"cgi_ext\" and \"cgi_path\"");
+
+			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
+			{
+				loc.maxBodySize = srv.maxBodySize;
+				loc.hasMaxBodySize = true;
+			}
+
+			bool cgiLoc = isCgiLocation(loc);
+
+			if (cgiLoc)
+			{
+				++cgiLocationCount;
+				if (cgiLocationCount > 1)
+					throw std::invalid_argument("webserv: [emerg] only one CGI location is allowed per server");
+			}
+
+			if (loc.hasCgiTimeout && !cgiLoc)
+				throw std::invalid_argument("webserv: [emerg] \"cgiTimeout\" is only allowed in CGI locations");
+
+			if (cgiLoc)
+			{
+				if (srvKeepalive - 5 <= 0)
+					throw std::invalid_argument("webserv: [emerg] effective \"keepalive_timeout\" must be greater than 5 to allow CGI");
+
+				if (!loc.hasCgiTimeout)
+				{
+					loc.cgiTimeoutSec = defaultCgiTimeoutSec(srvKeepalive);
+					loc.hasCgiTimeout = true;
+				}
+
+				if (loc.cgiTimeoutSec > srvKeepalive - 5)
+					throw std::invalid_argument("webserv: [emerg] \"cgiTimeout\" must be at least 5 seconds shorter than effective \"keepalive_timeout\"");
 			}
 		}
 	}
