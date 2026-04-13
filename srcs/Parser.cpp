@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Parser.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: maballet <maballet@student.42lyon.fr>      +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/09 09:24:15 by vakozhev          #+#    #+#             */
-/*   Updated: 2026/03/25 16:36:59 by vakozhev         ###   ########lyon.fr   */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Parser.hpp"
 
 #include <stdexcept>
@@ -391,6 +379,8 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 		loc.cgiTimeoutSec = parsePositiveInt(nameTok, args[0]);
+		if (loc.cgiTimeoutSec <= 0)
+			throwInvalidValue(nameTok, args[0]);
 		loc.hasCgiTimeout = true;
 		return;
 	}
