@@ -34,7 +34,6 @@ LocationConfig::LocationConfig()
 	, maxBodySize(0)
 	, hasCgiTimeout(false)
 	, cgiTimeoutSec(0)
-	//, cgiTimeoutLine(0)
 {
 	methods.push_back("GET");
 }

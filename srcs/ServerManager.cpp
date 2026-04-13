@@ -133,6 +133,9 @@ int ServerManager::readClientData(int clientFd){
 void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     
     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
+    // std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
+    // std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
+    std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;

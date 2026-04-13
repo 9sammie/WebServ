@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Parser.hpp"
+
 #include <stdexcept>
 #include <cstdlib> //strtol, strtoull
 #include <cerrno>
@@ -18,26 +19,58 @@
 #include <sstream>
 #include <climits>
 
+/* ************************************************************************** */
+/*                          canonical form + helpers + local funcs                        */
+/* ************************************************************************** */
+
 Parser::Parser(const std::vector<Token>& toks) : _toks(toks), _pos(0)
 {}
 
-const Token& Parser::currentToken() const
+Parser::~Parser()
+{}
+
+static bool isCgiLocation(const LocationConfig& loc)
 {
-	if (_toks.empty())
-		throw std::invalid_argument("webserv: [emerg] internal parser error");
-	if (_pos >= _toks.size())
-		return _toks[_toks.size() - 1];
-	return _toks[_pos];
+	return (!loc.cgiExt.empty() && !loc.cgiPath.empty());
 }
 
-const Token& Parser::previousToken() const
+static bool hasIncompleteCgiConfig(const LocationConfig& loc)
 {
-	if (_toks.empty())
-		throw std::invalid_argument("webserv: [emerg] internal parser error");
-	if (_pos == 0)
-		return _toks[0];
-	return _toks[_pos -1];
+	return (loc.cgiExt.empty() && !loc.cgiPath.empty()) || (!loc.cgiExt.empty() && loc.cgiPath.empty());
 }
+
+static bool isHttpMethod(const std::string& m)
+{
+	return (m == "GET" || m == "POST" || m == "DELETE");
+}
+
+static bool containsMethod(const std::vector<std::string>& v, const std::string& s)
+{
+	for (std::size_t i = 0; i < v.size(); ++i)
+	{
+		if (v[i] == s)
+			return true;
+	}
+	return false;
+}
+
+static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConfig& srv)
+{
+	if (srv.hasKeepalive)
+		return srv.keepaliveTimeoutSec;
+	return http.keepaliveTimeoutSec;
+}
+
+static int defaultCgiTimeoutSec(int keepaliveSec)
+{
+	if (keepaliveSec - 5 <= 0)
+		throw std::invalid_argument("webserv: [emerg] effective \"keepalive_timeout\" must be greater than 5 to define a CGI timeout with a 5-second gap");
+	return keepaliveSec - 5;
+}
+
+/* ************************************************************************** */
+/*                                 errors                                     */
+/* ************************************************************************** */
 
 std::string Parser::formatError(const Token& tok, const std::string& msg) const
 {
@@ -103,7 +136,29 @@ void Parser::throwDuplicateValue(const Token& directiveTok, const std::string& v
 {
 	throw std::invalid_argument(formatError(directiveTok, "duplicate value \"" + value + "\" in \"" + directiveTok.wordText + "\" directive"));
 }
-	
+
+/* ************************************************************************** */
+/*                                  token navigation                          */
+/* ************************************************************************** */
+
+const Token& Parser::currentToken() const
+{
+	if (_toks.empty())
+		throw std::invalid_argument("webserv: [emerg] internal parser error");
+	if (_pos >= _toks.size())
+		return _toks[_toks.size() - 1];
+	return _toks[_pos];
+}
+
+const Token& Parser::previousToken() const
+{
+	if (_toks.empty())
+		throw std::invalid_argument("webserv: [emerg] internal parser error");
+	if (_pos == 0)
+		return _toks[0];
+	return _toks[_pos -1];
+}
+
 bool Parser::isNotEnd() const
 {
 	if (_pos >= _toks.size())
@@ -127,10 +182,10 @@ const Token& Parser::consume(TokenType expectedType)
 	if (_toks[_pos].type != expectedType)
 		throwUnexpectedToken(_toks[_pos]);
 	_pos++;
-	return _toks[_pos - 1]; //on retourne par ref&
+	return _toks[_pos - 1];
 }
 
-bool Parser::checkWord(const std::string& expected) const //il s agit d un MOT et c est un mot que j attends
+bool Parser::checkWord(const std::string& expected) const
 {
 	if (checkType(WORD) && _toks[_pos].wordText == expected)
 		return true;
@@ -146,33 +201,61 @@ const Token& Parser::consumeWord(const std::string& expected)
 	return consume(WORD);
 }
 
-static bool isCgiLocation(const LocationConfig& loc)
+/* ************************************************************************** */
+/*                                   value parsing                            */
+/**************************************************************************** */
+
+bool Parser::parseOnOffArg(const Token& directiveTok, const std::vector<std::string>& args)
 {
-	return (!loc.cgiExt.empty() && !loc.cgiPath.empty());
+	if (args.size() != 1)
+		throwInvalidArgs(directiveTok);
+	if (args[0] == "on")
+		return true;
+	if (args[0] == "off")
+		return false;
+	throwInvalidValue(directiveTok, args[0]);
+	return false;
 }
 
-/*void Parser::skipBlock()
+int Parser::parsePositiveInt(const Token& directiveTok, const std::string& s) const
 {
-	consume(LBRACE);
-	int level = 1;
-	while (isNotEnd() && level > 0)
-	{
-		if (checkType(LBRACE))
-		{
-			consume(LBRACE);
-			level++;
-		}
-		else if (checkType(RBRACE))
-		{
-			consume(RBRACE);
-			level--;
-		}
-		else
-			_pos++;
-	}
-	if (level != 0)
-		throw std::invalid_argument("missing '}' to close block");
-}*/
+	if (s.empty())
+		throwInvalidValue(directiveTok, s);
+	char* end = NULL;
+	errno = 0;
+	long res = std::strtol(s.c_str(), &end, 10);
+	if (errno != 0 || end == s.c_str() || *end != '\0')
+		throwInvalidValue(directiveTok, s);
+	if (res < 0)
+		throwInvalidValue(directiveTok, s);
+	if (res > std::numeric_limits<int>::max())
+		throwInvalidValue(directiveTok, s);
+	return static_cast<int>(res);
+}	
+
+std::size_t Parser::parseSizeT(const Token& directiveTok, const std::string& s) const
+{
+	if (s.empty())
+		throwInvalidValue(directiveTok, s);
+	if (s[0] == '-')
+		throwInvalidValue(directiveTok, s);
+	char* end = NULL;
+	errno = 0;
+	unsigned long long res = std::strtoull(s.c_str(), &end, 10);
+	if (errno != 0 || end == s.c_str() || *end != '\0')
+		throwInvalidValue(directiveTok, s);
+	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max()))
+		throwInvalidValue(directiveTok, s);
+	return static_cast<size_t>(res);
+} 
+
+int Parser::parsePort(const Token& directiveTok, const std::string& s)
+{
+	int port = parsePositiveInt(directiveTok, s);
+	if (port < 1 || port > 65535)
+		throwInvalidValue(directiveTok, s);
+	return port;
+}
 
 std::vector<std::string> Parser::readDirectiveArgs(const Token& directiveTok)
 {
@@ -194,71 +277,42 @@ std::vector<std::string> Parser::readDirectiveArgs(const Token& directiveTok)
 	return args;
 }
 
-bool Parser::parseOnOffArg(const Token& directiveTok, const std::vector<std::string>& args)
+ListenConfig Parser::parseListenArg(const Token& directiveTok, const std::string& s)
 {
-	if (args.size() != 1)
-		throwInvalidArgs(directiveTok);
-	if (args[0] == "on")
-		return true;
-	if (args[0] == "off")
-		return false;
-	throwInvalidValue(directiveTok, args[0]);
-	return false;
-}
-
-int Parser::parsePositiveInt(const Token& directiveTok, const std::string& s) const
-{
-	if (s.empty())
-		throwInvalidValue(directiveTok, s);
-	char* end = NULL;
-	errno = 0;
-	long res = std::strtol(s.c_str(), &end, 10);//&end = l adresse de end pour ecrire dedans la valeur
-	if (errno != 0 || end == s.c_str() || *end != '\0') //owerflow/underflow, ou aucun chiffre, ou il reste des car 12a p ex
-		throwInvalidValue(directiveTok, s);
-	if (res < 0)
-		throwInvalidValue(directiveTok, s); //positifs
-	if (res > std::numeric_limits<int>::max())
-		throwInvalidValue(directiveTok, s); //doit rentrer dans int, on peut changer pour des valeurs plus raisonnables :)
-	return static_cast<int>(res);
-}	
-
-std::size_t Parser::parseSizeT(const Token& directiveTok, const std::string& s) const
-{
-	if (s.empty())
-		throwInvalidValue(directiveTok, s);
-	if (s[0] == '-')
-		throwInvalidValue(directiveTok, s);
-	char* end = NULL;
-	errno = 0;
-	unsigned long long res = std::strtoull(s.c_str(), &end, 10);
-	if (errno != 0 || end == s.c_str() || *end != '\0')
-		throwInvalidValue(directiveTok, s);
-	if (res > static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) //on peux changer aussi pour le temps raisonnable
-		throwInvalidValue(directiveTok, s);
-	return static_cast<size_t>(res);
-} 
-
-int Parser::parsePort(const Token& directiveTok, const std::string& s)
-{
-	int port = parsePositiveInt(directiveTok, s);
-	if (port < 1 || port > 65535)
-		throwInvalidValue(directiveTok, s);
-	return port;
-}
-
-static bool isHttpMethod(const std::string& m)
-{
-	return (m == "GET" || m == "POST" || m == "DELETE");
-}
-
-static bool containsMethod(const std::vector<std::string>& v, const std::string& s)
-{
-	for (std::size_t i = 0; i < v.size(); ++i)
+	ListenConfig lc;
+	lc.host = "";
+	lc.port = 0;
+	std::size_t pos = s.find(':');
+	if (pos == std::string::npos)
 	{
-		if (v[i] == s)
-			return true;
+		lc.port = parsePort(directiveTok, s);
+		return lc;
 	}
-	return false;
+	std::string hostPart = s.substr(0, pos);
+	std::string portPart = s.substr(pos + 1);
+	if (hostPart.empty() || portPart.empty()) 
+		throwInvalidValue(directiveTok, s);
+	lc.host = hostPart;
+	lc.port = parsePort(directiveTok, portPart);
+	return lc;
+}
+
+/* ************************************************************************** */
+/*                               parsing of directive                         */
+/**************************************************************************** */
+
+void Parser::parseErrorPage(std::map<int, std::string>& errors, const Token& directiveTok, const std::vector<std::string>& args)
+{
+	if (args.size() < 2)
+		throwInvalidArgs(directiveTok);
+	const std::string& path = args[args.size() - 1];
+	for (std::size_t i = 0; i + 1 < args.size(); ++i)
+	{
+		int code = parsePositiveInt(directiveTok, args[i]);
+		if (code < 300 || code > 599)
+			throwInvalidValue(directiveTok, args[i]);
+		errors[code] = path;
+	}
 }
 
 void Parser::applyMethods(LocationConfig& loc, const Token& directiveTok, const std::vector<std::string>& args)
@@ -278,21 +332,6 @@ void Parser::applyMethods(LocationConfig& loc, const Token& directiveTok, const 
 	loc.uploadAuthorised = containsMethod(loc.methods, "POST");
 }
 
-/////
-void Parser::parseErrorPage(std::map<int, std::string>& errors, const Token& directiveTok, const std::vector<std::string>& args)
-{
-	if (args.size() < 2)
-		throwInvalidArgs(directiveTok);
-	const std::string& path = args[args.size() - 1];
-	for (std::size_t i = 0; i + 1 < args.size(); ++i)
-	{
-		int code = parsePositiveInt(directiveTok, args[i]);
-		if (code < 300 || code > 599)
-			throwInvalidValue(directiveTok, args[i]);
-		errors[code] = path;
-	}
-}
-
 void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) //int line garder ?
 {
 	const std::string& name = nameTok.wordText;
@@ -301,16 +340,7 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
-
-		char absPath[PATH_MAX];
-        if (realpath(args[0].c_str(), absPath) != NULL)
-		{
-            loc.root = std::string(absPath);
-        }
-		else
-		{
-            loc.root = args[0];
-        }
+		loc.root = args[0];
 		return;
 	}
 	if (name == "index")
@@ -362,7 +392,6 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 			throwInvalidArgs(nameTok);
 		loc.cgiTimeoutSec = parsePositiveInt(nameTok, args[0]);
 		loc.hasCgiTimeout = true;
-		//loc.cgiTimeoutLine = nameTok.line;
 		return;
 	}
 	if (name == "cgi_ext")
@@ -384,43 +413,6 @@ void Parser::parseLocationDirective(LocationConfig& loc, const Token& nameTok) /
 		return;
 	}
 	throwUnknownDirective(nameTok);
-}
-	
-LocationConfig Parser::parseLocationBlock(const Token& locationTok)
-{
-    LocationConfig loc;
-	if (!checkType(WORD))
-	{
-		if (!isNotEnd())
-			throwUnexpectedEof("location modifier or prefix");
-		throwUnexpectedToken(currentToken());
-	}
-	const Token& prefixTok = consume(WORD); 
-    loc.prefix = prefixTok.wordText;
-
-    if (!isNotEnd())
-		throwNoOpeningBrace(locationTok);
-	if (!checkType(LBRACE))
-		throwNoOpeningBrace(locationTok);
-	consume(LBRACE);
-	while (!checkType(RBRACE))
-	{
-		if (!isNotEnd())
-			throwUnexpectedEof("}");
-		if (!checkType(WORD))
-			throwUnexpectedToken(currentToken());
-        const Token& nameTok = consume(WORD);
-        if (nameTok.wordText == "location")
-            throwDirectiveNotAllowedHere(nameTok);
-        if (nameTok.wordText == "server")
-            throwDirectiveNotAllowedHere(nameTok);
-		if (nameTok.wordText == "http")
-			throwDirectiveNotAllowedHere(nameTok);
-
-        parseLocationDirective(loc, nameTok);
-    }
-    consume(RBRACE);
-    return loc;
 }
 
 void Parser::parseHttpDirective(HttpConfig& http, const Token& nameTok)
@@ -451,55 +443,6 @@ void Parser::parseHttpDirective(HttpConfig& http, const Token& nameTok)
 		return;
 	}
 	throwUnknownDirective(nameTok);
-}
-
-HttpConfig Parser::parseHttpBlock(const Token& httpTok)
-{
-	HttpConfig http;
-	if (!isNotEnd())
-		throwNoOpeningBrace(httpTok);
-	if (!checkType(LBRACE))
-		throwNoOpeningBrace(httpTok);
-	consume(LBRACE);
-	while (!checkType(RBRACE))
-	{
-		if (!isNotEnd())
-			throwUnexpectedEof("}");
-		if (!checkType(WORD))
-			throwUnexpectedToken(currentToken());
-		const Token& nameTok = consume(WORD);
-		if (nameTok.wordText == "server")
-		{
-			ServerConfig srv = parseServerBlock(nameTok);
-			http.servers.push_back(srv);
-			continue;
-		}
-		if (nameTok.wordText == "location")
-			throwDirectiveNotAllowedHere(nameTok);
-		parseHttpDirective(http, nameTok);
-	}
-	consume(RBRACE);
-	return http;
-}
-
-ListenConfig Parser::parseListenArg(const Token& directiveTok, const std::string& s)
-{
-	ListenConfig lc;
-	lc.host = "";
-	lc.port = 0;
-	std::size_t pos = s.find(':');//on peut ecrire listen 127.0.0.1:8080; ou listen 8080;
-	if (pos == std::string::npos)
-	{
-		lc.port = parsePort(directiveTok, s);
-		return lc;
-	}
-	std::string hostPart = s.substr(0, pos);
-	std::string portPart = s.substr(pos + 1);
-	if (hostPart.empty() || portPart.empty()) 
-		throwInvalidValue(directiveTok, s);
-	lc.host = hostPart;
-	lc.port = parsePort(directiveTok, portPart);
-	return lc;
 }
 
 void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
@@ -543,12 +486,82 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 	if (name == "error_page")
 	{
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
-		parseErrorPage(srv.errors, nameTok, args);//d ou vient ceci ???
+		parseErrorPage(srv.errors, nameTok, args);
 		return;
 	}
 	throwUnknownDirective(nameTok);
 }
-		
+
+/* ************************************************************************** */
+/*                                 parsing of blocks                          */
+/**************************************************************************** */
+
+LocationConfig Parser::parseLocationBlock(const Token& locationTok)
+{
+    LocationConfig loc;
+	if (!checkType(WORD))
+	{
+		if (!isNotEnd())
+			throwUnexpectedEof("location modifier or prefix");
+		throwUnexpectedToken(currentToken());
+	}
+	const Token& prefixTok = consume(WORD); 
+    loc.prefix = prefixTok.wordText;
+
+    if (!isNotEnd())
+		throwNoOpeningBrace(locationTok);
+	if (!checkType(LBRACE))
+		throwNoOpeningBrace(locationTok);
+	consume(LBRACE);
+	while (!checkType(RBRACE))
+	{
+		if (!isNotEnd())
+			throwUnexpectedEof("}");
+		if (!checkType(WORD))
+			throwUnexpectedToken(currentToken());
+        const Token& nameTok = consume(WORD);
+        if (nameTok.wordText == "location")
+            throwDirectiveNotAllowedHere(nameTok);
+        if (nameTok.wordText == "server")
+            throwDirectiveNotAllowedHere(nameTok);
+		if (nameTok.wordText == "http")
+			throwDirectiveNotAllowedHere(nameTok);
+
+        parseLocationDirective(loc, nameTok);
+    }
+    consume(RBRACE);
+    return loc;
+}
+
+HttpConfig Parser::parseHttpBlock(const Token& httpTok)
+{
+	HttpConfig http;
+	if (!isNotEnd())
+		throwNoOpeningBrace(httpTok);
+	if (!checkType(LBRACE))
+		throwNoOpeningBrace(httpTok);
+	consume(LBRACE);
+	while (!checkType(RBRACE))
+	{
+		if (!isNotEnd())
+			throwUnexpectedEof("}");
+		if (!checkType(WORD))
+			throwUnexpectedToken(currentToken());
+		const Token& nameTok = consume(WORD);
+		if (nameTok.wordText == "server")
+		{
+			ServerConfig srv = parseServerBlock(nameTok);
+			http.servers.push_back(srv);
+			continue;
+		}
+		if (nameTok.wordText == "location")
+			throwDirectiveNotAllowedHere(nameTok);
+		parseHttpDirective(http, nameTok);
+	}
+	consume(RBRACE);
+	return http;
+}
+	
 ServerConfig Parser::parseServerBlock(const Token& serverTok)
 {
 	ServerConfig srv;
@@ -582,28 +595,16 @@ ServerConfig Parser::parseServerBlock(const Token& serverTok)
 	return srv;
 }
 
-/////////////////////////////////func will be modified///////////////
-static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConfig& srv)
-{
-	if (srv.hasKeepalive)
-		return srv.keepaliveTimeoutSec;
-	return http.keepaliveTimeoutSec;
-}
+/* ************************************************************************** */
+/*                                  main functions                           */
+/*************************************************************************** */
 
-static int defaultCgiTimeoutSec(int keepaliveSec)
-{
-	if (keepaliveSec <= 1)
-		return 1; //a voir avec Corentin si throw ? 
-	if (keepaliveSec > 5)
-		return keepaliveSec - 5;
-	return keepaliveSec - 1;
-}
-
-void Parser::applyEffectiveData(HttpConfig& http)
+/*void Parser::applyEffectiveData(HttpConfig& http)
 {
 	for (std::size_t i = 0; i < http.servers.size(); ++i)
 	{
 		ServerConfig& srv = http.servers[i];
+
 		if (!srv.hasKeepalive && http.hasKeepalive)
 		{
 			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
@@ -614,16 +615,28 @@ void Parser::applyEffectiveData(HttpConfig& http)
 			srv.maxBodySize = http.maxBodySize;
 			srv.hasMaxBodySize = true;
 		}
+
 		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		std::size_t cgiLocationCount = 0;
+
 		for (std::size_t j = 0; j < srv.locations.size(); ++j)
 		{
 			LocationConfig& loc = srv.locations[j];
+
+			if (hasIncompleteCgiConfig(loc))
+				throw std::invalid_argument("webserv: [emerg] CGI location requires both \"cgi_ext\" and \"cgi_path\"");
 			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
 			{
 				loc.maxBodySize = srv.maxBodySize;
 				loc.hasMaxBodySize = true;
 			}
 			bool cgiLoc = isCgiLocation(loc);
+			if (cgiLoc)
+			{
+				++cgiLocationCount;
+				if (cgiLocationCount > 1)
+					throw std::invalid_argument("webserv: [emerg] only one CGI location is allowed per server");
+			}
 			if (loc.hasCgiTimeout && !cgiLoc)
 				throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" is only allowed in CGI locations");
 			if (cgiLoc)
@@ -638,78 +651,70 @@ void Parser::applyEffectiveData(HttpConfig& http)
 			}
 		}
 	}
-}
-
-/*void Parser::applyEffectifData(HttpConfig& http)
-{
-    for (size_t si = 0; si < http.servers.size(); ++si)
-    {
-        ServerConfig& srv = http.servers[si];
-
-        // server hérite de http si non défini
-        if (!srv.hasKeepalive && http.hasKeepalive)
-        {
-            srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
-            srv.hasKeepalive = true;
-        }
-        if (!srv.hasMaxBodySize && http.hasMaxBodySize)
-        {
-            srv.maxBodySize = http.maxBodySize;
-            srv.hasMaxBodySize = true;
-        }
-
-        // location hérite de server si non défini
-        for (size_t li = 0; li < srv.locations.size(); ++li)
-        {
-            LocationConfig& loc = srv.locations[li];
-
-            if (!loc.hasKeepalive && srv.hasKeepalive)
-            {
-                loc.keepaliveTimeoutSec = srv.keepaliveTimeoutSec;
-                loc.hasKeepalive = true;
-            }
-            if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
-            {
-                loc.maxBodySize = srv.maxBodySize;
-                loc.hasMaxBodySize = true;
-            }
-        }
-    }
 }*/
 
-/*LocationConfig Parser::parseFirstLocationInFile()
+void Parser::applyEffectiveData(HttpConfig& http)
 {
-	// cherche "location"
-	while (isNotEnd())
+	for (std::size_t i = 0; i < http.servers.size(); ++i)
 	{
-		if (checkType(WORD) && _toks[_pos].wordText == "location")
+		ServerConfig& srv = http.servers[i];
+
+		if (!srv.hasKeepalive && http.hasKeepalive)
 		{
-			consume(WORD);              // consomme "location"
-			return parseLocationBlock(); // parse le bloc (préfixe + ...)
+			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
+			srv.hasKeepalive = true;
 		}
-		_pos++;
+		if (!srv.hasMaxBodySize && http.hasMaxBodySize)
+		{
+			srv.maxBodySize = http.maxBodySize;
+			srv.hasMaxBodySize = true;
+		}
+
+		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		std::size_t cgiLocationCount = 0;
+
+		for (std::size_t j = 0; j < srv.locations.size(); ++j)
+		{
+			LocationConfig& loc = srv.locations[j];
+
+			if (hasIncompleteCgiConfig(loc))
+				throw std::invalid_argument("webserv: [emerg] CGI location requires both \"cgi_ext\" and \"cgi_path\"");
+
+			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
+			{
+				loc.maxBodySize = srv.maxBodySize;
+				loc.hasMaxBodySize = true;
+			}
+
+			bool cgiLoc = isCgiLocation(loc);
+
+			if (cgiLoc)
+			{
+				++cgiLocationCount;
+				if (cgiLocationCount > 1)
+					throw std::invalid_argument("webserv: [emerg] only one CGI location is allowed per server");
+			}
+
+			if (loc.hasCgiTimeout && !cgiLoc)
+				throw std::invalid_argument("webserv: [emerg] \"cgiTimeout\" is only allowed in CGI locations");
+
+			if (cgiLoc)
+			{
+				if (srvKeepalive - 5 <= 0)
+					throw std::invalid_argument("webserv: [emerg] effective \"keepalive_timeout\" must be greater than 5 to allow CGI");
+
+				if (!loc.hasCgiTimeout)
+				{
+					loc.cgiTimeoutSec = defaultCgiTimeoutSec(srvKeepalive);
+					loc.hasCgiTimeout = true;
+				}
+
+				if (loc.cgiTimeoutSec > srvKeepalive - 5)
+					throw std::invalid_argument("webserv: [emerg] \"cgiTimeout\" must be at least 5 seconds shorter than effective \"keepalive_timeout\"");
+			}
+		}
 	}
-	throw std::invalid_argument("no 'location' found");
-}*/
-/////////////////////////////////////////////////////////////////////////////
-
-/*static int effectiveKeepaliveTimeoutSec(const HttpConfig& http, const ServerConfig& srv, const LocationConfig& loc)
-{
-	if (loc.hasKeepalive)
-		return loc.keepaliveTimeoutSec;
-	if (srv.hasKeepalive)
-		return srv.keepaliveTimeoutSec;
-	return http.keepaliveTimeoutSec;
 }
-
-static std::size_t effectiveBodySize(const HttpConfig& http, const ServerConfig& srv, const LocationConfig& loc)
-{
-	if (loc.hasMaxBodySize)
-		return loc.maxBodySize;
-	if (srv.hasMaxBodySize)
-		return srv.maxBodySize;
-	return http.maxBodySize;
-}*/
 
 HttpConfig Parser::parseConfig()
 {

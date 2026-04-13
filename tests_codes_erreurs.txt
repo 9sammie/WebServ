@@ -1,0 +1,146 @@
+1. 400 Bad Request : 
+c’est le code à renvoyer si on ne peut même pas parser correctement la requête
+test : 
+    printf 'GET / HTTP/1.1\r\nBad Header\r\n\r\n' | nc 127.0.0.1 8080
+reponse : OK
+HTTP/1.1 400 Bad Request
+Connection: close
+Content-Length: 50
+Content-Type: text/html
+
+<html><body><h1>400 Bad Request</h1></body></html>%  
+////////////////////////////////////////////////////////
+
+2. 403 Forbidden : 
+
+Pour webserv :
+
+chemin existe mais pas de droit de lecture
+répertoire demandé avec autoindex off
+ressource interdite par règle interne
+
+test :
+    printf 'GET /testdir/ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8080
+reponse : OK
+HTTP/1.1 403 Forbidden
+Connection: close
+Content-Length: 48
+Content-Type: text/html
+
+<html><body><h1>403 Forbidden</h1></body></html>% 
+/////////////////////////////////////////////////////////////
+
+3. 404 Not Found : 
+
+Pour webserv :
+
+fichier absent
+chemin résolu inexistant
+
+test :
+    printf 'GET /fichier-inexistant.html HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8080
+reponse : OK 
+HTTP/1.1 404 Not Found
+Connection: close
+Content-Length: 48
+Content-Type: text/html
+
+<html><body><h1>404 Not Found</h1></body></html>
+//////////////////////////////////////////////////////////
+
+4. 405 Method Not Allowed
+
+Pour webserv :
+
+DELETE refusé sur une location
+POST refusé sur un fichier statique
+ta directive methods n’autorise pas la méthode reçue
+
+test : 
+    printf 'POST / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\nContent-Length: 0\r\n\r\n' | nc 127.0.0.1 8080
+reponse : OK
+HTTP/1.1 405 Method Not Allowed
+Connection: close
+Content-Length: 57
+Content-Type: text/html
+
+<html><body><h1>405 Method Not Allowed</h1></body></html>%
+/////////////////////////////////////////////////////////////
+
+5. 408 Request Timeout
+
+Pour webserv :
+
+client trop lent
+socket ouverte sans fin de requête
+timeout lecture header/body
+reponse : PAS OK
+///////////////////////////////////////////////////////////
+
+6. 413 Content Too Large
+
+Pour webserv :
+body > client_max_body_size
+test : 
+    printf 'POST /uploads/test.txt HTTP/1.1\r\nHost: localhost\r\nContent-Length: 11\r\nConnection: close\r\n\r\nabcdefghijk' | nc 127.0.0.1 8080
+je le teste sur : client_max_body_size 10;
+reponse :PAS OK 
+HTTP/1.1 200 No Content
+Content-Length: 0
+//////////////////////////////////////////////////////////////
+
+7. 414 URI Too Long
+
+Pour webserv :
+
+URI énorme dépassant ta limite interne
+test : 
+    python3 -c 'print("GET /" + "a"*5000 + " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n", end="")' | nc 127.0.0.1 8080
+reponse : PAS OK
+ HTTP/1.1 404 Not Found
+Connection: close
+Content-Length: 48
+Content-Type: text/html
+
+<html><body><h1>404 Not Found</h1></body></html>%
+///////////////////////////////////////////////////////////////////
+
+8. 500 Internal Server Error / 502 Bad Gateway
+
+Pour webserv :
+
+exception interne
+bug dans ton code
+échec imprévu de génération de réponse
+
+test : 
+    cat > ./html/site1/cgi-bin/badcgi.py << 'EOF'
+#!/usr/bin/python3
+print("bonjour")
+EOF
+chmod +x ./html/site1/cgi-bin/badcgi.py
+Ensuite, 
+printf 'GET /cgi-bin/badcgi.py HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8080
+
+reponse OK
+printf 'GET /cgi-bin/badcgi.py HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8080
+
+/////////////////////////////////////////////////////////////////////
+
+501 Not Implemented
+
+Pour webserv :
+
+méthode non supportée du tout (PUT, PATCH, etc. si tu ne les implémentes pas)
+contrairement à 405, ici la méthode n’est pas prise en charge par le serveur
+
+test : 
+    printf 'PATCH / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 8080
+reponse : PAS OK
+HTTP/1.1 405 Method Not Allowed
+Connection: close
+Content-Length: 57
+Content-Type: text/html
+
+<html><body><h1>405 Method Not Allowed</h1></body></html>% 
+

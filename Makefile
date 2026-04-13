@@ -10,7 +10,7 @@ TEST_NAME = test
 
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
-DEPFLAGS = -MMD -MP #creer un fichier de dep
+DEPFLAGS = -MMD -MP
 
 # **************************************************************************** #
 #                           DIRECTORIES AND PATHS                              #
@@ -87,9 +87,10 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR) #-p if folder exists
 	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -Iheaders -Itests -c $< -o $@
 
-tests: $(TEST_NAME)
+test: build_test
+	./$(TEST_NAME)
 
-$(TEST_NAME): $(TEST_OBJ) $(TEST_PROJECT_OBJ)
+build_test: $(TEST_OBJ) $(TEST_PROJECT_OBJ)
 	$(CXX) $(CXXFLAGS) $(TEST_OBJ) $(TEST_PROJECT_OBJ) -o $(TEST_NAME)
 
 $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/%.cpp
@@ -121,4 +122,4 @@ debug: re ##When you run “make debug” -> first run “re”
 -include $(TEST_DEP)
 -include $(TEST_PROJECT_DEP)
 
-.PHONY: all clean fclean re debug tests run_tests
+.PHONY: all clean fclean re debug test run_tests build_test
