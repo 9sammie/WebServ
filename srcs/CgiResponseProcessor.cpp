@@ -43,7 +43,7 @@ std::map<std::string, std::string> getHeadersMaps(std::string& headers){
     size_t start = 0;
     size_t end;
     while ((end = headers.find("\n", start)) != std::string::npos){
-        std::string currentLine = headers.substr(start, (end - start + 2));
+        std::string currentLine = headers.substr(start, (end - start));
         size_t currentStart = currentLine.find(":");
         if (currentStart == std::string::npos)
             continue ;
@@ -53,7 +53,7 @@ std::map<std::string, std::string> getHeadersMaps(std::string& headers){
         key = strToLower(key);
         value = trim(value, " \t\r\n");
         mapHeaders[key] = value;
-        start = end +2;
+        start = end +1;
     }
     return mapHeaders;
 }

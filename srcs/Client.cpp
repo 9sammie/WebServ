@@ -104,64 +104,7 @@ ssize_t      Client::getContentLenthSize()const{
     return bodySize;
 }
 
-//Add a check transfer-encoding function to check for chunked data
-// bool Client::isRequestComplete(){
-//     if (_transferEncoding == false){
-//         std::cout << "Debug: _transfertEncoding = false." << std::endl;
-//         if (!hasHeadersSeparator())
-//             return false;
-//         if (!hasContentLengthHeader() && !hasTransferEncodingHeader()){
-//             return true;
-//         }
-//         if (hasContentLengthHeader() && hasTransferEncodingHeader()){
-//             _badRequest = true;
-//             return true;
-//         }
-//         if (hasTransferEncodingHeader()){
-//             _transferEncoding = true;
-//             std::cout << "Debug: _transfertEncoding = true." << std::endl;
-//             // store first part with headers and empty line
-//             size_t size = _rawBuffer.find("\r\n\r\n") + 4;
-//             store(_rawBuffer.substr(0, size),Client::REQUEST);
-//             _rawBuffer.erase(0, size);
-//             return false;
-//         }
-//         if (hasContentLengthHeader()){
-//             ssize_t bodySize = getContentLenthSize();
-//             if (bodySize < 0){
-//                 _badRequest = true;
-//                 return true;
-//             }
-//             return availableDataAfterHeaders() >= (size_t)bodySize;
-//         }
-//     }
-//     if (_transferEncoding == true){
-//         std::cout << YELLOW << "Debug chunk, requestBuffer : " << _requestBuffer << RESET << std::endl;
-//         if (_chunkSize == -1){
-//             if (updateChunkSize()){
-//                 _badRequest = true;
-//                 return true;
-//             }//return ssize_t, on -1 error 400, _closeAfterConnection, return true;
-//             // update _chunkSize inside function
-//         }
-//         else if (_chunkSize > 0){
-//             if (getChunkData() < 0){
-//                 _badRequest = true;
-//                 return true;
-//             }//return ssize_t, on -1 error 400, _closeAfterConnection, return true;
-//             // update chunksize to -1 if ssize_t != -1
-//         }
-//         else{
-//              if (finalChunkReceived())
-//                 return true;
-//             // look for \r\n, if not found, just return, if false
-//         }
-//     }
-//     return false;
-// }
-
 bool Client::isRequestComplete(){
-    // std::cout << "Start isRequestComplete, rawBuffer: " << _rawBuffer << std::endl;
     if (_transferEncoding == false){
         if (!hasHeadersSeparator())
             return false;
@@ -190,7 +133,6 @@ bool Client::isRequestComplete(){
         }
     }
     while (_transferEncoding == true) {
-    // std::cout << MAGENTA << "Inside isRequestComplete, inside LOOP, rawBuffer: " << RESET << _rawBuffer << std::endl;
         if (_chunkSize == -1) {
             if (_rawBuffer.find("\r\n") == std::string::npos) {
                 break;  // Waiting for the data
@@ -200,7 +142,6 @@ bool Client::isRequestComplete(){
                 _transferEncoding = false;
                 _badRequest = true;
                 _closeStatus = true;
-                // std::cout << "chunksize -1 && ret<0" << std::endl;
                 return true;
             }
         }
@@ -212,12 +153,10 @@ bool Client::isRequestComplete(){
                 _transferEncoding = false;
                 _badRequest = true;
                 _closeStatus = true;
-                // std::cout << "chunksize > 0 && ret < 0" << std::endl;
                 return true;
             }
         } else {
             if (finalChunkReceived()) {
-                // std::cout << "finalChunkReceived" << std::endl;
                 _transferEncoding = false;
                 return true;
             }
@@ -248,7 +187,7 @@ int Client::getFd() const{
     return _fd;
 }
 
-const std::string& Client::getBuffer(BufferType type){//Could be better
+const std::string& Client::getBuffer(BufferType type){
     if (type == REQUEST)
         return _requestBuffer;
     else if (type == RESPONSE)

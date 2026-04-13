@@ -5,13 +5,6 @@
 #include <cerrno> 
 #include <fcntl.h> 
 
-// TcpListener::TcpListener() : _fd(-1), _port(8080){
-//     std::memset(&_address, 0, sizeof(_address));
-//     _address.sin_family = AF_INET;
-//     _address.sin_addr.s_addr = htonl(INADDR_ANY);
-//     _address.sin_port = htons(_port);
-// }
-
 TcpListener::TcpListener(int port) : _fd(-1), _port(port){
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = AF_INET; // IPv4
