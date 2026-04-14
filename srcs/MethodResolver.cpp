@@ -113,6 +113,14 @@ static std::string buildDirectoryListing(const std::string& uriPath, const std::
 
 bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& path, const LocationConfig* loc, std::string& outPath, std::string& outResponse, Client& Client)
 {
+	if (loc && loc->hasRedirection)
+	{
+		std::map<std::string, std::string> headers;
+		headers["location"] = loc->redirectTarget;
+		outResponse = buildHttpResponse(loc->redirectCode, getStatusMessage(loc->redirectCode), "", Client.getCloseStatus(), headers);
+		return false;
+	}
+
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
     {

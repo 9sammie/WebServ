@@ -23,11 +23,13 @@ int RequestHandler::extractStatusCode(const std::string& response) const
 	return std::atoi(codeStr.c_str());
 }
 
-static std::string getStatusMessage(int code)
+std::string RequestHandler::getStatusMessage(const int code) const
 {
 	if (code == 200) return "OK";
 	if (code == 201) return "Created";
 	if (code == 204) return "No Content";
+	if (code == 301) return "Moved Permanently";
+	if (code == 302) return "Found";
 	if (code == 400) return "Bad Request";
 	if (code == 403) return "Ressource Access Forbidden";
 	if (code == 404) return "Ressource Not Found";

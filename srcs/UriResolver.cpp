@@ -222,7 +222,7 @@ std::string UriResolver::resolve(const HttpRequest& request, const LocationConfi
 		Client.setCloseStatus(true);
 	fullPath = applyRootOrAlias(path, loc);
 
-	if (!isPathSecure(fullPath, loc))
+	if (!isPathSecure(fullPath, loc) && !loc->hasRedirection)
 	{
 		if (access(fullPath.c_str(), F_OK) != 0)
 			throw HttpException(404, "not found");
