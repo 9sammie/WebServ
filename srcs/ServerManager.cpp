@@ -91,8 +91,6 @@ void ServerManager::acceptNewConnection(int serverFd){
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
     _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
-    //Debug
-    std::cout << BRIGHT_GREEN << "New client connected on: " << serverFd << "." << RESET << std::endl;
 }
 
 void    ServerManager::closeConnection(int clientFd){
@@ -133,16 +131,13 @@ int ServerManager::readClientData(int clientFd){
 void ServerManager::sendResponse(int clientFd, int idx) {// Final VERSION
     
     const std::string& response = _clients[clientFd].getBuffer(Client::RESPONSE);
-    // std::cout << MAGENTA << "DEBUG: Trying to send " << response.size() << " bytes as response." << RESET << std::endl;
-    // std::cout << "DEBUG : Request: [" << BLUE << _clients[clientFd].getBuffer(Client::REQUEST) << "]" << RESET << std::endl;
-    // std::cout << "DEBUG : Response: [" << BROWN << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     size_t& offset = _clients[clientFd].getResponseOffsetSent();
     const void* dataToSend = response.c_str() + offset;
     size_t sizeToSend = response.size() - offset;
-    //To keep for debugging
-    std::cout << BLUE << "Request: [" << _clients[clientFd].getBuffer(Client::REQUEST) << "]" <<RESET<< std::endl;
-    std::cout << GREEN << "Response: [" << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
+    //To keep for DEBUG
+    // std::cout << BLUE << "Request: [" << _clients[clientFd].getBuffer(Client::REQUEST) << "]" <<RESET<< std::endl;
+    // std::cout << GREEN << "Response: [" << _clients[clientFd].getBuffer(Client::RESPONSE) << "]" << RESET << std::endl;
 
     ssize_t sent = send(clientFd, dataToSend, sizeToSend, MSG_NOSIGNAL);
 
@@ -355,7 +350,7 @@ std::string getBody(const std::string& requestBuffer){
 }
 
 size_t    ServerManager::removeWritePipe(int pipeWrite){
-    if (close(pipeWrite) == -1)
+    if (pipeWrite >= 0 && close(pipeWrite) == -1)
         std::cerr << RED << "Error: close(" << pipeWrite <<") failed: " << strerror(errno) << RESET << std::endl;
     // Update client CgiInfos
     if (_cgiWriteFds.count(pipeWrite)) {
@@ -374,7 +369,7 @@ size_t    ServerManager::removeWritePipe(int pipeWrite){
 }
 
 size_t    ServerManager::removeReadPipe(int pipeRead){
-    if (close(pipeRead) == -1)
+    if (pipeRead >= 0 && close(pipeRead) == -1)
         std::cerr << RED << "Error: close(" << pipeRead <<") failed: " << strerror(errno) << RESET << std::endl;
     
     // Update client CgiInfos
@@ -471,10 +466,8 @@ void    ServerManager::readCgiResponse(size_t& idx){
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
             _clients[clientFd].store(cgiResponseProcessor(result, getServer(_clients[clientFd].getPort(Client::SERVER))), Client::RESPONSE);
             _clients[clientFd].resetCgiInfos();
-            if (removeReadPipe(pipeRead) <= idx){
-                std::cout << "Inside readCgiResponse call removeReadPipe on pipe: " << pipeRead << std::endl;
+            if (removeReadPipe(pipeRead) <= idx)
                 --idx;
-            }
             setPollout(clientFd);
         } else if (bytesReadAgain > 0) {
             _clients[clientFd].store(std::string(buffer, bytesReadAgain), Client::RESPONSE);

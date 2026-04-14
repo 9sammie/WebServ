@@ -104,12 +104,3 @@ HTTP/1.1 204 No Content
 curl -X INVALID http://localhost:8080/
 Attendu:
 HTTP/1.1
-
-
-
-
-
-#### A tester
-cgiTimeout a tester\
-
-chercher a forcer le error 500
