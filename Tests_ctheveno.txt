@@ -55,3 +55,61 @@ Résultat: [ Failed ] Connection-closed absent in response
 Error 408 client too slow
 
 (printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 100\r\n\r\nCoucou..."; sleep 100; printf " Fin\r\n") | nc 127.0.0.1 8080
+
+
+### Test POST
+
+curl -X POST -d "param1=value1&param2=value2" http://localhost:8080/uploads/test_file.txt -i
+Attendu: 
+HTTP/1.1 201 No Content
+
+curl -X POST -H "Content-Type: application/json" -d '{"key":"value"}' http://localhost:8080/uploads/test.txt -i
+Attendu: 
+HTTP/1.1 201 No Content
+
+ curl -X POST http://localhost:8080/uploads/test.txt -i
+Attendu:
+HTTP/1.1 201 No Content
+
+curl -X POST --data-binary @body_max_size.txt http://localhost:8080/uploads/test1.txt -i     
+Attendu:
+HTTP/1.1 200 No Content
+
+curl -X POST --data-binary @body_over_max_size.txt http://localhost:8080/uploads/test2.txt -i
+Attendu:
+HTTP/1.1 413 Body Too Large
+
+
+## Test DELETE
+curl -X DELETE http://localhost:8080/uploads/test.txt -i
+Attendu:
+HTTP/1.1 405 Method Not Allowed On This Location
+
+curl -X DELETE http://localhost:8080/files/test.txt -i
+Attendu: 
+HTTP/1.1 204 No Content
+
+curl -X DELETE http://localhost:8080/files/nothere.txt -i
+Attendu:
+HTTP/1.1 404 Ressource Not Found
+
+
+curl -X DELETE http://localhost:8080/files/noPerm.txt -i Est ce normal que le fichier soit delete ?
+Attendu: ????
+HTTP/1.1 204 No Content
+
+
+### Test not implemented
+
+curl -X INVALID http://localhost:8080/
+Attendu:
+HTTP/1.1
+
+
+
+
+
+#### A tester
+cgiTimeout a tester\
+
+chercher a forcer le error 500
