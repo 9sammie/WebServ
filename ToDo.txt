@@ -1,0 +1,12 @@
+
+update PATH_INFO
+
+Ajouter les erreurs sur la page cauchemar en cuisine :
+
+
+	if (code == 411) return "Body Without Content Length"; mabal
+501) return "not implemented"; Mabal
+
+Erreur 502, utiliser un script qui ne marche pas Cthe
+Erreur 504, utiliser le script timeoutCgi CTHEVENO
+if (code == 505) return "Wrong HTTP Version";
