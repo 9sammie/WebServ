@@ -5,8 +5,6 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 	try
 	{
 		_parser.parseRequest(Client.getBuffer(Client::REQUEST), request, _config);
-		if(request.hasHeader("connection"))
-			Client.setCloseStatus(true);
 	}
 	catch (const HttpException& he)
 	{
@@ -14,6 +12,11 @@ std::string RequestHandler::validateParsing(Client& Client, HttpRequest& request
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code, Client);
 	}
+	
+	std::string status = "close";
+	if(request.hasHeader("connection") == 1 && request.getHeader("connection") == status)
+		Client.setCloseStatus(true);
+
 	return "";
 }
 

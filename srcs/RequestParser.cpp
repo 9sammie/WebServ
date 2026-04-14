@@ -97,7 +97,6 @@ void HttpParser::parseHeaders(const std::string& headersBlock, HttpRequest& temp
 		colon = line.find(':');
 		if (colon == std::string::npos)
 			continue;
-			// throw HttpException(400, "bad request: invalid header format");
 
 		key = line.substr(0, colon);
 		value = line.substr(colon + 1);
@@ -189,7 +188,7 @@ void HttpParser::parseRequestLine(const std::string& requestLine, HttpRequest& t
 	tockeniseRequestLine(requestLine, method, path, version);
 
 	if (method != "GET" && method != "POST" && method != "DELETE" && method != "dataCgi")
-		throw HttpException(400, "bad request: invalid method");
+		throw HttpException(501, "not implemented");
 
 	if (path.size() > 8192)
 		throw HttpException(414, "URI Too Long");
@@ -241,7 +240,6 @@ void HttpParser::parseRequest(const std::string& buffer, HttpRequest& request, c
 	loc = locateRessource.findMatchingLocation(tempRequest.getUri());
 
 	parseBody(bodyPart, tempRequest, _config, loc);
-
-	request = tempRequest;
-
+	
+	request = tempRequest;	
 }
