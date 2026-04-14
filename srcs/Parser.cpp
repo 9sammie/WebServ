@@ -642,7 +642,7 @@ ServerConfig Parser::parseServerBlock(const Token& serverTok)
 		}
 	}
 }*/
-
+//#include <iostream>
 void Parser::applyEffectiveData(HttpConfig& http)
 {
 	for (std::size_t i = 0; i < http.servers.size(); ++i)
@@ -661,6 +661,7 @@ void Parser::applyEffectiveData(HttpConfig& http)
 		}
 
 		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
+		//std::cout << "[DEBUG] server[" << i << "] effective keepalive_timeout = "<< srvKeepalive << "s" << std::endl;
 		std::size_t cgiLocationCount = 0;
 
 		for (std::size_t j = 0; j < srv.locations.size(); ++j)
@@ -701,6 +702,7 @@ void Parser::applyEffectiveData(HttpConfig& http)
 
 				if (loc.cgiTimeoutSec > srvKeepalive - 5)
 					throw std::invalid_argument("webserv: [emerg] \"cgiTimeout\" must be at least 5 seconds shorter than effective \"keepalive_timeout\"");
+				//std::cout << "[DEBUG] location \"" << loc.prefix << "\" effective cgiTimeout = "<< loc.cgiTimeoutSec << "s" << std::endl;
 			}
 		}
 	}
