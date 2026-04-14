@@ -36,16 +36,10 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code, Client);
 	}
-    if (fullPath.empty())
+    if (fullPath.empty() && !loc->hasRedirection)
 	{
         return buildStatusResponse(404, Client);
 	}
-	if (loc && loc->hasRedirection)
-	{
-		std::map<std::string, std::string> headers;
-		headers["location"] = loc->redirectTarget;
-		Client.setCloseStatus(true);
-		return buildHttpResponse(301, "moved permanently", "", true, headers);
-	}
+
 	return "";
 }
