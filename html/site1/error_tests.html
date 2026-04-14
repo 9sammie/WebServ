@@ -172,6 +172,26 @@
         </div>
 
         <div class="test-group">
+            <h2>Test 502 - Bad Gateway</h2>
+            <p>Lance un CGI qui va lever une exeption.<br>
+            <em>Note : Ce test simule un crash de script durant un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/badCgi.py -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 504 - Gateway Timeout</h2>
+            <p>Lance un CGI qui met plus de temps a s'effectuer que la config ne le permet.<br>
+            <em>Note : Ce test simule un temps de réponse anormalement long pour un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/timeoutCgi.py -i
+            </div>
+        </div>
+
+        <div class="test-group">
             <h2>Test 505 - HTTP Version Not Supported</h2>
             <p>Envoie une requête en <code>HTTP/1.0</code> au serveur, alors que celui-ci attend <code>HTTP/1.1</code>.<br>
             <em>Ce test permet de vérifier que le serveur rejette une version HTTP non supportée avec une erreur <code>505</code>.</em></p>
