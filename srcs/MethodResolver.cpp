@@ -146,7 +146,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 			}
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "text/html";
-			outResponse = buildHttpResponse(200, "OK", listing, false, headers);
+			outResponse = buildHttpResponse(200, "OK", listing, Client.getCloseStatus(), headers);
 			return false;
 		}
 		outResponse = buildStatusResponse(403, Client);
@@ -174,7 +174,7 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		std::map<std::string, std::string> headers;
 		headers["set-cookie"] = "mouse_type=" + request.getQueryParam("type") + "; Path=/; Max-Age=3600";
 		headers["location"] = "/home.html"; 
-		return buildHttpResponse(302, "Found", "", false, headers);
+		return buildHttpResponse(302, "Found", "", Client.getCloseStatus(), headers);
 	}
 
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse, Client))
@@ -188,19 +188,6 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 
 	if (stat(resolvedPath.c_str(), &st) != 0)
 		return buildStatusResponse(500, Client);
-
-	// if (S_ISDIR(st.st_mode))
-	// {
-	// 	if (loc->autoindex)
-	// 	{
-	// 		body = generateAutoIndex(resolvedPath, request.getUri());
-    //         if (body.empty())
-    //             return buildStatusResponse(500, Client);
-	// 		headers["content-type"] = "text/html";
-	// 		return buildHttpResponse(200, "OK", body, false, headers);
-	// 	}
-	// 	return buildStatusResponse(403, Client);
-	// }
 
 	if (!S_ISREG(st.st_mode))
 		return buildStatusResponse(403, Client);
@@ -220,5 +207,5 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		applyHtmlTemplates(body, request);
 
 	headers["Content-Type"] = mimeType;
-	return buildHttpResponse(200, "OK", body, false, headers);
+	return buildHttpResponse(200, "OK", body, Client.getCloseStatus(), headers);
 }

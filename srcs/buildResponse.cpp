@@ -37,7 +37,9 @@ static std::string getStatusMessage(int code)
 	if (code == 413) return "Body Too Large";
 	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
-	if (code == 502) return "Cgi Problem";
+	if (code == 501) return "not implemented";
+	if (code == 502) return "bad gateway";
+	if (code == 504) return "gateway timeout";
 	if (code == 505) return "Wrong HTTP Version";
 	return "Internal Server Error";
 }
