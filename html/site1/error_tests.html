@@ -117,21 +117,28 @@
         <div class="test-group">
             <h2>Test 403 - Ressource Access Forbidden</h2>
             <p>Tente d'accéder à une ressource dont les permissions de lecture ont été retirées (Penser a chmod 000).</p>
-            <a href="/forbidden.html" class="btn-test">Tester le 403</a>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/forbidden.html -i
+            </div>
         </div>
 
         <div class="test-group">
             <h2>Test 404 - Not Found</h2>
             <p>Tente d'accéder à une page qui n'existe pas sur le serveur (/page_inconnue.html).</p>
-            <a href="/page_inconnue.html" class="btn-test">Tester le 404</a>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/page_inconnue.html -i
+            </div>
         </div>
 
         <div class="test-group">
             <h2>Test 405 - Method Not Allowed</h2>
             <p>Exécute une requête avec une méthode non autorisée. (POST sur menu.html)</p>
-            <form action="/menu.html" method="POST">
-                <button type="submit" class="btn-test">Tester le 405</button>
-            </form>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl -X POST http://127.0.0.1:8080/menu.html -i
+            </div>
         </div>
 
         <div class="test-group">
@@ -161,6 +168,26 @@
             <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
             <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
                 curl "http://127.0.0.1:8080/?q=$(python -c "print('a'*8192)")" -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 502 - Bad Gateway</h2>
+            <p>Lance un CGI qui va lever une exeption.<br>
+            <em>Note : Ce test simule un crash de script durant un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/badCgi.py -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 504 - Gateway Timeout</h2>
+            <p>Lance un CGI qui met plus de temps a s'effectuer que la config ne le permet.<br>
+            <em>Note : Ce test simule un temps de réponse anormalement long pour un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/timeoutCgi.py -i
             </div>
         </div>
 

@@ -1,0 +1,3 @@
+Nom: Colette_R
+
+"J'ai dû faire un poll() sur l'état de ma commande pendant 20 minutes, mais quand le plat est arrivé, c'était parfait. Par contre, le serveur est un rat, littéralement. C'est conforme à la norme RFC ça ?"

@@ -1,4 +1,5 @@
 #include "CgiResponseProcessor.hpp"
+#include "RequestHandler.hpp"
 #include <iostream>
 
 std::string trim(std::string& str, const char* charset){
@@ -94,7 +95,8 @@ std::string cgiResponseProcessor(std::string result, ServerConfig const & server
     std::string cgiResponse;
     std::string headers = getRawHeaders(result);
     if (headers.empty())
-        return "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n";
+        return RequestHandler::buildHttpResponse(502, "Bad Gateway",
+                "<html><body><h1>502 Bad Gateway</h1></body></html>", true);
     std::string body = getBody(result);
     std::map<std::string, std::string> headersMap = getHeadersMaps(headers);
     std::map<std::string, std::string>::iterator itS = headersMap.find("status");
