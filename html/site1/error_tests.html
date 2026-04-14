@@ -164,6 +164,16 @@
             </div>
         </div>
 
+        <div class="test-group">
+            <h2>Test 505 - HTTP Version Not Supported</h2>
+            <p>Envoie une requête en <code>HTTP/1.0</code> au serveur, alors que celui-ci attend <code>HTTP/1.1</code>.<br>
+            <em>Ce test permet de vérifier que le serveur rejette une version HTTP non supportée avec une erreur <code>505</code>.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl --http1.0 http://127.0.0.1:8080/ -i
+            </div>
+        </div>
+
         <div style="text-align: center;">
             <a href="/" class="back-link">← Retour à Chez Gusteau</a>
         </div>
