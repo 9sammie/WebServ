@@ -271,7 +271,7 @@ bool    ServerManager::receivedRequest(int idx){
 		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
-            // _pollFds[idx].events = 0;
+            _pollFds[idx].events = 0;
 
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
             struct pollfd cgiReadFd;
