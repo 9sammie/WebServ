@@ -126,8 +126,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
-    {
-		printf("HHHHHHHHHHHHHHHHHHHHHH\n");
+	{
         outResponse = buildStatusResponse(404, Client);
         return false;
     }
@@ -193,10 +192,7 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		return earlyResponse;
 	
 	if (access(resolvedPath.c_str(), F_OK) != 0)
-	{
-		printf("YYYYYYYYYYYYYYYYY\n");
 		return buildStatusResponse(404, Client);
-	}
 
 	if (access(resolvedPath.c_str(), R_OK) != 0)
 		return buildStatusResponse(403, Client);
