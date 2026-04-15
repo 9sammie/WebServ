@@ -36,7 +36,7 @@ std::string RequestHandler::getStatusMessage(const int code) const
 	if (code == 405) return "Method Not Allowed On This Location";
 	if (code == 408) return "Client Too Slow";
 	if (code == 411) return "Body Without Content Length";
-	if (code == 413) return "Body Too Large";
+	if (code == 413) return "Payload Too Large";
 	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
 	if (code == 501) return "not implemented";
@@ -56,8 +56,8 @@ std::string RequestHandler::buildStatusResponse(int code, Client& Client) const
 	std::string message = getStatusMessage(code);
 
 	std::ostringstream body;
-	body << "<html>\n<head>\n<style>\nbody.cursor-fork { cursor: url('/assets/cursors/fork.png'), auto !important; }\nbody.cursor-paw { cursor: url('/assets/cursors/paw.png'), auto !important; }\n</style>\n</head>\n<body class=\"cursor-fork\"> <h1>" << code << " " << message << "</h1></body></html>";
-	
+	body << "<html><body><h1>" << code << " " << message << "</h1></body></html>";
+
 	std::map<std::string, std::string> headers;
 	if (!mimeType.empty())
 		headers["Content-Type"] = mimeType;

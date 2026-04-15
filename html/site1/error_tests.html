@@ -104,7 +104,7 @@
 
     <div class="container">
         <h1>Cauchemar en cuisine...</h1>
-        
+
         <div class="test-group">
             <h2>Test 400 - Bad Request</h2>
             <p>Envoie une requête HTTP syntaxiquement mal formée (par exemple, sans le protocole obligatoire <code>HTTP/1.1</code>).<br>
@@ -144,6 +144,14 @@
             </div>
         </div>
 
+		<div class="test-group">
+			<h2>Test 411 - Body Sent Without Content Length</h2>
+			<p>Tente d'envoyer des données (POST) sans spécifier l'en-tête <code>Content-Length</code>. Le serveur doit rejeter la requête car il ne sait pas combien d'octets lire.</p>
+			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+				printf "POST /site1/test.txt HTTP/1.1\r\nHost: localhost\r\n\r\nCeci est un corps sans taille" | nc 127.0.0.1 8080
+			</div>
+		</div>
+
         <div class="test-group">
             <h2>Test 413 - Payload Too Large</h2>
             <p>Envoie une requête POST avec un corps de 1 048 577 octets, dépassant la limite configurée de <code>client_max_body_size</code> (1 048 576 octets).<br>
@@ -163,6 +171,37 @@
                 curl "http://127.0.0.1:8080/?q=$(python -c "print('a'*8192)")" -i
             </div>
         </div>
+
+		<div class="test-group">
+		    <h2>Test 501 - Not Implemented</h2>
+		    <p>Ce test envoie une méthode inconnue et affiche la page d'erreur générée par le serveur.</p>
+		
+		    <a href="javascript:void(0)" onclick="runTest501()" class="btn-test" style="text-decoration: none; display: inline-block;">
+		        Exécuter le test 501
+		    </a>
+		</div>
+		
+		<script>
+		function runTest501() {
+		    // On envoie la requête avec la méthode invalide
+		    fetch('/', { method: 'GUSTEAU' })
+		    .then(response => {
+		        // On récupère le texte (le HTML de ton buildStatusResponse)
+		        return response.text().then(html => {
+		            // On remplace le document actuel par le HTML d'erreur reçu
+		            document.open();
+		            document.write(html);
+		            document.close();
+				
+		            // Optionnel : On change l'URL dans la barre d'adresse pour faire propre
+		            window.history.pushState({}, "", "/error-501");
+		        });
+		    })
+		    .catch(err => {
+		        alert("Erreur lors de l'envoi : " + err);
+		    });
+		}
+		</script>
 
         <div style="text-align: center;">
             <a href="/" class="back-link">← Retour à Chez Gusteau</a>
