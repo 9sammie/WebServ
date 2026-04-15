@@ -2,11 +2,33 @@
 #include "Client.hpp"
 #include <stdio.h>
 
+static std::string getPathInfo(const HttpRequest& req, const LocationConfig* loc)
+{
+	std::string uri = req.getUri();
+	size_t qPos = uri.find('?');
+	std::string uriWithoutQuery = (qPos != std::string::npos) ? uri.substr(0, qPos) : uri;
+	const std::string& ext = loc->cgiExt; 
+
+	if (ext.empty())
+		return "";
+
+	size_t scriptPos = uriWithoutQuery.find(ext);
+
+	if (scriptPos != std::string::npos)
+	{
+		size_t endOfScript = scriptPos + ext.length();
+
+		if (endOfScript < uriWithoutQuery.length())
+			return uriWithoutQuery.substr(endOfScript);
+	}
+	return "";
+}
 
 DataCgi RequestHandler::fillCgiData(const HttpRequest& req, const std::string& fullPath, const LocationConfig* loc, Client& client)
 {
 	DataCgi data;
 
+	data.pathInfo = getPathInfo(req, loc);
 	data.method = req.getMethod();
 	data.serverProtocol = req.getVersion();
 	data.requestURI = req.getUri();
