@@ -94,10 +94,14 @@ Attendu:
 HTTP/1.1 404 Ressource Not Found
 
 
-curl -X DELETE http://localhost:8080/files/noPerm.txt -i Est ce normal que le fichier soit delete ?
-Attendu: ????
+curl -X DELETE http://localhost:8080/files/noPerm.txt -i It should work because the directory as the rights to do so
+Attendu: 
 HTTP/1.1 204 No Content
 
+
+curl -i -X DELETE http://localhost:8080/files/site1/review_ter_1776238579429.txt //here is a test when you posted a review first, add site1 because it's in the subdir site1
+Attendu: 
+HTTP/1.1 204 No Content
 
 ### Test not implemented
 
