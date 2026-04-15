@@ -154,8 +154,9 @@
 		<div class="test-group">
 			<h2>Test 411 - Body Sent Without Content Length</h2>
 			<p>Tente d'envoyer des données (POST) sans spécifier l'en-tête <code>Content-Length</code>. Le serveur doit rejeter la requête car il ne sait pas combien d'octets lire.</p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
 			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
-				printf "POST /site1/test.txt HTTP/1.1\r\nHost: localhost\r\n\r\nCeci est un corps sans taille" | nc 127.0.0.1 8080
+				printf "POST /uploads/test.txt HTTP/1.1\r\nHost: localhost\r\n\r\nCeci est un corps sans taille" | nc 127.0.0.1 8080
 			</div>
 		</div>
 
@@ -182,9 +183,7 @@
 		<div class="test-group">
 			<h2>Test 501 - Not Implemented</h2>
 			<p>Ce test vérifie que le serveur rejette les méthodes HTTP qu'il ne connaît pas (ex: <code>GUSTEAU</code>, <code>TRACE</code>, <code>CONNECT</code>).<br>
-			<em>Note : Les navigateurs ne permettent pas d'envoyer des méthodes exotiques via l'URL, utilisez le terminal.</em></p>
-			
-			<p style="margin-bottom: 5px;">Copiez-collez cette commande pour voir la page d'erreur 501 :</p>
+			<p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
 			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
 				curl -X GUSTEAU http://127.0.0.1:8080/ -i
 			</div>
