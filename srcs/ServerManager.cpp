@@ -48,7 +48,7 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
     if (_pollFds.empty()) {
         throw std::runtime_error("No listeners created from HttpConfig: _pollFds is empty. Check your listen directives and permissions.");
     }
-    std::cout << GREEN << "_listeners ready with " << _portsQuantity << " different ports." << RESET << std::endl;//Debug
+    // std::cout << GREEN << "_listeners ready with " << _portsQuantity << " different ports." << RESET << std::endl;//Debug
 }
 
 ServerManager::~ServerManager(){
@@ -205,7 +205,6 @@ void   ServerManager::checkCgiTimeOuts(){
         if (it->second.getCgiInfo().isCgi == true){
             int timeoutCgiVal = it->second.getCgiTimeout();
             if (time(NULL) - it->second.getCgiInfo().start_time > timeoutCgiVal){
-                std::cout << "timeoutCgiVal= " << timeoutCgiVal << std::endl;
                 kill(it->second.getCgiInfo().pid, SIGKILL);
                 waitpid(it->second.getCgiInfo().pid, NULL, WNOHANG);
                 removeReadPipe(it->second.getCgiInfo().pipeRead);
@@ -216,7 +215,7 @@ void   ServerManager::checkCgiTimeOuts(){
                 "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
                 it->second.store(response, Client::RESPONSE);
                 setPollout(it->second.getFd());
-                std::cout << "End of checkCgiTimeOuts" << std::endl;
+                std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
             }
         }
    }
@@ -272,6 +271,7 @@ bool    ServerManager::receivedRequest(int idx){
 		_clients[fd].store(RH.handleRequest(_clients[fd]), Client::RESPONSE);
         // CgiInfo
         if (_clients[fd].getCgiInfo().isCgi == true){
+            _pollFds[idx].events = 0;
 
             int pipeRead = _clients[fd].getCgiInfo().pipeRead;
             struct pollfd cgiReadFd;

@@ -117,21 +117,28 @@
         <div class="test-group">
             <h2>Test 403 - Ressource Access Forbidden</h2>
             <p>Tente d'accéder à une ressource dont les permissions de lecture ont été retirées (Penser a chmod 000).</p>
-            <a href="/forbidden.html" class="btn-test">Tester le 403</a>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/forbidden.html -i
+            </div>
         </div>
 
         <div class="test-group">
             <h2>Test 404 - Not Found</h2>
             <p>Tente d'accéder à une page qui n'existe pas sur le serveur (/page_inconnue.html).</p>
-            <a href="/page_inconnue.html" class="btn-test">Tester le 404</a>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/page_inconnue.html -i
+            </div>
         </div>
 
         <div class="test-group">
             <h2>Test 405 - Method Not Allowed</h2>
             <p>Exécute une requête avec une méthode non autorisée. (POST sur menu.html)</p>
-            <form action="/menu.html" method="POST">
-                <button type="submit" class="btn-test">Tester le 405</button>
-            </form>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl -X POST http://127.0.0.1:8080/menu.html -i
+            </div>
         </div>
 
         <div class="test-group">
@@ -140,13 +147,14 @@
             <em>Note : Ce test simulant un client lent (Slow Loris) ne peut pas être fait via le navigateur.</em></p>
             <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
             <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
-                (printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 100\r\n\r\nCoucou..."; sleep 16; printf " Fin\r\n") | nc 127.0.0.1 8080
+                (printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Lengt") | nc 127.0.0.1 8080
             </div>
         </div>
 
 		<div class="test-group">
 			<h2>Test 411 - Body Sent Without Content Length</h2>
 			<p>Tente d'envoyer des données (POST) sans spécifier l'en-tête <code>Content-Length</code>. Le serveur doit rejeter la requête car il ne sait pas combien d'octets lire.</p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
 			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
 				printf "POST /uploads/test.txt HTTP/1.1\r\nHost: localhost\r\n\r\nCeci est un corps sans taille" | nc 127.0.0.1 8080
 			</div>
@@ -173,35 +181,43 @@
         </div>
 
 		<div class="test-group">
-		    <h2>Test 501 - Not Implemented</h2>
-		    <p>Ce test envoie une méthode inconnue et affiche la page d'erreur générée par le serveur.</p>
-		
-		    <a href="javascript:void(0)" onclick="runTest501()" class="btn-test" style="text-decoration: none; display: inline-block;">
-		        Exécuter le test 501
-		    </a>
+			<h2>Test 501 - Not Implemented</h2>
+			<p>Ce test vérifie que le serveur rejette les méthodes HTTP qu'il ne connaît pas (ex: <code>GUSTEAU</code>, <code>TRACE</code>, <code>CONNECT</code>).<br>
+			<p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+				curl -X GUSTEAU http://127.0.0.1:8080/ -i
+			</div>
 		</div>
-		
-		<script>
-		function runTest501() {
-		    // On envoie la requête avec la méthode invalide
-		    fetch('/', { method: 'GUSTEAU' })
-		    .then(response => {
-		        // On récupère le texte (le HTML de ton buildStatusResponse)
-		        return response.text().then(html => {
-		            // On remplace le document actuel par le HTML d'erreur reçu
-		            document.open();
-		            document.write(html);
-		            document.close();
-				
-		            // Optionnel : On change l'URL dans la barre d'adresse pour faire propre
-		            window.history.pushState({}, "", "/error-501");
-		        });
-		    })
-		    .catch(err => {
-		        alert("Erreur lors de l'envoi : " + err);
-		    });
-		}
-		</script>
+
+        <div class="test-group">
+            <h2>Test 502 - Bad Gateway</h2>
+            <p>Lance un CGI qui va lever une exeption.<br>
+            <em>Note : Ce test simule un crash de script durant un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/badCgi.py -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 504 - Gateway Timeout</h2>
+            <p>Lance un CGI qui met plus de temps a s'effectuer que la config ne le permet.<br>
+            <em>Note : Ce test simule un temps de réponse anormalement long pour un CGI.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl http://127.0.0.1:8080/cgi-bin/timeoutCgi.py -i
+            </div>
+        </div>
+
+        <div class="test-group">
+            <h2>Test 505 - HTTP Version Not Supported</h2>
+            <p>Envoie une requête en <code>HTTP/1.0</code> au serveur, alors que celui-ci attend <code>HTTP/1.1</code>.<br>
+            <em>Ce test permet de vérifier que le serveur rejette une version HTTP non supportée avec une erreur <code>505</code>.</em></p>
+            <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
+            <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
+                curl --http1.0 http://127.0.0.1:8080/ -i
+            </div>
+        </div>
 
         <div style="text-align: center;">
             <a href="/" class="back-link">← Retour à Chez Gusteau</a>

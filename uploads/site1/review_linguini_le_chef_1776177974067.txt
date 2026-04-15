@@ -1,0 +1,3 @@
+Nom: Linguini_Le_Chef
+
+"La cuisine est excellente, mais j'ai l'impression que mes mouvements sont forkés par quelqu'un d'autre sous ma toque. Un peu trop de multithreading dans les fourneaux, je n'arrive plus à suivre !"

@@ -1,27 +1,25 @@
 #!/usr/bin/php
 <?php
-// 1. Lire les données envoyées par le Webserv via STDIN
+
 $raw_data = file_get_contents("php://stdin");
 
-// 2. Parser la chaîne (ex: client_name=Remy&guests=2&res_time=20%3A00)
+
 parse_str($raw_data, $post_vars);
 
 $name = isset($post_vars['client_name']) ? htmlspecialchars($post_vars['client_name']) : "Client mystère";
 $guests = isset($post_vars['guests']) ? (int)$post_vars['guests'] : 0;
 $time = isset($post_vars['res_time']) ? $post_vars['res_time'] : "non précisée";
 
-// 2a. Valider l'horaire de réservation (entre 11h et 23h)
+
 $time_valid = true;
 $error_message = "";
 
 if ($time !== "non précisée") {
-    // Parser l'heure (format HH:MM)
     $time_parts = explode(":", $time);
     if (count($time_parts) === 2) {
         $hour = (int)$time_parts[0];
         $minute = (int)$time_parts[1];
         
-        // Vérifier que l'heure est dans une plage plausible (11h à 22h59)
         if ($hour < 11 || $hour >= 23) {
             $time_valid = false;
             $error_message = "Nous sommes ouverts de 11h à 22h59. Veuillez choisir un horaire valide.";
@@ -29,7 +27,6 @@ if ($time !== "non précisée") {
     }
 }
 
-// 2b. Sauvegarder la réservation SEULEMENT si l'horaire est valide
 if ($time_valid) {
     $reservation = array(
         'timestamp' => date('Y-m-d H:i:s'),
@@ -41,7 +38,6 @@ if ($time_valid) {
     $reservations_file = dirname(__FILE__) . '/reservations.json';
     $reservations = array();
 
-    // Lire les réservations existantes
     if (file_exists($reservations_file)) {
         $json_data = file_get_contents($reservations_file);
         if ($json_data) {
@@ -52,17 +48,13 @@ if ($time_valid) {
         }
     }
 
-    // Ajouter la nouvelle réservation
     $reservations[] = $reservation;
 
-    // Sauvegarder
     file_put_contents($reservations_file, json_encode($reservations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 }
 
-// 3. Envoyer les headers HTTP obligatoires pour le CGI
 echo "Content-type: text/html\r\n\r\n";
 
-// 4. Générer la page de réponse
 ?>
 <!DOCTYPE html>
 <html lang="fr">
