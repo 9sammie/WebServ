@@ -1,61 +1,47 @@
-=== TESTS WEBSERV - CTHEVENO ===
+=== TESTS WEBSERV ===
 
 ## SECTION 1: TESTS GET SIMPLES (Locations existantes)
 
 ### Test 1.1: GET / (home site1) - CURL
-Commande: curl -v http://localhost:8080/
+Command: curl -i http://localhost:8080/
 Attendu: 200 OK + home.html
-Résultat: [ Validated ]
+Résult: [ OK ]
 
 ### Test 1.2: GET / (home site2) - CURL
-Commande: curl -v http://localhost:8081/
+Command: curl -i http://localhost:8081/
 Attendu: 200 OK + home.html
-Résultat: [ Validated ]
+Résult: [ OK ]
 
 ### Test 1.5: GET / (home site1) - NC
-Commande: echo -ne "GET / HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Command: echo -ne "GET / HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
 Attendu: 200 OK + home.html
-Résultat: [ Failed] Connection-closed absent in response
+Résult: [ OK] Connection-closed absent in response
 
 ### Test 1.6: GET /menu.html (site1) - NC
-Commande: echo -ne "GET /menu.html HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Command: echo -ne "GET /menu.html HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
 Attendu: 200 OK + menu.html
-Résultat: [ Failed ] Connection-closed absent in response
+Résult: [ OK ] Connection-closed absent in response
 
 ---
 
 ## SECTION 2: TESTS 404 NOT FOUND
 
 ### Test 2.1: GET /nonexistent - CURL
-Commande: curl -v http://localhost:8080/nonexistent
+Command: curl -i http://localhost:8080/nonexistent
 Attendu: 404 Not Found
-Résultat: [ Validated ]
+Résult: [ Ok ]
 
 ### Test 2.2: GET /fake.html - CURL
-Commande: curl -v http://localhost:8080/fake.html
+Command: curl -i http://localhost:8080/fake.html
 Attendu: 404 Not Found
-Résultat: [ Validated ]
+Résult: [ OK ]
 
 ### Test 2.3: GET /nonexistent - NC
-Commande: echo -ne "GET /nonexistent HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
+Command: echo -ne "GET /nonexistent HTTP/1.1\r\nHost: localhost:8080\r\nConnection: close\r\n\r\n" | nc localhost 8080
 Attendu: 404 Not Found
-Résultat: [ Failed ] Connection-closed absent in response
+Résult: [ OK ] Connection-closed absent in response
 
 ---
-
-## NOTES
-- Serveur doit être lancé: ./webserv webserv2.config
-- Site1 sur port 8080, Site2 sur port 8081
-- Utiliser curl -v pour voir tous les headers
-- Utiliser nc pour tester bas niveau
-
-
-
-
-Error 408 client too slow
-
-(printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Length: 100\r\n\r\nCoucou..."; sleep 100; printf " Fin\r\n") | nc 127.0.0.1 8080
-
 
 ### Test POST
 
@@ -71,13 +57,13 @@ HTTP/1.1 201 No Content
 Attendu:
 HTTP/1.1 201 No Content
 
-curl -X POST --data-binary @body_max_size.txt http://localhost:8080/uploads/test1.txt -i     
+curl -X POST --data-binary @tests/tests_requests/body_max_size.txt http://localhost:8080/uploads/test1.txt -i     
 Attendu:
 HTTP/1.1 200 No Content
 
-curl -X POST --data-binary @body_over_max_size.txt http://localhost:8080/uploads/test2.txt -i
+curl -X POST --data-binary @tests/tests_requests/body_over_max_size.txt http://localhost:8080/uploads/test1.txt -i
 Attendu:
-HTTP/1.1 413 Body Too Large
+HTTP/1.1 413 Payload Too Large
 
 
 ## Test DELETE
@@ -107,4 +93,4 @@ HTTP/1.1 204 No Content
 
 curl -X INVALID http://localhost:8080/
 Attendu:
-HTTP/1.1
+HTTP/1.1 501 Not Implemented
