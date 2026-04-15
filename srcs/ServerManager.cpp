@@ -117,7 +117,7 @@ int ServerManager::readClientData(int clientFd){
         else if (bytesRead == 0){
             //Client disconnected properly close fd, remove from _clients and _pollFds
             this->closeConnection(clientFd);
-            std::cout << YELLOW << "Client: [" << clientFd << "] disconnected." << RESET << std::endl;
+            // std::cout << YELLOW << "Client: [" << clientFd << "] disconnected." << RESET << std::endl;
             return 0;
         }
         else{
@@ -226,7 +226,7 @@ void   ServerManager::checkClientTimeOuts(){
         int timeoutVal = it->second.getKeepaliveTimeout();
         if (timeoutVal > 0 &&  it->second.timeSinceLastActivity() > timeoutVal){
             int fd = it->second.getFd();
-            std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
+            // std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
             it->second.clean(Client::REQUEST);
             it->second.clean(Client::RESPONSE);
             const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
@@ -236,9 +236,9 @@ void   ServerManager::checkClientTimeOuts(){
             setPollout(fd);
             ++it;
         }
-        else if (timeoutVal == 0 && it->second.timeSinceLastActivity() > 60){
+        else if (timeoutVal == 0 && it->second.timeSinceLastActivity() > 120){
             int fd = it->second.getFd();
-            std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
+            // std::cerr << "Client: [" << fd << "] disconnected: TimeOut." << std::endl;
             it->second.clean(Client::REQUEST);
             it->second.clean(Client::RESPONSE);
             const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
@@ -263,7 +263,7 @@ bool    ServerManager::receivedRequest(int idx){
         // std::cout << BRIGHT_BLUE << "DEBUG: REQUEST complete !" << RESET << std::endl;
         
         _clients[fd].extractRequest();
-        // std::cout  << "REQUEST: [" << _clients[fd].getBuffer(Client::REQUEST) << "]" << std::endl;
+        std::cout  << "REQUEST: [" << _clients[fd].getBuffer(Client::REQUEST) << "]" << std::endl;
         // RequestHandler call will call CgiHandler() if it's a CGI
         const ServerConfig& serverToSend = getServer(_clients[fd].getPort(Client::SERVER));
 		RequestHandler RH(serverToSend);
