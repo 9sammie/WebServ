@@ -26,7 +26,7 @@ ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpCon
         }
     }
     _listeners.reserve(ports.size());
-    _pollFds .reserve(MAX_CLIENTS + ports.size());
+    _pollFds.reserve(MAX_CLIENTS + ports.size());
     for (std::set<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
     {
         TcpListener* tmp = new TcpListener(*it);

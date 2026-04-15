@@ -4,7 +4,12 @@
 #include <stdexcept>
 #include <cerrno> 
 #include <fcntl.h> 
+/*
+Récupérer l'IP du fichier .conf (sous forme de chaîne std::string comme "127.0.0.1").
+La convertir avec inet_addr() ou inet_pton() pour la passer à _address.sin_addr.s_addr à la place de htonl(INADDR_ANY).
 
+
+*/
 TcpListener::TcpListener(int port) : _fd(-1), _port(port){
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = AF_INET; // IPv4
