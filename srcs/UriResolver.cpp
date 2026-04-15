@@ -156,7 +156,7 @@ std::string UriResolver::normalize(const std::string& path)
     return res;
 }
 
-// Check s'il y a des caracteres encodé et on les remplacent par leur valeur en ascii
+// Check encoded characters and repllace them by ascii ones
 std::string UriResolver::urlDecode(const std::string& path)
 {
 	std::string result;

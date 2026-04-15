@@ -8,12 +8,11 @@
 
 HttpParser::HttpParser() {}
 
-// HttpParser::HttpParser(const HttpParser& other) {}
-
-// HttpParser& HttpParser::operator=(const HttpParser& other)
-// {
-// 	return *this;
-// }
+HttpParser& HttpParser::operator=(const HttpParser& other)
+{
+	(void)other;
+	return *this;
+}
 
 HttpParser::~HttpParser() {}
 

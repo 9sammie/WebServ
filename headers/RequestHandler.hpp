@@ -23,9 +23,6 @@ class RequestHandler
 		RequestHandler(const RequestHandler& other);
 		~RequestHandler();
 
-		// Traite le buffer (requête complète ou non) et renvoie :
-    	// - une réponse HTTP complète si la requête est complète ou en cas d'erreur,
-    	// - une string vide si la requête est incomplète (caller doit attendre + données).
 		std::string handleRequest(Client& Client);
 		int extractStatusCode(const std::string& response) const;
 		static std::string buildHttpResponse(int statusCode,
