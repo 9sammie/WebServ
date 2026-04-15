@@ -39,9 +39,9 @@ std::string RequestHandler::getStatusMessage(const int code) const
 	if (code == 413) return "Payload Too Large";
 	if (code == 414) return "URI Too Long";
 	if (code == 500) return "Internal Server Error";
-	if (code == 501) return "not implemented";
-	if (code == 502) return "bad gateway";
-	if (code == 504) return "gateway timeout";
+	if (code == 501) return "Not Implemented";
+	if (code == 502) return "Bad Gateway";
+	if (code == 504) return "Gateway Timeout";
 	if (code == 505) return "Wrong HTTP Version";
 	return "Internal Server Error";
 }

@@ -93,7 +93,25 @@ The poll() function takes a timeout. While a value of -1 would cause it to block
 
 ### PARSING OF REQUEST / BUILD RESPONSE
 
+The core of the server's logic is to transform a raw client stream into a structured HTTP response.
 
+## REQUEST PARSING
+
+The process begins by assembling raw data into a usable format. In the meantime, we perform validation at every stage:
+-first line (method - uri - http version)
+-headers (in a map: key - value)
+-body (if there is one). Once we got all the infos we need and checked for special cases, then we can proceed to the next big step.
+
+## ROUTE HANDLING
+
+Once the request is parsed, the server maps the URI to the corresponding location block in the configuration. At this stage, we enforce security and logic rules depending on this new found location such as method autorization, context awarness or redirections.
+
+## RESPONSE BUILDING
+
+The final response is constructed dynamically based on the outcome of the route handling.
+For a valid request, the server attaches the requested resource (static file, CGI output, or directory listing) and sets the standard headers (Content-Type, Date, Server).
+If an issue occurs (e.g., 404 Not Found, 405 Method Not Allowed), the server automatically generates a response using either a default template or a custom error page defined in the configuration.
+If specific headers are present or required, the server handles stateful information through the CookieHandler.
 
 ## Instructions
 
