@@ -8,18 +8,20 @@ class TcpListener{
 
     public :
 
-        TcpListener(int port);
+        TcpListener(std::string ip, int port);
         ~TcpListener();
     
-        void    init();// Init the socket(), socketaddr();, bind() -> bind our fd to our address form, fcntl() for non blocking, listen() -> _fd becomes a listening socket
-        int     getFd()const;
-        int     getPort()const;
+        void     init();// Init the socket(), socketaddr();, bind() -> bind our fd to our address form, fcntl() for non blocking, listen() -> _fd becomes a listening socket
+        int      getFd()const;
+        int      getPort()const;
+        uint32_t convertIp(const std::string& ip);
 
     private :
 
         struct sockaddr_in  _address;
         int                 _fd;
         int                 _port;
+        std::string         _ip;
 
         //No use of those, why would i make a copy of a _fd ? if i close the first one, both will be closed and it
         // could lead to big issues

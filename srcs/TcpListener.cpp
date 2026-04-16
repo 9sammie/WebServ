@@ -4,16 +4,12 @@
 #include <stdexcept>
 #include <cerrno> 
 #include <fcntl.h> 
-/*
-Récupérer l'IP du fichier .conf (sous forme de chaîne std::string comme "127.0.0.1").
-La convertir avec inet_addr() ou inet_pton() pour la passer à _address.sin_addr.s_addr à la place de htonl(INADDR_ANY).
+#include <sstream>
 
-
-*/
-TcpListener::TcpListener(int port) : _fd(-1), _port(port){
+TcpListener::TcpListener(std::string ip, int port) : _ip(ip), _fd(-1), _port(port){
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = AF_INET; // IPv4
-    _address.sin_addr.s_addr = htonl(INADDR_ANY); // Listen everything on the subnet, htonl for better practice
+    _address.sin_addr.s_addr = convertIp(_ip);
     _address.sin_port = htons(_port); //htons Host to Network short, convert in Big endian
 }
 
@@ -54,4 +50,18 @@ int TcpListener::getFd()const{
 
 int TcpListener::getPort()const{
     return _port;
+}
+
+uint32_t TcpListener::convertIp(const std::string& ip) {
+    uint32_t result = 0;
+    int octet;
+    char dot;
+    std::stringstream ss(ip);
+
+    for (int i = 0; i < 4; ++i) {
+        ss >> octet;
+        result = (result << 8) | octet;
+        if (i < 3) ss >> dot;
+    }
+    return htonl(result);
 }

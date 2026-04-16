@@ -19,17 +19,17 @@
 #include "CgiResponseProcessor.hpp"
 
 ServerManager::ServerManager(const HttpConfig& httpConfig) : _httpConfig(httpConfig){
-    std::set<int> ports;
+    std::map<int, std::string> listenMap;
     for (std::vector<ServerConfig>::const_iterator it = _httpConfig.servers.begin(); it != _httpConfig.servers.end(); ++it){
         for (size_t i = 0; i < it->listens.size(); ++i){
-            ports.insert(it->listens[i].port);
+            listenMap.insert(std::make_pair(it->listens[i].port, it->listens[i].host));
         }
     }
-    _listeners.reserve(ports.size());
-    _pollFds.reserve(MAX_CLIENTS + ports.size());
-    for (std::set<int>::const_iterator it = ports.begin(); it != ports.end(); ++it)
+    _listeners.reserve(listenMap.size());
+    _pollFds.reserve(MAX_CLIENTS + listenMap.size());
+    for (std::map<int, std::string>::const_iterator it = listenMap.begin(); it != listenMap.end(); ++it)
     {
-        TcpListener* tmp = new TcpListener(*it);
+        TcpListener* tmp = new TcpListener(it->second, it->first);
         try{
             tmp->init();
             _listeners.push_back(tmp);
@@ -87,7 +87,14 @@ void ServerManager::acceptNewConnection(int serverFd){
     newSPollFd.events = POLLIN;
     newSPollFd.revents = 0;
     _pollFds.push_back(newSPollFd);
-    std::string remoteAddr = inet_ntoa(address.sin_addr);
+    
+    uint32_t ipAddr = ntohl(address.sin_addr.s_addr);
+    std::stringstream ssRemote;
+    ssRemote << ((ipAddr >> 24) & 0xFF) << "."
+             << ((ipAddr >> 16) & 0xFF) << "."
+             << ((ipAddr >> 8) & 0xFF) << "."
+             << (ipAddr & 0xFF);
+    std::string remoteAddr = ssRemote.str();
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
     _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
