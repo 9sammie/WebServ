@@ -6,7 +6,7 @@
 #include <fcntl.h> 
 #include <sstream>
 
-TcpListener::TcpListener(std::string ip, int port) : _ip(ip), _fd(-1), _port(port){
+TcpListener::TcpListener(std::string ip, int port) : _fd(-1), _port(port), _ip(ip){
     std::memset(&_address, 0, sizeof(_address));
     _address.sin_family = AF_INET; // IPv4
     _address.sin_addr.s_addr = convertIp(_ip);
