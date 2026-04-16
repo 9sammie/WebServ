@@ -93,7 +93,7 @@ echo "Content-type: text/html\r\n\r\n";
             
             <p><em>Tout le monde peut cuisiner, mais seuls les plus intrépides réussissent !</em></p>
             <br><br>
-            <a href="http://localhost:8080/">Retour au Site 1</a>
+            <a href="#" onclick="window.location.href = 'http://' + window.location.hostname + ':8080/'; return false;">Retour au Site 1</a>
         <?php else: ?>
             <h1 style="color: #e63946;">Erreur de Réservation</h1>
             <p style="color: #e63946; font-weight: bold;"><?php echo $error_message; ?></p>
