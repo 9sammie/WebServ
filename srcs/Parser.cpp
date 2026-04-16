@@ -245,6 +245,55 @@ int Parser::parsePort(const Token& directiveTok, const std::string& s)
 	return port;
 }
 
+static bool isValidHost(const std::string& s)
+{
+	std::size_t start = 0;
+	for (int parts = 0; parts < 4; parts++)
+	{
+		std::size_t end = s.find('.', start);
+		std::string part;
+		if (end == std::string::npos)
+			part = s.substr(start);
+		else
+			part = s.substr(start, end - start);
+		if (part.empty())
+			return false;
+		for (std::size_t i = 0; i < part.size(); i++)
+		{
+			if (!std::isdigit(static_cast<unsigned char>(part[i])))
+				return false;
+		}
+		if (part.size() > 1 && part[0] == '0')
+			return false;
+		char* conversionEnd = NULL;
+		long res = std::strtol(part.c_str(), &conversionEnd, 10);
+		if (*conversionEnd != '\0' || res < 0 || res > 255)
+			return false;
+		if (parts < 3)
+		{
+			if (end == std::string::npos)
+				return false;
+			start = end + 1;
+		}
+		else
+		{
+			if (end != std::string::npos)
+				return false;
+		}
+	}
+	return true;
+}
+
+static bool isSameListenValue(const std::vector<ListenConfig>& listens, const ListenConfig& input)
+{
+	for (std::size_t i = 0; i < listens.size(); ++i)
+	{
+		if (listens[i].host == input.host && listens[i].port == input.port)
+			return true;
+	}
+	return false;
+}
+
 std::vector<std::string> Parser::readDirectiveArgs(const Token& directiveTok)
 {
 	std::vector<std::string> args;
@@ -272,14 +321,13 @@ ListenConfig Parser::parseListenArg(const Token& directiveTok, const std::string
 	lc.port = 0;
 	std::size_t pos = s.find(':');
 	if (pos == std::string::npos)
-	{
-		lc.port = parsePort(directiveTok, s);
-		return lc;
-	}
+		throwInvalidValue(directiveTok, s);
 	std::string hostPart = s.substr(0, pos);
 	std::string portPart = s.substr(pos + 1);
 	if (hostPart.empty() || portPart.empty()) 
 		throwInvalidValue(directiveTok, s);
+	if (!isValidHost(hostPart))
+		throwInvalidValue(directiveTok, hostPart);
 	lc.host = hostPart;
 	lc.port = parsePort(directiveTok, portPart);
 	return lc;
@@ -444,6 +492,8 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 		ListenConfig lc = parseListenArg(nameTok, args[0]);
+		if (isSameListenValue(srv.listens, lc))
+			throwDuplicateValue(nameTok, args[0]);
 		srv.listens.push_back(lc);
 		return;
 	}
@@ -589,59 +639,6 @@ ServerConfig Parser::parseServerBlock(const Token& serverTok)
 /*                                  main functions                           */
 /*************************************************************************** */
 
-/*void Parser::applyEffectiveData(HttpConfig& http)
-{
-	for (std::size_t i = 0; i < http.servers.size(); ++i)
-	{
-		ServerConfig& srv = http.servers[i];
-
-		if (!srv.hasKeepalive && http.hasKeepalive)
-		{
-			srv.keepaliveTimeoutSec = http.keepaliveTimeoutSec;
-			srv.hasKeepalive = true;
-		}
-		if (!srv.hasMaxBodySize && http.hasMaxBodySize)
-		{
-			srv.maxBodySize = http.maxBodySize;
-			srv.hasMaxBodySize = true;
-		}
-
-		int srvKeepalive = effectiveKeepaliveTimeoutSec(http, srv);
-		std::size_t cgiLocationCount = 0;
-
-		for (std::size_t j = 0; j < srv.locations.size(); ++j)
-		{
-			LocationConfig& loc = srv.locations[j];
-
-			if (hasIncompleteCgiConfig(loc))
-				throw std::invalid_argument("webserv: [emerg] CGI location requires both \"cgi_ext\" and \"cgi_path\"");
-			if (!loc.hasMaxBodySize && srv.hasMaxBodySize)
-			{
-				loc.maxBodySize = srv.maxBodySize;
-				loc.hasMaxBodySize = true;
-			}
-			bool cgiLoc = isCgiLocation(loc);
-			if (cgiLoc)
-			{
-				++cgiLocationCount;
-				if (cgiLocationCount > 1)
-					throw std::invalid_argument("webserv: [emerg] only one CGI location is allowed per server");
-			}
-			if (loc.hasCgiTimeout && !cgiLoc)
-				throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" is only allowed in CGI locations");
-			if (cgiLoc)
-			{
-				if (!loc.hasCgiTimeout)
-				{
-					loc.cgiTimeoutSec = defaultCgiTimeoutSec(srvKeepalive);
-					loc.hasCgiTimeout = true;
-				}
-				if (loc.cgiTimeoutSec >= srvKeepalive)
-					throw std::invalid_argument("webserv: [emerg] \"cgi_timeout\" must be strictly shorter than effective \"keepalive_timeout\"");
-			}
-		}
-	}
-}*/
 //#include <iostream>
 void Parser::applyEffectiveData(HttpConfig& http)
 {
