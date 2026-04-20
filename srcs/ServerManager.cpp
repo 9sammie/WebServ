@@ -95,7 +95,7 @@ void ServerManager::acceptNewConnection(int serverFd){
              << ((ipAddr >> 8) & 0xFF) << "."
              << (ipAddr & 0xFF);
     std::string remoteAddr = ssRemote.str();
-    ServerConfig server = getServer(serverFd);
+    ServerConfig server = getServer(getListenerPort(serverFd));
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
     _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
