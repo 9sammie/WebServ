@@ -126,7 +126,7 @@ cd WebServ
 make
 
 # Build and execute the tests for Lexer and Parser parts
-make tests
+make test
 
 # Run the server with a custom configuration file
 ./webserv <path_to_config_file>

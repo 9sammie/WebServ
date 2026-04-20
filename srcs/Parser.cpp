@@ -6,6 +6,7 @@
 #include <limits>
 #include <sstream>
 #include <climits>
+#include <cctype>
 
 /* ************************************************************************** */
 /*                          canonical form + helpers + local funcs                        */
@@ -284,12 +285,48 @@ static bool isValidHost(const std::string& s)
 	return true;
 }
 
-static bool isSameListenValue(const std::vector<ListenConfig>& listens, const ListenConfig& input)
+static bool isSamePortValueInServer(const std::vector<ListenConfig>& listens, int input)
 {
 	for (std::size_t i = 0; i < listens.size(); ++i)
 	{
-		if (listens[i].host == input.host && listens[i].port == input.port)
+		if (listens[i].port == input)
 			return true;
+	}
+	return false;
+}
+
+static bool isSamePortValueInHttp(const std::vector<ServerConfig>& servers, int input)
+{
+	for (std::size_t i = 0; i < servers.size(); ++i)
+	{
+		for (std::size_t j = 0; j < servers[i].listens.size(); ++j)
+		{
+			if (servers[i].listens[j].port == input)
+				return true;
+		}
+	}
+	return false;
+}
+
+static bool isValidServerName(const std::string& s)
+{
+	if (s.empty())
+		return false;
+	for (std::size_t i = 0; i < s.size(); ++i)
+	{
+		unsigned char c = static_cast<unsigned char>(s[i]);
+		if (!std::isprint(c))
+			return false;
+		if (std::isspace(c))
+			return false;
+		if (c == ';' || c == '{' || c == '}')
+			return false;
+	}
+	for (std::size_t i = 0; i < s.size(); ++i)
+	{
+		unsigned char c = static_cast<unsigned char>(s[i]);
+		if (std::isalpha(c))
+		return true;
 	}
 	return false;
 }
@@ -492,7 +529,7 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
 		ListenConfig lc = parseListenArg(nameTok, args[0]);
-		if (isSameListenValue(srv.listens, lc))
+		if (isSamePortValueInServer(srv.listens, lc.port))
 			throwDuplicateValue(nameTok, args[0]);
 		srv.listens.push_back(lc);
 		return;
@@ -502,6 +539,8 @@ void Parser::parseServerDirective(ServerConfig& srv, const Token& nameTok)
 		std::vector<std::string> args = readDirectiveArgs(nameTok);
 		if (args.size() != 1)
 			throwInvalidArgs(nameTok);
+		if (!isValidServerName(args[0]))
+			throwInvalidValue(nameTok, args[0]);
 		srv.serverName = args[0];
 		return;
 	}
@@ -591,6 +630,15 @@ HttpConfig Parser::parseHttpBlock(const Token& httpTok)
 		if (nameTok.wordText == "server")
 		{
 			ServerConfig srv = parseServerBlock(nameTok);
+			for (std::size_t i = 0; i < srv.listens.size(); ++i)
+			{
+				if (isSamePortValueInHttp(http.servers, srv.listens[i].port))
+				{
+					std::ostringstream oss;
+					oss << srv.listens[i].port;
+					throw std::invalid_argument("webserv: [emerg] server uses a port already declared in another server");
+				}
+			}
 			http.servers.push_back(srv);
 			continue;
 		}

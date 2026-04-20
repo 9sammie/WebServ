@@ -35,7 +35,7 @@ static void lexerValidMinimalConf()
 	assertToken(tokens[2], WORD, "server", 2);
 	assertToken(tokens[3], LBRACE, "{", 2);
 	assertToken(tokens[4], WORD, "listen", 3);
-	assertToken(tokens[5], WORD, "8080", 3);
+	assertToken(tokens[5], WORD, "127.0.0.1:8080", 3);
 	assertToken(tokens[6], SEMICOLON, ";", 3);
 	assertToken(tokens[7], RBRACE, "}", 4);
 	assertToken(tokens[8], RBRACE, "}", 5);

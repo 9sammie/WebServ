@@ -38,7 +38,7 @@ static void parserAcceptsMinimalHttpServer()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(RBRACE, "}", 4));
     tokens.push_back(makeToken(RBRACE, "}", 5));
@@ -215,7 +215,7 @@ static void parserAcceptsHttpKeepaliveTimeout()
     tokens.push_back(makeToken(WORD, "server", 3));
     tokens.push_back(makeToken(LBRACE, "{", 3));
     tokens.push_back(makeToken(WORD, "listen", 4));
-    tokens.push_back(makeToken(WORD, "8080", 4));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 4));
     tokens.push_back(makeToken(SEMICOLON, ";", 4));
     tokens.push_back(makeToken(RBRACE, "}", 5));
     tokens.push_back(makeToken(RBRACE, "}", 6));
@@ -244,7 +244,7 @@ static void parserAcceptsHttpClientMaxBodySize()
     tokens.push_back(makeToken(WORD, "server", 3));
     tokens.push_back(makeToken(LBRACE, "{", 3));
     tokens.push_back(makeToken(WORD, "listen", 4));
-    tokens.push_back(makeToken(WORD, "8080", 4));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 4));
     tokens.push_back(makeToken(SEMICOLON, ";", 4));
     tokens.push_back(makeToken(RBRACE, "}", 5));
     tokens.push_back(makeToken(RBRACE, "}", 6));
@@ -270,10 +270,10 @@ static void parserAcceptsServerName()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "server_name", 4));
-    tokens.push_back(makeToken(WORD, "test_serv_1", 4));
+    tokens.push_back(makeToken(WORD, "rats_du_port_80", 4));
     tokens.push_back(makeToken(SEMICOLON, ";", 4));
     tokens.push_back(makeToken(RBRACE, "}", 5));
     tokens.push_back(makeToken(RBRACE, "}", 6));
@@ -281,7 +281,7 @@ static void parserAcceptsServerName()
     Parser parser(tokens);
     HttpConfig http = parser.parseConfig();
 
-    assertEqualString("test_serv_1", http.servers[0].serverName, "wrong server_name");
+    assertEqualString("rats_du_port_80", http.servers[0].serverName, "wrong server_name");
     printTestOK("parser accepts server_name");
 }
 
@@ -295,7 +295,7 @@ static void parserAcceptsLocationRoot()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/", 4));
@@ -331,7 +331,7 @@ static void parserAcceptsMethodsGetPost()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/uploads", 4));
@@ -366,7 +366,7 @@ static void parserRejectsDuplicateMethods()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/", 4));
@@ -405,7 +405,7 @@ static void parserRejectsInvalidMethod()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/", 4));
@@ -443,7 +443,7 @@ static void parserAcceptsReturn301()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/old-page", 4));
@@ -481,7 +481,7 @@ static void parserAcceptsHttpErrorPage404()
     tokens.push_back(makeToken(WORD, "server", 3));
     tokens.push_back(makeToken(LBRACE, "{", 3));
     tokens.push_back(makeToken(WORD, "listen", 4));
-    tokens.push_back(makeToken(WORD, "8080", 4));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 4));
     tokens.push_back(makeToken(SEMICOLON, ";", 4));
     tokens.push_back(makeToken(RBRACE, "}", 5));
     tokens.push_back(makeToken(RBRACE, "}", 6));
@@ -505,7 +505,7 @@ static void parserAcceptsServerErrorPage404()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "error_page", 4));
     tokens.push_back(makeToken(WORD, "404", 4));
@@ -543,7 +543,7 @@ static void parserAppliesInheritanceHttpToServerToLocation()
     tokens.push_back(makeToken(LBRACE, "{", 4));
 
     tokens.push_back(makeToken(WORD, "listen", 5));
-    tokens.push_back(makeToken(WORD, "8080", 5));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 5));
     tokens.push_back(makeToken(SEMICOLON, ";", 5));
 
     tokens.push_back(makeToken(WORD, "location", 6));
@@ -603,7 +603,7 @@ static void parserAppliesInheritanceHttpToServerToCgiLocation()
     tokens.push_back(makeToken(LBRACE, "{", 4));
 
     tokens.push_back(makeToken(WORD, "listen", 5));
-    tokens.push_back(makeToken(WORD, "8080", 5));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 5));
     tokens.push_back(makeToken(SEMICOLON, ";", 5));
 
     tokens.push_back(makeToken(WORD, "location", 6));
@@ -659,7 +659,7 @@ static void parserRejectsUnknownDirectiveInServer()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "kapouet", 4));
     tokens.push_back(makeToken(WORD, "42", 4));
@@ -693,7 +693,7 @@ static void parserRejectsUnknownDirectiveInLocation()
     tokens.push_back(makeToken(WORD, "server", 2));
     tokens.push_back(makeToken(LBRACE, "{", 2));
     tokens.push_back(makeToken(WORD, "listen", 3));
-    tokens.push_back(makeToken(WORD, "8080", 3));
+    tokens.push_back(makeToken(WORD, "127.0.0.1:8080", 3));
     tokens.push_back(makeToken(SEMICOLON, ";", 3));
     tokens.push_back(makeToken(WORD, "location", 4));
     tokens.push_back(makeToken(WORD, "/", 4));
