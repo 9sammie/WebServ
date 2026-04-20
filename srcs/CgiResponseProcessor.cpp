@@ -83,7 +83,7 @@ std::string getBodySizeStr(std::string body){
 void enforceHttpCompliance(std::map<std::string, std::string> & headersMap, std::string& body, ServerConfig const & server){
     // DATE, SERVER, CONNECTION, STATUS, CONTENTLENGTH
     headersMap.erase("status");
-    headersMap["server"] = "Rats_du_port_80";
+    headersMap["server"] = server.serverName;
     headersMap["date"] = getDate();
     headersMap["content-length"] = getBodySizeStr(body);
     if (server.hasKeepalive == true)

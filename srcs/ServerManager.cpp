@@ -130,7 +130,7 @@ int ServerManager::readClientData(int clientFd){
         else{
             //Error -1, something crashed (ex: wifi stopped, a cable was unplug...)
             this->closeConnection(clientFd);
-            std::cout << RED << "Error: recv() failed on client: [" << clientFd << "]." << RESET << std::endl;
+            std::cerr << RED << "Error: recv() failed on client: [" << clientFd << "]." << RESET << std::endl;
             return -1;
         }
 }
@@ -222,7 +222,7 @@ void   ServerManager::checkCgiTimeOuts(){
                 "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
                 it->second.store(response, Client::RESPONSE);
                 setPollout(it->second.getFd());
-                std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
+                // std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
             }
         }
    }
