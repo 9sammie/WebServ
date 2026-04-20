@@ -67,6 +67,11 @@ ServerManager::~ServerManager(){
 }
 
 void ServerManager::acceptNewConnection(int serverFd){
+    int port = getListenerPort(serverFd);
+    ServerConfig server = getServer(port);
+    int timeout = getTimeout(port);
+    int cgiTimeout = getCgiTimeout(port);
+
     struct sockaddr_in address;
     socklen_t address_size = sizeof(address);
 
@@ -95,10 +100,9 @@ void ServerManager::acceptNewConnection(int serverFd){
              << ((ipAddr >> 8) & 0xFF) << "."
              << (ipAddr & 0xFF);
     std::string remoteAddr = ssRemote.str();
-    ServerConfig server = getServer(getListenerPort(serverFd));
-    _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
-    _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
-    _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
+    _clients[newFd] = Client(newFd, port, address.sin_port, remoteAddr);
+    _clients[newFd].setKeepaliveTimeout(timeout);
+    _clients[newFd].setCgiTimeout(cgiTimeout);
     _clients[newFd].setServerName(server.serverName);
 }
 
@@ -181,7 +185,9 @@ int    ServerManager::getListenerPort(int fd){
         if ((*it)->getFd() == fd)
             return (*it)->getPort();
     }
-    return -1;
+    std::stringstream ss;
+    ss << fd;
+    throw std::runtime_error("Critical error: Listener FD " + ss.str() + " not found in listeners list.");
 }
 
 int ServerManager::getTimeout(int port)const{
@@ -192,7 +198,9 @@ int ServerManager::getTimeout(int port)const{
             }
 		}
     }
-    return 1;
+    std::stringstream ss;
+    ss << port;
+    throw std::runtime_error("No configurable timeout found for port: " + ss.str());
 }
 
 int ServerManager::getCgiTimeout(int port)const{
@@ -206,7 +214,9 @@ int ServerManager::getCgiTimeout(int port)const{
             }
 		}
     }
-    return 1;
+    std::stringstream ss;
+    ss << port;
+    throw std::runtime_error("No configurable timeout found for port: " + ss.str());
 }
 
 void   ServerManager::checkCgiTimeOuts(){
