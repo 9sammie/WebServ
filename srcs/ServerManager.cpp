@@ -221,7 +221,7 @@ void   ServerManager::checkCgiTimeOuts(){
                     removeWritePipe(it->second.getCgiInfo().pipeWrite);
                 it->second.resetCgiInfos();
                 const std::string response = RequestHandler::buildHttpResponse(504, "Gateway Timeout",
-                "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
+                "<html><body><h1>504 Gateway Timeout</h1></body></html>", true, it->second.getServerName());
                 it->second.store(response, Client::RESPONSE);
                 setPollout(it->second.getFd());
                 // std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
@@ -239,7 +239,7 @@ void   ServerManager::checkClientTimeOuts(){
             it->second.clean(Client::REQUEST);
             it->second.clean(Client::RESPONSE);
             const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
-            "<html><body><h1>408 Request Timeout</h1></body></html>", true);
+            "<html><body><h1>408 Request Timeout</h1></body></html>", true, it->second.getServerName());
             it->second.store(response, Client::RESPONSE);
             it->second.setCloseStatus(true);
             setPollout(fd);
@@ -251,7 +251,7 @@ void   ServerManager::checkClientTimeOuts(){
             it->second.clean(Client::REQUEST);
             it->second.clean(Client::RESPONSE);
             const std::string response = RequestHandler::buildHttpResponse(408, "Request Timeout",
-            "<html><body><h1>408 Request Timeout</h1></body></html>", true);
+            "<html><body><h1>408 Request Timeout</h1></body></html>", true, it->second.getServerName());
             it->second.store(response, Client::RESPONSE);
             it->second.setCloseStatus(true);
             setPollout(fd);
@@ -425,7 +425,7 @@ void    ServerManager::writeCgiBody(size_t& idx){
             waitpid(_clients[clientFd].getCgiInfo().pid, NULL, WNOHANG);
             _clients[clientFd].resetCgiInfos();
             _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
-                "<html><body><h1>500 Internal Server Error</h1></body></html>", true), Client::RESPONSE);
+                "<html><body><h1>500 Internal Server Error</h1></body></html>", true, _clients[clientFd].getServerName()), Client::RESPONSE);
             setPollout(clientFd);
             return ;
         }
@@ -497,7 +497,7 @@ void    ServerManager::readCgiResponse(size_t& idx){
         if (removeReadPipe(pipeRead) <= idx)
                 --idx;
             _clients[clientFd].store(RequestHandler::buildHttpResponse(500, "Internal Server Error", 
-                "<html><body><h1>500 Internal Server Error</h1></body></html>", true), Client::RESPONSE);
+                "<html><body><h1>500 Internal Server Error</h1></body></html>", true, _clients[clientFd].getServerName()), Client::RESPONSE);
             _clients[clientFd].resetCgiInfos();
             setPollout(clientFd);
     }

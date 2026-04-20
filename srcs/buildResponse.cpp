@@ -90,7 +90,7 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
 	std::ostringstream response;
 	response << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
 
-	response << "Server: " << _config.serverName << "\r\n";
+	response << "Server: " << serverName << "\r\n";
 	response << "Date: " << getRfc7231Date() << "\r\n";
 
 	if (closeConnection == true)

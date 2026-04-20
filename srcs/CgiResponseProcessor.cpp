@@ -96,7 +96,7 @@ std::string cgiResponseProcessor(std::string result, ServerConfig const & server
     std::string headers = getRawHeaders(result);
     if (headers.empty())
         return RequestHandler::buildHttpResponse(502, "Bad Gateway",
-                "<html><body><h1>502 Bad Gateway</h1></body></html>", true);
+                "<html><body><h1>502 Bad Gateway</h1></body></html>", true, server.serverName);
     std::string body = getBody(result);
     std::map<std::string, std::string> headersMap = getHeadersMaps(headers);
     std::map<std::string, std::string>::iterator itS = headersMap.find("status");

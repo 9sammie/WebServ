@@ -25,7 +25,7 @@ class RequestHandler
 
 		std::string handleRequest(Client& Client);
 		int extractStatusCode(const std::string& response) const;
-		std::string buildHttpResponse(int statusCode,
+		static std::string buildHttpResponse(int statusCode,
 									const std::string& reason,
 									const std::string& body,
 									const bool closeConnection,
