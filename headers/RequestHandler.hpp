@@ -25,10 +25,11 @@ class RequestHandler
 
 		std::string handleRequest(Client& Client);
 		int extractStatusCode(const std::string& response) const;
-		static std::string buildHttpResponse(int statusCode,
+		std::string buildHttpResponse(int statusCode,
 									const std::string& reason,
 									const std::string& body,
 									const bool closeConnection,
+									const std::string serverName,
 									const std::map<std::string, std::string>& extraHeaders
 									= std::map<std::string, std::string>());
 		std::string mimeType;
@@ -51,7 +52,7 @@ class RequestHandler
 		bool		isCgiRequest(const std::string& fullPath, const LocationConfig* loc);
 		std::string handlePOST(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client);
 		std::string handleDELETE(const HttpRequest& request, const std::string& path, const LocationConfig* loc, Client& Client);
-		std::string buildStatusResponse(int code, Client& Client) const;
+		std::string buildStatusResponse(int code, Client& Client);
 		std::string getStatusMessage(int code) const;
 		void		applyHtmlTemplates(std::string& body, const HttpRequest& request);
 		std::string updateCloseStatus(Client& client, const std::string& response);

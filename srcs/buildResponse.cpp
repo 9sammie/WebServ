@@ -46,12 +46,12 @@ std::string RequestHandler::getStatusMessage(const int code) const
 	return "Internal Server Error";
 }
 
-std::string RequestHandler::buildStatusResponse(int code, Client& Client) const
+std::string RequestHandler::buildStatusResponse(int code, Client& Client)
 {
 	if (code >= 200 && code < 300 && Client.getCloseStatus() == false)
-		return buildHttpResponse(code, "No Content", "", false);
+		return buildHttpResponse(code, "No Content", "", false, _config.serverName);
 	if (code >= 200 && code < 300 && Client.getCloseStatus() == true)
-		return buildHttpResponse(code, "No Content", "", true);
+		return buildHttpResponse(code, "No Content", "", true, _config.serverName);
 
 	std::string message = getStatusMessage(code);
 
@@ -64,7 +64,7 @@ std::string RequestHandler::buildStatusResponse(int code, Client& Client) const
 	else
 		headers["Content-Type"] = "text/html";
 
-	return buildHttpResponse(code, message, body.str(), true, headers);
+	return buildHttpResponse(code, message, body.str(), true, _config.serverName, headers);
 }
 
 std::string getRfc7231Date()
@@ -80,12 +80,13 @@ std::string RequestHandler::buildHttpResponse(int statusCode,
                                                const std::string& reason,
                                                const std::string& body,
 											   const bool closeConnection,
+											   const std::string serverName,
                                                const std::map<std::string, std::string>& extraHeaders)
 {
 	std::ostringstream response;
 	response << "HTTP/1.1 " << statusCode << " " << reason << "\r\n";
 
-	response << "Server: Rats_du_port_80\r\n";
+	response << "Server: " << _config.serverName << "\r\n";
 	response << "Date: " << getRfc7231Date() << "\r\n";
 
 	if (closeConnection == true)
