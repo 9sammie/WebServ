@@ -601,7 +601,7 @@ HttpConfig Parser::parseHttpBlock(const Token& httpTok)
 	consume(RBRACE);
 	return http;
 }
-	
+
 ServerConfig Parser::parseServerBlock(const Token& serverTok)
 {
 	ServerConfig srv;

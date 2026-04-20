@@ -120,7 +120,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 	{
 		std::map<std::string, std::string> headers;
 		headers["location"] = loc->redirectTarget;
-		outResponse = buildHttpResponse(loc->redirectCode, getStatusMessage(loc->redirectCode), "", Client.getCloseStatus(), headers);
+		outResponse = buildHttpResponse(loc->redirectCode, getStatusMessage(loc->redirectCode), "", Client.getCloseStatus(), _config.serverName, headers);
 		return false;
 	}
 
@@ -157,7 +157,7 @@ bool RequestHandler::resolvePath(const HttpRequest& request, const std::string& 
 			}
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "text/html";
-			outResponse = buildHttpResponse(200, "OK", listing, Client.getCloseStatus(), headers);
+			outResponse = buildHttpResponse(200, "OK", listing, Client.getCloseStatus(), _config.serverName, headers);
 			return false;
 		}
 		outResponse = buildStatusResponse(403, Client);
@@ -185,7 +185,7 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		std::map<std::string, std::string> headers;
 		headers["set-cookie"] = "mouse_type=" + request.getQueryParam("type") + "; Path=/; Max-Age=3600";
 		headers["location"] = "/home.html"; 
-		return buildHttpResponse(302, "Found", "", Client.getCloseStatus(), headers);
+		return buildHttpResponse(302, "Found", "", Client.getCloseStatus(), _config.serverName, headers);
 	}
 
 	if(!resolvePath(request, path, loc, resolvedPath, earlyResponse, Client))
@@ -218,5 +218,5 @@ std::string RequestHandler::handleGET(const HttpRequest& request, const std::str
 		applyHtmlTemplates(body, request);
 
 	headers["Content-Type"] = mimeType;
-	return buildHttpResponse(200, "OK", body, Client.getCloseStatus(), headers);
+	return buildHttpResponse(200, "OK", body, Client.getCloseStatus(), _config.serverName, headers);
 }

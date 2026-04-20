@@ -225,7 +225,7 @@ void   ServerManager::checkCgiTimeOuts(){
                 std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
             }
         }
-   }
+	}
 }
 
 void   ServerManager::checkClientTimeOuts(){

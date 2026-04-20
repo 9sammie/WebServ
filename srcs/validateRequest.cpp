@@ -32,7 +32,7 @@ std::string RequestHandler::validateLocation(Client& Client, HttpRequest& reques
 	{
 		int code = he.getStatusCode();
 		if (code < 400)
-			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true);
+			return buildHttpResponse(500, "Internal Server Error", "<html><body><h1>500 Internal Server Error</h1></body></html>", true, _config.serverName);
 		Client.setCloseStatus(true);
 		return buildStatusResponse(code, Client);
 	}

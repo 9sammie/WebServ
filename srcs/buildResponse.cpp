@@ -25,25 +25,29 @@ int RequestHandler::extractStatusCode(const std::string& response) const
 
 std::string RequestHandler::getStatusMessage(const int code) const
 {
-	if (code == 200) return "OK";
-	if (code == 201) return "Created";
-	if (code == 204) return "No Content";
-	if (code == 301) return "Moved Permanently";
-	if (code == 302) return "Found";
-	if (code == 400) return "Bad Request";
-	if (code == 403) return "Ressource Access Forbidden";
-	if (code == 404) return "Ressource Not Found";
-	if (code == 405) return "Method Not Allowed On This Location";
-	if (code == 408) return "Client Too Slow";
-	if (code == 411) return "Body Without Content Length";
-	if (code == 413) return "Payload Too Large";
-	if (code == 414) return "URI Too Long";
-	if (code == 500) return "Internal Server Error";
-	if (code == 501) return "Not Implemented";
-	if (code == 502) return "Bad Gateway";
-	if (code == 504) return "Gateway Timeout";
-	if (code == 505) return "Wrong HTTP Version";
-	return "Internal Server Error";
+	switch(code)
+	{
+		case 200: return "Ok";
+		case 201: return "Created";
+		case 204: return "No Content";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
+		case 400: return "Bad Request";
+		case 403: return "Ressource Access Forbidden";
+		case 404: return "Ressource Not Found";
+		case 405: return "Method Not Allowed On This Location";
+		case 408: return "Client Too Slow";
+		case 411: return "Body Without Content Length";
+		case 413: return "Payload Too Large";
+		case 414: return "URI Too Long";
+		case 500: return "Internal Server Error";
+		case 501: return "Not Implemented";
+		case 502: return "Bad Gateway";
+		case 504: return "Gateway Timeout";
+		case 505: return "Wrong HTTP Version";
+
+		default: return "Internal Server Error";
+	}
 }
 
 std::string RequestHandler::buildStatusResponse(int code, Client& Client)
