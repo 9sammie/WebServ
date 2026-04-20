@@ -95,9 +95,11 @@ void ServerManager::acceptNewConnection(int serverFd){
              << ((ipAddr >> 8) & 0xFF) << "."
              << (ipAddr & 0xFF);
     std::string remoteAddr = ssRemote.str();
+    ServerConfig server = getServer(serverFd);
     _clients[newFd] = Client(newFd, getListenerPort(serverFd), address.sin_port, remoteAddr);
     _clients[newFd].setKeepaliveTimeout(getTimeout(getListenerPort(serverFd)));
     _clients[newFd].setCgiTimeout(getCgiTimeout(getListenerPort(serverFd)));
+    _clients[newFd].setServerName(server.serverName);
 }
 
 void    ServerManager::closeConnection(int clientFd){
@@ -130,7 +132,7 @@ int ServerManager::readClientData(int clientFd){
         else{
             //Error -1, something crashed (ex: wifi stopped, a cable was unplug...)
             this->closeConnection(clientFd);
-            std::cout << RED << "Error: recv() failed on client: [" << clientFd << "]." << RESET << std::endl;
+            std::cerr << RED << "Error: recv() failed on client: [" << clientFd << "]." << RESET << std::endl;
             return -1;
         }
 }
@@ -222,7 +224,7 @@ void   ServerManager::checkCgiTimeOuts(){
                 "<html><body><h1>504 Gateway Timeout</h1></body></html>", true);
                 it->second.store(response, Client::RESPONSE);
                 setPollout(it->second.getFd());
-                std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
+                // std::cout << BROWN << "Cgi timeout." << RESET << std::endl;
             }
         }
 	}

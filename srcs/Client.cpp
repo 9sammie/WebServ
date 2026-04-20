@@ -4,7 +4,7 @@
 #include <cerrno>
 #include <cstdlib>
 
-Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _badRequest(false), _closeStatus(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1){
+Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _badRequest(false), _closeStatus(false), _responseOffsetSent(0), _requestSize(0), _chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1), _serverName("Unknown"){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
@@ -16,7 +16,7 @@ Client::Client() : _fd(-1), _serverPort(-1), _clientPort(-1), _badRequest(false)
 
 Client::Client(int fd, int serverPort, int clientPort, std::string remoteAddr): _fd(fd),_serverPort(serverPort),
 _clientPort(clientPort), _remoteAddr(remoteAddr), _badRequest(false), _closeStatus(false), _responseOffsetSent(0), _requestSize(0),
-_chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1){
+_chunkSize(-1), _transferEncoding(false), _keepaliveTimeout(-1), _cgiTimeout(-1), _serverName("Unknown"){
     _lastActivity = time(NULL);
     _cgiInfo.isCgi = false;
     _cgiInfo.pid = -1;
@@ -236,7 +236,7 @@ Client::~Client(){}
 Client::Client(const Client& src) : _rawBuffer(src._rawBuffer), _requestBuffer(src._requestBuffer), _responseBuffer(src._responseBuffer),
 _lastActivity(src._lastActivity), _fd(src._fd), _serverPort(src._serverPort), _clientPort(src._clientPort), _remoteAddr(src._remoteAddr), 
 _badRequest(src._badRequest), _closeStatus(src._closeStatus), _responseOffsetSent(src._responseOffsetSent), _chunkSize(src._chunkSize),
-_transferEncoding(src._transferEncoding), _keepaliveTimeout(-1), _cgiTimeout(-1){
+_transferEncoding(src._transferEncoding), _keepaliveTimeout(src._keepaliveTimeout), _cgiTimeout(src._cgiTimeout), _serverName(src._serverName){
    _cgiInfo = src._cgiInfo;
 }
 
@@ -258,6 +258,7 @@ Client& Client::operator=(const Client& rhs){
         _remoteAddr = rhs._remoteAddr;
         _keepaliveTimeout = rhs._keepaliveTimeout;
         _cgiTimeout = rhs._cgiTimeout;
+        _serverName = rhs._serverName;
 
     }
     return *this;
@@ -350,4 +351,12 @@ int Client::getCgiTimeout()const{
 
 void Client::setCgiTimeout(int timeout){
     _cgiTimeout = timeout;
+}
+
+void    Client::setServerName(std::string serverName){
+    _serverName = serverName;
+}
+
+const std::string & Client::getServerName()const{
+    return _serverName;
 }

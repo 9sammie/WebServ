@@ -65,6 +65,10 @@ curl -X POST --data-binary @tests/tests_requests/body_over_max_size.txt http://l
 Attendu:
 HTTP/1.1 413 Payload Too Large
 
+#First modifye maxBodySize in the config file and then try this to post a png :
+curl -X POST --data-binary @html/site1/assets/soup_dish.png http://localhost:8080/uploads/site1/uploaded_image.png -i
+Attendu:
+200 ok
 
 ## Test DELETE
 curl -X DELETE http://localhost:8080/uploads/test.txt -i

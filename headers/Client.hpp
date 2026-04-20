@@ -47,8 +47,10 @@ class Client{
         std::string getRemoteAddr()const;
         const std::string& getBuffer(BufferType type);
         int         getKeepaliveTimeout()const;
-        void        setKeepaliveTimeout(int timeout);
         int         getCgiTimeout()const;
+        const std::string & getServerName()const;
+        void        setKeepaliveTimeout(int timeout);
+        void        setServerName(std::string serverName);
         void        setCgiTimeout(int timeout);
 
         void        resetCgiInfos();
@@ -80,6 +82,7 @@ class Client{
         bool        _transferEncoding;
         int         _keepaliveTimeout;
         int         _cgiTimeout;
+        std::string _serverName;
 };
 
 #endif

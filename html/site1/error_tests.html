@@ -143,8 +143,8 @@
 
         <div class="test-group">
             <h2>Test 408 - Request Timeout</h2>
-            <p>Exécute une requête incomplète avec une pause de 16 secondes (fichier config client timeout = 15).<br>
-            <em>Note : Ce test simulant un client lent (Slow Loris) ne peut pas être fait via le navigateur.</em></p>
+            <p>Exécute une requête incomplète.(fichier config client timeout = 15).<br>
+            <em>Note : Ce test simulant un client ayant envoye une requete incomplete, il se ferra kick par un timeout.</em></p>
             <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
             <div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
                 (printf "POST / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nContent-Lengt") | nc 127.0.0.1 8080
@@ -152,7 +152,7 @@
         </div>
 
 		<div class="test-group">
-			<h2>Test 411 - Body Sent Without Content Length</h2>
+			<h2>Test 411 - Length Required</h2>
 			<p>Tente d'envoyer des données (POST) sans spécifier l'en-tête <code>Content-Length</code>. Le serveur doit rejeter la requête car il ne sait pas combien d'octets lire.</p>
             <p style="margin-bottom: 5px;">Copiez-collez cette commande dans votre terminal :</p>
 			<div style="background: #1a2533; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: monospace; color: #a4b0be; border: 1px solid #34495e;">
