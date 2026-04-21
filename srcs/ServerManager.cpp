@@ -320,47 +320,136 @@ bool    ServerManager::receivedRequest(int idx){
 }
 
 // In poll() -1 has been changed to 1000 to allow servermanager to clean innactive clients
-void    ServerManager::run(){
+// void    ServerManager::run(){
+//     while(true){
+//         if (stop_sig == 1)
+//                 break;
+//         checkCgiTimeOuts();
+//         checkClientTimeOuts();
+//         //Event go through _pollFds to find the revent On
+//         if (poll(&_pollFds[0], _pollFds.size(), 1000) >= 0){
+//             for (size_t i = 0; i < _pollFds.size(); ++i){
+//                 if (_pollFds[i].revents & (POLLIN | POLLHUP)){ // Can read
+//                     if (isListener(_pollFds[i].fd)){
+//                         acceptNewConnection(_pollFds[i].fd);
+//                     }
+//                     // else if (_cgiClient handler, get response from cgi and store inside client)
+//                     else if (_cgiReadFds.count(_pollFds[i].fd))
+//                         readCgiResponse(i);//CookCgi() inside readCgiResponse()
+//                     else{
+//                         if (!receivedRequest(i))
+//                             i--; //A client has been disconnected, decrement i because _pollFds has one client less
+//                     }
+//                 }
+//                 else if (_pollFds[i].revents & POLLOUT){ // Can write
+//                     if (_cgiWriteFds.count(_pollFds[i].fd)){
+//                         writeCgiBody(i);
+//                     }
+//                     else
+//                         sendResponse(_pollFds[i].fd, i);
+//                 }
+//             }
+//         }
+//         else{
+//             if (errno == EINTR){
+//                 if (stop_sig == 1)
+//                     break;
+//                 else
+//                     continue;
+//             }
+//             else
+//                 throw std::runtime_error(strerror(errno));
+//         }
+//     }
+// }
+
+ void    ServerManager::run(){
+    bool fatal_error = false;
+    std::string fatal_msg = "";
+    
     while(true){
-        if (stop_sig == 1)
+        if (stop_sig == 1 || (fatal_error && _clients.empty()))
                 break;
-        checkCgiTimeOuts();
-        checkClientTimeOuts();
-        //Event go through _pollFds to find the revent On
-        if (poll(&_pollFds[0], _pollFds.size(), 1000) >= 0){
-            for (size_t i = 0; i < _pollFds.size(); ++i){
-                if (_pollFds[i].revents & (POLLIN | POLLHUP)){ // Can read
-                    if (isListener(_pollFds[i].fd)){
-                        acceptNewConnection(_pollFds[i].fd);
+        
+        try {
+            if (!fatal_error) {
+                checkCgiTimeOuts();
+                checkClientTimeOuts();
+            }
+            
+            //Event go through _pollFds to find the revent On
+            if (poll(&_pollFds[0], _pollFds.size(), 1000) >= 0){
+                for (size_t i = 0; i < _pollFds.size(); ++i){
+                    if (_pollFds[i].revents & (POLLIN | POLLHUP)){ // Can read
+                        if (isListener(_pollFds[i].fd)){
+                            acceptNewConnection(_pollFds[i].fd);
+                        }
+                        // else if (_cgiClient handler, get response from cgi and store inside client)
+                        else if (_cgiReadFds.count(_pollFds[i].fd))
+                            readCgiResponse(i);//CookCgi() inside readCgiResponse()
+                        else{
+                            if (!receivedRequest(i))
+                                i--; //A client has been disconnected, decrement i because _pollFds has one client less
+                        }
                     }
-                    // else if (_cgiClient handler, get response from cgi and store inside client)
-                    else if (_cgiReadFds.count(_pollFds[i].fd))
-                        readCgiResponse(i);//CookCgi() inside readCgiResponse()
-                    else{
-                        if (!receivedRequest(i))
-                            i--; //A client has been disconnected, decrement i because _pollFds has one client less
+                    else if (_pollFds[i].revents & POLLOUT){ // Can write
+                        if (_cgiWriteFds.count(_pollFds[i].fd)){
+                            writeCgiBody(i);
+                        }
+                        else
+                            sendResponse(_pollFds[i].fd, i);
                     }
                 }
-                else if (_pollFds[i].revents & POLLOUT){ // Can write
-                    if (_cgiWriteFds.count(_pollFds[i].fd)){
-                        writeCgiBody(i);
-                    }
+            }
+            else{
+                if (errno == EINTR){
+                    if (stop_sig == 1)
+                        break;
                     else
-                        sendResponse(_pollFds[i].fd, i);
+                        continue;
+                }
+                else
+                    throw std::runtime_error(strerror(errno));
+            }
+        } catch (const std::exception& e) {
+            if (!fatal_error) {
+                fatal_error = true;
+                fatal_msg = e.what();
+                std::cerr << RED << "CRITICAL FATAL ERROR: " << e.what() << ". Remove clients." << RESET << std::endl;
+                
+                // Remove listeners from _pollFds so we stop accepting new connections and avoid a busy loop
+                for (std::vector<TcpListener*>::iterator it = _listeners.begin(); it != _listeners.end(); ++it){
+                    int fd = (*it)->getFd();
+                    for (std::vector<struct pollfd>::iterator pit = _pollFds.begin(); pit != _pollFds.end(); ){
+                        if (pit->fd == fd)
+                            pit = _pollFds.erase(pit);
+                        else
+                            ++pit;
+                    }
+                }
+                
+                // Prepare 500 error response for all clients
+                const std::string response = RequestHandler::buildHttpResponse(500, "Internal Server Error", 
+                    "<html><body><h1>500 Internal Server Error (Server shutting down)</h1></body></html>", true);
+                
+                for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+                    it->second.clean(Client::REQUEST);
+                    it->second.clean(Client::RESPONSE);
+                    it->second.store(response, Client::RESPONSE);
+                    it->second.setCloseStatus(true);
+                    // set POLLOUT to let poll() handle the send gracefully
+                    for (size_t i = 0; i < _pollFds.size(); ++i) {
+                        if (_pollFds[i].fd == it->second.getFd()) {
+                            _pollFds[i].events = POLLOUT;
+                            break;
+                        }
+                    }
                 }
             }
-        }
-        else{
-            if (errno == EINTR){
-                if (stop_sig == 1)
-                    break;
-                else
-                    continue;
-            }
-            else
-                throw std::runtime_error(strerror(errno));
         }
     }
+    if (fatal_error)
+        throw std::runtime_error(fatal_msg);
 }
 
 std::string getBody(const std::string& requestBuffer){
