@@ -33,7 +33,7 @@ std::string RequestHandler::getStatusMessage(const int code) const
 	if (code == 400) return "Bad Request";
 	if (code == 403) return "Ressource Access Forbidden";
 	if (code == 404) return "Ressource Not Found";
-	if (code == 405) return "Method Not Allowed On This Location";
+	if (code == 405) return "Method Not Allowed";
 	if (code == 408) return "Client Too Slow";
 	if (code == 411) return "Length Required";
 	if (code == 413) return "Payload Too Large";
